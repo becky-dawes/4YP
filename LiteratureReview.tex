@@ -1,5 +1,212 @@
 
 \subsection{Literature Review}
 
-This is the beginning of the literature review.
+Currently just a load of notes from reading the papers...
+
+\subsubsection{A Hierarchical Bayesian Language Model Based on Pitman Yor Processes - \textit{Teh} 2006}
+
+\textit{n}-gram models approximate the distribution over sentences using the conditional distribution of each work given a context consisting of only the previous \textit{n} - 1 words:
+
+\begin{equation}
+P(sentence)\approx\prod_{i=1}^{T}P(word_{i}|word_{i-n+1}^{i-1})
+\label{eq:nGramModel}
+\end{equation}
+
+Even for small \textit{n}, the number of parameters is huge due to the large vocabulary size, therefore direct maximum likelihood parameter fitting severely over fits to the training data.
+
+This paper proposes a novel language model based on a hierarchical Bayesian model where each hidden variable is distributed according to a Pitman Yor process (a nonparametric generalisation of the Dirichlet distribution).
+
+\textbf{Pitman Yor Process:} Let $W$ be a fixed and finite vocabulary of $V$ words. For each word $w \in W$ let $G(w)$ be the (to be estimated) probability of $w$, and let $G = [G(w)]_{w\in W}$ be the vector of word probabilities. We place a Pitman Yor process prior on $G$: $G \sim PY(d, \theta, G_{0})$ where discount parameter $0\leq d <1$, strength parameter $\theta >-d$ and a mean vector $G_{0} = [G_{0}(w)]_{w\in W}$. $G_{0}(w)$ is the a priori probability of word $w$ (usually $G_{0}(w) = 1/V$). $\theta$ and $d$ control the amount of variability around $G_{0}$. When $d=0$, the Pitman Yor process reduces to a Dirichlet distribution with parameters $\theta G_{0}$.
+
+Let $x_{1}, x_{2}, ...$ be a sequence of words drawn independently and identically (i.i.d.) from $G$. The first word $x_{1}$ is assigned a value of the first draw $y_{1}$ from $G_{0}$. Let $t$ be the current number of draws from $G_{0}$ (currently $t=1$), $c_{k}$ be the number of words assigned the value of draw $y_{k}$ (currently $c_{1}=1$), and $c.=\sum_{k=1}^{t}c_{k}$ be the current number of draws from $G$. For each subsequent word $x_{c.+1}$, we either assign it the value of a previous draw $y_{k}$ with probability $\frac{c_{k}-d}{\theta +c.}$ (increment $c_{k}$; set $x_{c.+1}\leftarrow y_{k}$), or we assign it the value of a new draw from $G_{0}$ with probability $\frac{\theta +dt}{\theta +c.}$ (increment $t$; set $c_{t}=1$; draw $y_{t}\sim G_{0}$; set $x_{c.+1}<y_{t}$).
+
+The more words that have been assigned to a draw from $G_{0}$, the more likely subsequent words will be assigned to the draw. Also, the more we draw from $G_{0}$, the more likely a new word will be assigned to a new draw from $G_{0}$. These effects together produce a power-law distribution where many unique words are observed, most of them rarely. $\theta$ controls the overall numbers of unique words, while $d$ controls the asymptotic growth of the number of unique words. This procedure for generating words drawn from $G$ is the Chinese Restaurant Process. (Consider a sequence of customers (corresponding to the words drawn from $G$) visiting a Chinese restaurant with an unbounded number of tables (corresponding to the draws from $G_{0}$), each of which can accommodate an unbounded number of customers. The first customer sits at the first table, and each subsequent customer either joins an already occupied table (assign the word to the corresponding draw from $G_{0}$), or sits at a new table (assign the word to a new draw from $G_{0}$).)
+
+\textbf{Hierarchical Pitman Yor Language Models:} Given a context $\textbf{u}$, let $G_{\textbf{u}}(w)$ be the probability of the current word taking on value $w$. We use a Pitman Yor process as the prior for $G_{\textbf{u}}[G_{\textbf{u}}(w)]_{w \in W}$, in particular,
+
+\begin{equation}
+G_{\textbf{u}}\sim PY(d_{|\textbf{u}|}, \theta_{|\textbf{u}|}, G_{\pi(\textbf{u})})
+\label{eq:pitmanYorPrior}
+\end{equation}
+
+\noindent where $\pi(\textbf{u})$ is the suffix of $\textbf{u}$ consisting of all but the earliest word. As we don't know $G_{\pi(\textbf{u})}$, we recursively place a prior over $G_{\pi(\textbf{u})}$ using Equation \ref{eq:pitmanYorPrior}, but now with parameters $\theta_{|\pi(\textbf{u})|}, d_{|\pi(\textbf{u})|}$ and mean vector $G_{\pi(\pi(\textbf{u}))}$ instead. This is repeated until we get to $G_{\emptyset}$, the vector of probabilities over the current word given the empty context $\emptyset$. Finally we place a prior on $G_{\emptyset}$:
+
+\begin{equation}
+G_{\emptyset} \sim PY(d_{0}, \theta_{0}, G_{0})
+\label{eq:emptyContextPrior}
+\end{equation}
+
+\noindent where $G_{0}$ is the global mean vector, given a uniform value of $G_{0}(w)=1/V$ for all $w \in W$. Finally, we place a uniform prior on the discount parameters and a Gamma(1,1) prior on the strength parameters. The total number of parameters in the model is $2n$.
+
+The prior is structured as a suffix tree of depth $n$, where each node corresponds to a context consisting of up to $n-1$ words, and each child corresponds to adding a different word to the beginning of the context (words appearing earlier in a context have (a priori) the least importance in modelling the probability of the current word).
+
+\textbf{Hierarchical Chinese Restaurant Process:} We may treat each $G_{\textbf{u}}$ as a distribution over the current word. Since $G_{\textbf{u}}$ is Pitman Yor process distributed, we can draw words from it using the Chinese Restaurant process. The same applies for $G_{\pi(\textbf{u})}$. This is recursively applied until we need draws from the global mean distribution $G_{0}$, which is easy since it is just uniformally distributed.
+
+For each context $\textbf{u}$, there is a sequence of words $x_{\textbf{u}1}, x_{\textbf{u}2}, ...$ drawn i.i.d. from $G_{\textbf{u}}$ and another sequence of words $y_{\textbf{u}1}, y_{\textbf{u}2}, ...$ drawn i.i.d. from the parent distribution $G_{\pi(\textbf{u})}$. We use $l$ to index draws from $G_{\textbf{u}}$ and $k$ to index draws from $G_{\pi(\textbf{u})}$. $t_{\textbf{u}wk}=1$ if $y_{\textbf{u}k}$ takes on value $w$, and $t_{\textbf{u}wk}=0$ otherwise. Each word $x_{\textbf{u}l}$ is assigned to one of the draws $y_{\textbf{u}k}$ from $G_{\pi(\textbf{u})}$. If $y_{\textbf{u}k}$ takes on value $w$ define $c_{\textbf{u}wk}$ as the number of words $x_{\textbf{u}l}$ drawn from $G_{\textbf{u}}$ assigned to $y_{\textbf{u}k}$, otherwise let $c_{\textbf{u}wk}=0$. Finally, we denote marginal counts by dots, e.g. $c_{\textbf{u}.k}$ is the number of $x_{\textbf{u}l}$s assigned with the value of $y_{\textbf{u}k}$, $c_{\textbf{u}w.}$ is the number of $x_{\textbf{u}l}$s with value $w$, and $t_{\textbf{u}..}$ is the current number of draws $y_{\textbf{u}k}$ from $G_{\pi(\textbf{u})}$.
+
+\begin{equation}
+\left \{ \begin{array} {c c} t_{\textbf{u}w.}=0 & if\ c_{\textbf{u}w.}=0 \\
+1\leq t_{\textbf{u}w.} \leq c_{\textbf{u}w.} & if\ c_{\textbf{u}w.}>0
+\end{array}
+\right.
+\label{eq:hierarchicalChineseRestaurantT}
+\end{equation}
+
+\begin{equation}
+c_{\textbf{u}w.}=\sum _{\textbf{u}':\pi (\textbf{u}')=\textbf{u}}t_{\textbf{u}'w.}
+\label{eq:hierarchicalChineseRestaurantC}
+\end{equation}
+
+The more a word $w$ has been drawn in context $\textbf{u}$, the more likely it will be drawn again in context $\textbf{u}$. Word $w$ will be reinforced for other contexts that share a common suffix with $\textbf{u}$, with the probability of drawing $w$ increasing as the length of the common suffix increases ($w$ will be more likely under the context of the common suffix as well).
+
+\textbf{Markov Chain Monte Carlo sampling based inference scheme for the hierarchical Pitman Yor language model:} Training data $D$ consists of the number of occurrences $c_{\textbf{u}w.}$ of each word $w$ after each context $\textbf{u}$ of length exactly $n-1$. This corresponds to observing word $w$ drawn $c_{\textbf{u}w.}$ times from $G_{\textbf{u}}$. Given $D$, we are interested in the posterior distribution over the latent vectors $\textbf{G}=\{ G_{\textbf{v}}\colon all\ contexts\ \textbf{v} \} $ and parameters $\boldsymbol\Theta =\{ \theta_{m}, d_{m} \colon 0 \leq m \leq n-1 \}$:
+
+\begin{equation}
+p(\textbf{G}, \boldsymbol\Theta | D)=p(\textbf{G}, \boldsymbol\Theta, D)/p(D)
+\label{eq:mcmcPosteriorG}
+\end{equation}
+
+The hierarchical Chinese Restaurant process marginalises out each $G_{\textbf{u}}$, replacing it with the seating arrangement in the corresponding restaurant, $S_{\textbf{u}}$. Let $\textbf{S}=\{S_{\textbf{v}}:all\ context\ \textbf{v}\}$. Therefore we are instead interested in the posterior over seating arrangements:
+
+\begin{equation}
+p(\textbf{S}, \boldsymbol\Theta |D)=p(\textbf{S}, \boldsymbol\Theta, D)/p(D)
+\label{eq:mcmcPosteriorS}
+\end{equation}
+
+The probability of a test word $w$ after a context $\textbf{u}$ is given by:
+
+\begin{equation}
+p(w | \textbf{u}, D)=\int p(w | \textbf{u}, \textbf{S}, \boldsymbol\Theta)p(\textbf{S}, \boldsymbol\Theta | D)d(\textbf{S}, \boldsymbol\Theta)
+\label{eq:mcmcWordProb}
+\end{equation}
+
+\noindent where the first probability on the right is the predictive probability under a particular setting of seating arrangements $\textbf{S}$ and parameters $\boldsymbol\Theta$, and the overall predictive probability is obtained by averaging this with respect to the posterior over $\textbf{S}$ and $\boldsymbol\Theta$ (second probability on right).
+
+\subsubsection{A Hierarchical, Hierarchical Pitman Yor Process Language Model - \textit{Wood, Teh}}
+
+\textbf{Normal Pitman Yor process language modelling:} Distribution over words following a particular context:
+
+\begin{equation}
+w_{t}|w_{t-1}, w_{t-2} \sim G_{\{w_{t-2},w_{t-1}\}}^{0}
+\label{eq:PYWordDistribution}
+\end{equation}
+
+\noindent (context length 2) is a random distribution:
+
+\begin{equation}
+G_{\{w_{t-2}, w_{t-1}\}}^{0} \sim PY(d_{2}, \alpha_{2}, H)
+\label{eq:PYDistributionPY}
+\end{equation}
+
+\noindent where $PY(d, \alpha, H)$ is a Pitman Yor process with a distributed count $d$, concentration $\alpha$ and base distribution $H$. When the base distribution is the distribution over words following the same context with one fewer antecedents, $H=G_{\{w_{t-1}\}}^{0}$, and $G_{\{w_{t-1}\}}^{0}$ is a random distribution which is distributed according to a Pitman Yor process with another more general base distribution, this is a \textit{Hierarchical Pitman Yor Process (HPYP)}. This "recursion" continues until the set of antecedent words is empty - "root" PY process is typically given a base distribution which is uniform over the corpus vocabulary.
+
+\textbf{Graphical Pitman Yor Process:} Assume we have corpora from domains $D_{1}, D_{2}$ and we take the approach common to Bayesain domain adaptation, specifying a hierarchical model that allows statistical sharing between the models of each sorpus. The model has the same form as the HPYP, except that the base distribution of every PY process in the hierarchy is different:
+
+\begin{equation}
+G_{\{w_{t-2}, w_{t-1}\}}^{D_{i}} \sim PY(d_{j}, \theta_{j}, \pi G_{\{w_{t-1}\}}^{D_{i}} + (1-\pi)G_{\{w_{t-2}, w_{t-1}\}}^{0})
+\label{eq:graphicalPY}
+\end{equation}
+
+\noindent The distribution over words in a particular context in a particular domain could reasonably back off to a distribution over words given a shorted context in the same domain or a distribution over words given the whole context in a general domain. Here $\pi$ is the parameter that controls how closely the base distribution is tied to the domain specific model or the general model.
+
+\subsubsection{Dirichlet Process - \textit{Teh} 2010}
+
+The Dirichlet Process is a stochastic process used in Bayesian nonparametric models of data. It is a distribution over distributions and has Dirichlet distributed finite dimensional marginal distributions. Distributions drawn from a Dirichlet process are discrete, but cannot be described using a finite number of parameters (nonparametric).
+
+DP is a stochastic process whose sample paths are probability measures with probability 1. Stochastic processes are distributions over function spaces, with sample paths being random functions drawn from the distribution. DP is a distribution over probability measures, which are functions with certain special properties which allow them to be interpreted as distributions over some probability space $\Theta$. Therefore draws from a DP can be interpreted as random distributions. DP is an infinite dimensional generalisation of Dirichlet distributions.
+
+\subsubsection{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011}
+
+"The Sequence Memoizer is a new hierarchical Bayesian model for discrete sequence data that captures long range dependencies and power-law characteristics, while remaining computationally attractive."
+
+Let $\Sigma$ be the set of symbols that can occur in some sequence. Suppose that we are given a sequence $\textbf{x}=x_{1}, x_{2}, ..., x_{T}$ of symbols from $\Sigma$ and want to estimate the probability that the next symbol takes a particular value $s \in \Sigma$.
+
+\textbf{Using Relative Frequency:} i.e. if $s$ occurs frequently in $\textbf{x}$ we expect its probability of appearing next to be high as well. $N(s)$ is number os occurrences of $s$ in $\textbf{x}$. Probability of $s$ being next symbol is $G(s)=N(s)/T=N(s)/\sum_{s' \in \Sigma}N(s')$. $G$ is a discrete distribution over the elements of $\Sigma$: it assigns a non-negative number $G(s)$ to each symbol $s$ signifying the probability of observing $s$ with the numbers summing to 1 over $\Sigma$. This approach is reasonable only if the process generating $\textbf{x}$ has no history dependence. 
+\textbf{Taking into account context:} If the last symbol in $\textbf{x}$ is $\textbf{u}$, then we can estimate the probability of the next symbol being $s$ by counting the number of times $s$ occurs after $\textbf{u}$ in $\textbf{x}$:
+
+\begin{equation}
+G_{\textbf{u}}(s)=\frac{N(\textbf{u}s)}{\sum_{s' \in \Sigma}N(\textbf{u}s')}
+\label{eq:seqMemRelativeFreqContext}
+\end{equation}
+
+\noindent is the estimated probability go $s$ occurring after $\textbf{u}$, where $N(\textbf{u}s)$ is the number os occurrences of the subsequence $\textbf{u}s$ in $\textbf{x}$. $G_{\textbf{u}}$ is a discrete distribution over the symbols in $\Sigma$, but it is a conditional distribution as the probability assigned to each symbol $s$ depends on the context $\textbf{u}$.
+
+\textbf{Maximum Likelihood:} An optimistic procedure - assumes $\textbf{x}$ is an accurate reflection of the true underlying process that generated it, to the ML parameters will be an accurate estimate of the true parameters - leads to overfitting. if $\textbf{u}$ is long, the chance that it nevers occurs in $\textbf{x}$ is high, therefore the denominator in Equation \ref{eq:seqMemRelativeFreqContext} is 0. If $\textbf{u}$ did occur in $\textbf{x}$, a high probability will be assigned to the symbols that followed $\textbf{u}$ and zero probability to all other symbols. The amount of data in $\textbf{x}$ is insufficient to characterise the conditional distribution $G_{\textbf{u}}$. Avoid this by making a fixed-order Markov assumption and restricting to estimating collections of distributions conditioned on short contexts.
+
+\textbf{Bayesian Modelling:} conservative compared to ML approach. Uncertainty in estimation is taken into account by treating the parameters $\Theta$ as random, with a prior distribution $p(\Theta)$ reflecting the prior knowledge we have about the true data generating process. $p(\Theta | \textbf{x})=p(\Theta)p(\textbf{x}|\Theta)/p(\textbf{x})$. Computations such as prediction are then done taking into account the a posteriori uncertainty about the underlying parameters.
+
+Natural sequence data often exhibits power-law properties. Conditional distributions of similar contexts tend to be similar themselves, particularly in the sense that recency matters.
+
+\textbf{Power-law scaling:} There are a small number of words that occur disproportionately frequently and a very large number of rare words that, although each occurs rarely, when taken together make up a large proportion of the language. ML estimates the probabilities of the frequently occurring symbols well, since they are based on many observations of the symbols. The estimates of the rare symbols will be bad.If a symbol did not occur in our sequence, our estimate of its probability is 0, while the estimate of a rare symbol that occurred by chance will be too high.
+
+Using Pitman Yor:
+
+\begin{equation}
+p(\textbf{x}_{T+1}=s|\textbf{x})=\int(\textbf{x}_{T+1}=s | G)p(G|\textbf{x})dG={\mathbb E} [G(s)]
+\label{eq:seqMemPowerLaw}
+\end{equation}
+
+\noindent where $\mathbb E$ stands for expectation wrt posterior distribution $p(G|\textbf{x})$. This equation doesn't always have an analytic solution therefore use numerical integration approaches, including sampling and Monte Carlo integration. 
+
+In addition to the counts $\{N(s')\}_{s' \in \Sigma}$ assume that there is another set of random "counts" $\{M(s')\}_{s' \in \Sigma}$ satisfying $1/leq M(s') /leq N(s')$ if $N(s') >)$ and $M(s')>0$ otherwise. Probability of a symbol $s$ occurring next:
+
+\begin{equation}
+\mathbb E [G(s)]=\mathbb E \left [\frac {N(s)-\alpha M(s)+\sum_{s' \in \Sigma}\alpha M(s')G_{0}(s)}{\sum_{s' \in \Sigma}N(s')}\right ]
+\label{eq:seqMemPYP}
+\end{equation}
+
+\noindent Each $M(s)$ reduces the count $N)s)$ by $\alpha M(s)$. The total amount subtracted is redistributed across all symbols in $\Sigma$ proportionally according to the symbols' probability under the base distribution $G_{0}$. Therefore non-zero counts are usually reduced, with larger counts typically reduced by a larger amount. This mitigates the overestimation of probabilities of rare symbols that happen to appear by chance. For symbols that did not appear at all, the estimates of their probabilities are pulled upward from zero, mitigating underestimation.
+
+\textbf{Context trees:} If two contexts are similar, then the corresponding conditional distributions over the symbols that follow those context will tend to be similar as well. Similarity is defined by overlapping contextual suffixes.
+
+Using a hierarchical Bayesian model and considering only fixed, finite length contexts, we are making an \textit{n}\textsuperscript{th} order Markov assumption - each symbol depends only on the last \textit{n} observed symbols. This assumption dictates that distributions are not only similar, but equal among context whose suffixes overlap in their last \textit{n} symbols.
+
+To construct a context tree: Arrange the context $\textbf{u}$ (and the associated distributions $G_{\textbf{u}}$) in a tree where the parent of a node $\textbf{u}$, denoted by $\sigma(\textbf{u})$, is given by its longest proper suffix (i.e. $\textbf{u}$ with its first symbol from the left removed). Since we are making an \textit{n}\textsuperscript{th} order Markov assumption, it is sufficient to consider only the contexts $\textbf{u} \in \Sigma_{\textbf{u}}^{*} = \{u' \in \Sigma^{*} :|\textbf{U}'|\leq n\}$ of length at most \textit{n}. The resulting context tree has height \textit{n} and the total number of nodes in the tree grows exponentially in \textit{n}. The memory complexity of models built on such context trees usually grows too large and too quickly for reasonable values of \textit{n} and $|\Sigma|$.
+
+\textbf{HPYP:}
+
+\begin{equation}
+G_{\varepsilon}\sim PY(\alpha_{0}, G_{0})
+\label{eq:seqMemG}
+\end{equation}
+
+\begin{equation}
+G_{\textbf{u}}|G_{\sigma(\textbf{u})}\sim PY(\alpha_{|\textbf{u}|}, G_{\sigma(\textbf{u})}) \ \ \ \  for\ all\ \textbf{u} \in \Sigma_{n}^{*}/\varepsilon
+\label{eq:seqMemGU}
+\end{equation}
+
+\begin{equation}
+x_{i}|\textbf{x}_{i-n:i-1}=\textbf{u}, G_{\textbf{u}}\sim G_{\textbf{u}} \ \ \ \  for\ i=1, ..., T
+\label{eq:seqMemXi}
+\end{equation}
+
+\noindent Equation \ref{eq:seqMemGU} says that a priori the conditional distribution $G_{\textbf{u}}$ should be similar to $G_{\sigma(\textbf{u})}$, its parent in the context tree. The variation of $G_{\textbf{u}}$ around its mean $G_{\sigma(\textbf{u})}$ is described by a PYP with a context length-dependent discount parameter $\alpha_{|\textbf{u}|}$. At the top of the tree, the distribution $G_{\varepsilon}$ for the empty context $\varepsilon$ is similar to an overall base distribution $G_{0}$ which specifies our prior belief that each symbol $s$ will appear with the probability $G_{0}(s)$. Equation \ref{eq:seqMemXi} describes the \textit{n}\textsuperscript{th} order Markov model for $\textbf{x}$ - the distribution over each symbol $x_{i}$ in $\textbf{x}$, given that its context consisting of the previous \textit{n} symbols $x_{i-n:i-1}$ is $\textbf{u}$, is simply $G_{\textbf{u}}$. This is the hierarchical PY process.
+
+\textbf{The Sequence Memoizer Model:} Instead of limiting context lengths to \textit{n}, the model is extended to include the set of distributions in all contexts of any (finite) length - the distribution over each symbol is now conditioned on all previous symbols, not just the previous \textit{n}. The model is the hierarchical PY model defined in Equations \ref{eq:seqMemG}, \ref{seqMemGU} and \ref{eq:seqMemXi}, but with 2 changes: the contexts range over all finite nonempty strings, $\textbf{u}\in \Sigma^{*}/\varepsilon$; Equation \ref{eq:seqMemXi} becomes $x_{i}|\textbf{x}_{1:i-1}=\textbf{u}, G_{\textbf{u}}\sim G_{\textbf{u}}$ (conditioning on all previous symbols). The Model can be interpreted as the limit of an HPYP model as the Markov order \textit{n} tends to infinity.
+
+\textbf{Compacting the context tree:} Given a finite length sequence of symbols $\textbf{x}$ we need access to only a finite number of conditional distributions. We need only $G_{x_{1:i}}$ where $i=0, ..., T$ and all the ancestors of each $G_{x_{1:i}}$ in the context tree. The ancestors are needed because each $G_{\textbf{u}}$ has a prior that depends on its parents $G_{\sigma(\textbf{u})}$. The resulting set of conditional distributions that the sequence $\textbf{x}$ actually depends on consists of $G_{\textbf{u}}$ where $\textbf{u}$ ranges over all continuous substrings of $\textbf{x}$, a finite set of $O(T^2)$ contexts. This subtree is denoted $T(\textbf{x})$.
+
+Many of the contexts that appear in $T(\textbf{x})$ appear only in non-branching chains, i.e. each node on the chain has only one child in $T(\textbf{x})$. If we can directly express the prior of the longer context in terms of the shortest non-branching suffix, then we can effectively ignore those in between and marginalise them out from the model (coagulation: $G_{11}|G_{1}\sim PY(\alpha_{2}, G_{1})$ and $G_{011}|G_{11}\sim PY(\alpha_{3}, G_{11})$ gives $G_{011}|G_{1}\sim PY(\alpha_{2}\alpha_{3}, G_{1})$ where $G_{11}$ has been marginalised out - i.e. the prior for $G_{011}$ is another PYP whose discount parameter is simply the product of the discount parameters along the chaing leading into it on the tree $T(\textbf{x})$, while the base distribution is simply the head of the $G_{1}$.
+
+We can apply this marginalization procedure to all non-branching chains of $T(\textbf{x})$ to give a compact context tree $\hat{T}(\textbf{x})$ where all internal nodes have at least two children. The number of nodes in $\hat{T}(\textbf{x})$ is at most twice the length of the sequence $\textbf{x}$ (independent of $|\Sigma|$). The structure of the compact context tree is given by the suffix structure for the reverse sequence $x_{T}, x_{T-1}, ..., x_{1}$.
+
+Inference in the full SM model with an infinite number of parameters is equivalent to inference in the compact context tree with a linear number of parameters. The prior over the conditional distributions on $\hat{T}(\textbf{x})$ still retains the form of an HPYP - each node has a PYP prior with its parent as the base distribution.
+
+\begin{equation}
+\mathbb E [G_{\textbf{u}}(s)]=\mathbb E \left [ \frac{N(\textbf{u}s)-\alpha_{\textbf{u}}M(\textbf{u}s)+\sum_{s'\in \Sigma}\alpha_{\textbf{u}}M(\textbf{u}s')G_{\sigma(\textbf{u})}(s)}{\sum_{s'\in \Sigma}N(\textbf{u}s')}\right ]
+\label{eq:seqMemCompact}
+\end{equation}
+
+\subsubsection{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009}
+
+\subsubsection{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009}
+
+\subsubsection{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006}
+
+\subsubsection{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011}
+
+
+\subsubsection{Other Notes}
+
+\textit{n}-gram model is a contiguous sequence of \textit{n} items from a given sequence of text.
 
