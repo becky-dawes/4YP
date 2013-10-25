@@ -222,6 +222,14 @@ If the context $\boldsymbol u$ does not appear in the compact context tree $\hat
 
 Use stochastic (Monte Carlo) approximations to evaluate Equation \ref{eq:seqMemCompact} where the expectation is approximated using samples from the posterior distribution. Samples are obtained using Gibbs sample, which repeatedly makes local changes to the counts, and using sequential Monte Carlo which iterates through the sequence $x_{1}, x_{2}, ..., x_{T}$, keeping track of a set of samples at each step and updating the samples as each symbol $x_{i}$ is incorporated into the model.
 
+\textbf{Language modelling:} Language model performance is report in terms of a standard measure called \textit{perplexity}, defined as $2^{\ell(\boldsymbol x)}$ where $\ell(\boldsymbol x)=-\frac{1}{|\boldsymbol x|}\sum_{i=1}^{|\boldsymbol x|}log_{2}p(x_{i}|\boldsymbol x_{1:i-1})$ is the average \textit{log-loss} on a sequence $\boldsymbol x$ and the average number of bits per word required to encode the sequence using an optimal code. Another interpretation of perplexity is that it is the average number of guesses the model would have to make before it guessed each word correctly (if it makes these guesses by drawing samples from its estimate of the conditional distribution). For SM, $p(x_{i}|\boldsymbol x_{1:i-1})$ is computed using Equation \ref{eq:seqMemCompact}.
+
+As more data is used to estimate a language model, typically its performance improves.Prediction in the SM has real-world time complexity that is essentially the same as that of a smoothed finite-order Markov model, while its memory complexity is linear in the amount of data. The computational complexity of Markov models theoretically does not depend on the amount of data, but is exponential in the Markov order, rendering straightforward extensions to higher orders impractical. The SM model fixes this problem while remaining computationally tractable.
+
+\textbf{Compression}
+
+
+
 \subsubsection{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009}
 
 \subsubsection{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009}
@@ -230,8 +238,31 @@ Use stochastic (Monte Carlo) approximations to evaluate Equation \ref{eq:seqMemC
 
 \subsubsection{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011}
 
+Deplump is a general purpose, lossless, batch compressor based on a probabilistic model of discrete sequences called the sequence memoizer.
+
+The Sequence Memoizer is an incremental method for estimating the conditional distributions in an \textit{n}-gram model in the limit of $n\to\infty$. The space complexity is a function of the number of instantiated nodes in the corresponding suffix-tree-shaped graphical model and the storage required at each node.
+
+\textbf{Review:} A distribution over $P$ can be factorized as $P(S=[s_{0}, s_{1}, ..., s_{m}])=P(s_{0})P_{[s_{0}]}(s_{1})P_{[s_{0}, s_{1}]}(s_{2})...P_{[s_{0}, s_{1}, ..., s_{m-1}]}(s_{m})$, where $P_{U}(s)=P(s|U)$. The Sequence Memoizer jointly models these conditional distributions using a hierarchical Bayesian framework in which non-negative, integer parameters $\{c_{\sigma}^{U}, t_{\sigma}^{U}\}_{\sigma \in \Sigma, U \in \Sigma^{+}}$ are used to characterise each $P_{I}$. If we define $c^{U}=\sum_{\sigma\in\Sigma}c_{\sigma}^{U}$ and $t^{U}=\sum_{\sigma\in\Sigma}t_{\sigma}^{U}$ then the model is:
+
+\begin{equation}
+P_{U}(s)=\frac{c_{s}^{U}-t_{s}^{U}\delta^{U}}{c^{U}}+\frac{t^{U}\delta^{U}P_{\sigma(U)}(s)}{c^{U}}
+\label{eq:deplumpReview}
+\end{equation}
+
+\noindent where $\sigma([s_{1}, s_{2}, s_{3}, ...])=[s_{2}, s_{3}, ...]$ and $P_{\sigma([])}$ is the uniform distribution over $\Sigma$.
+
+The latent parameters of the SM are the counts in the set of sets $G=\{\{c_{\sigma}^{U}, t_{\sigma}^{U}\}_{\sigma\in\Sigma}|U\in\Sigma^{+}\}$ and $\delta_{n}$ for $n\geq 0$. While $|G|=\infty$ for sequences of unbounded length, inference requires only a computation on $H\subset G$ for any finite training sequence $\boldsymbol S$ such that $|H|\leq 2|\boldsymbol S |$. The linear growth of $|H|$ makes using the model intractable for streaming sequences. Deplump yields an inference algorithm with asymptotically constant storage complexity for $H$.
+
+\textbf{Approximation:} Batch deplump uses a suffix tree which has storage complexity linear in input sequence length. Streaming deplump cannot have suffix tree representation of entire input sequence, so instead a fixed-length "reference sequence" is maintained, along with a dynamically updated suffix tree referencing only the suffixes found therein. Deleting nodes to constrain the size of this context tree forces node-removal inference approximations - operations are justifiable from a statistical perspective.
+
+During incremental estimation, for each symbol $s$ in the input sequence, $c_{s}^{U}$ is incremented in at least one node on the tree. $max_{P\in H, \sigma\in\Sigma}\{c_{\sigma}^{U}\}$ then grows monotonically as a function of the length of the input sequence. Incremental construction of the model includes an operation on node elements known as fragmentation that requires computation proportional to $max_{\sigma\in\Sigma}\{c_{\sigma}^{U}\}$ for node $U$. To ensure computational complexity that is independent of the sequence length, $c_{\sigma}^{U}$ must be bounded for all $U\in H$.
+
+\textbf{Algorithm:} Given a sequence of symbols $\boldsymbol S=[s_{0}, s_{1}, s_{2}, ...]$ where each symbol $s_{n}$ comes from an ordered set of symbols $\{\sigma_{1}, \sigma_{2}, ...\}=\Sigma$, streaming deplump worlds by repeatedly producing a predictive distribution for the continuation of the sequence given the full preceding context and encoding the next symbol by passing the predictive distribution to an entropy encoder. We assume that if the predictive distribution function is $F$ and the next symbol in the stream is $s$ then an entropy encoder exists that takes $F(s-1)$ and $F(s)$ as arguments and returns a bit stream. 
 
 \subsubsection{Other Notes}
 
 \textit{n}-gram model is a contiguous sequence of \textit{n} items from a given sequence of text.
+
+\null
+\noindent Entropy encoding is a lossless data compression scheme that is independent of the specific characteristics of the medium.
 
