@@ -1,9 +1,9 @@
 
-\subsection{Literature Review}
+\section{Literature Review}
 
 Currently just a load of notes from reading the papers...
 
-\subsubsection{A Hierarchical Bayesian Language Model Based on Pitman Yor Processes - \textit{Teh} 2006}
+\section{A Hierarchical Bayesian Language Model Based on Pitman Yor Processes - \textit{Teh} 2006}
 
 \textit{n}-gram models approximate the distribution over sentences using the conditional distribution of each work given a context consisting of only the previous \textit{n} - 1 words:
 
@@ -101,7 +101,7 @@ p(w|\boldsymbol u, \boldsymbol S, \boldsymbol \Theta)=\frac{c_{\boldsymbol u w.}
 
 \noindent where the counts are obtained from the seating arrangement $S_{\boldsymbol u}$ in the Chinese Restaurant process corresponding to $G_{\boldsymbol u}$.
 
-\subsubsection{A Hierarchical, Hierarchical Pitman Yor Process Language Model - \textit{Wood, Teh}}
+\section{A Hierarchical, Hierarchical Pitman Yor Process Language Model - \textit{Wood, Teh}}
 
 \textbf{Normal Pitman Yor process language modelling:} Distribution over words following a particular context:
 
@@ -128,13 +128,13 @@ G_{\{w_{t-2}, w_{t-1}\}}^{D_{i}} \sim PY(d_{j}, \theta_{j}, \pi G_{\{w_{t-1}\}}^
 
 \noindent The distribution over words in a particular context in a particular domain could reasonably back off to a distribution over words given a shorted context in the same domain or a distribution over words given the whole context in a general domain. Here $\pi$ is the parameter that controls how closely the base distribution is tied to the domain specific model or the general model.
 
-\subsubsection{Dirichlet Process - \textit{Teh} 2010}
+\section{Dirichlet Process - \textit{Teh} 2010}
 
 The Dirichlet Process is a stochastic process used in Bayesian nonparametric models of data. It is a distribution over distributions and has Dirichlet distributed finite dimensional marginal distributions. Distributions drawn from a Dirichlet process are discrete, but cannot be described using a finite number of parameters (nonparametric).
 
 DP is a stochastic process whose sample paths are probability measures with probability 1. Stochastic processes are distributions over function spaces, with sample paths being random functions drawn from the distribution. DP is a distribution over probability measures, which are functions with certain special properties which allow them to be interpreted as distributions over some probability space $\Theta$. Therefore draws from a DP can be interpreted as random distributions. DP is an infinite dimensional generalisation of Dirichlet distributions.
 
-\subsubsection{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011}
+\section{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011}
 
 "The Sequence Memoizer is a new hierarchical Bayesian model for discrete sequence data that captures long range dependencies and power-law characteristics, while remaining computationally attractive."
 
@@ -230,13 +230,13 @@ As more data is used to estimate a language model, typically its performance imp
 
 
 
-\subsubsection{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009}
+\section{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009}
 
-\subsubsection{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009}
+\section{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009}
 
-\subsubsection{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006}
+\section{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006}
 
-\subsubsection{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011}
+\section{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011}
 
 Deplump is a general purpose, lossless, batch compressor based on a probabilistic model of discrete sequences called the sequence memoizer.
 
@@ -259,7 +259,7 @@ During incremental estimation, for each symbol $s$ in the input sequence, $c_{s}
 
 \textbf{Algorithm:} Given a sequence of symbols $\boldsymbol S=[s_{0}, s_{1}, s_{2}, ...]$ where each symbol $s_{n}$ comes from an ordered set of symbols $\{\sigma_{1}, \sigma_{2}, ...\}=\Sigma$, streaming deplump worlds by repeatedly producing a predictive distribution for the continuation of the sequence given the full preceding context and encoding the next symbol by passing the predictive distribution to an entropy encoder. We assume that if the predictive distribution function is $F$ and the next symbol in the stream is $s$ then an entropy encoder exists that takes $F(s-1)$ and $F(s)$ as arguments and returns a bit stream. 
 
-\subsubsection{Other Notes}
+\section{Other Notes}
 
 \textit{n}-gram model is a contiguous sequence of \textit{n} items from a given sequence of text.
 
