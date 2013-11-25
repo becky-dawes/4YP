@@ -8,7 +8,7 @@
 
 (println "Reading file")
 
-(def file-name "Name of file from which text is read" (str "Untitled.txt")) ;"the-wonderful-wizard-of-oz.txt"
+(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz.txt")) ;"the-wonderful-wizard-of-oz.txt"
 
 
 
@@ -20,15 +20,16 @@
 ;Remove all punctuation (except apostrophes) and convert to lower case
 
 (def formattedText "Text with all punctuation (except apostrophes) removed and converted to lower case" 
-  (clojure.string/lower-case (clojure.string/replace lines #"[\p{P}&&[^'][\n]]" " ")))
+  (clojure.string/lower-case (clojure.string/replace lines #"[\p{P}&&[^'][\n]]" "")))
 
 ; split tokens at whitespace (reg. expr.)
 
 (def words-vector "Vector of all words in text" (clojure.string/split formattedText #"\s+"))
 
 (defn makeWords "Creates a sequence of all the words from the input"
-  ([theWords] (if (> (count theWords) 1)
-     (cons(take 1 theWords)(lazy-seq(makeWords (rest theWords)))))))
+  [theWords] (if (> (count theWords) 1)
+     (cons(take 1 theWords)(lazy-seq(makeWords (rest theWords))))
+     (take 1 theWords)))
 
 (def words (makeWords words-vector))
 
@@ -100,8 +101,9 @@
    (println "Making pairs")
 
 (defn makePairs "Creates a sequence of all the word pairs from the input"
-  ([theWords] (if (> (count theWords) 2)
-     (cons(take 2 theWords)(lazy-seq(makePairs (rest theWords)))))))
+  [theWords] (if (> (count theWords) 2)
+     (cons(take 2 theWords)(lazy-seq(makePairs (rest theWords))))
+     (take 2 theWords)))
 
 
 ;(def pairFreq (frequencies (pairs (map #(nth words (- % 1)) ai) (map #(nth words %) ai))))
@@ -142,8 +144,9 @@
 (println "Making trios")
 
 (defn makeTrios "Creates a sequence of the word trios from the input"
-  ([theWords] (if (> (count theWords) 3)
-     (cons(take 3 theWords)(lazy-seq(makeTrios (rest theWords)))))))
+  [theWords] (if (> (count theWords) 3)
+     (cons(take 3 theWords)(lazy-seq(makeTrios (rest theWords))))
+     (take 3 theWords)))
 
 ; Create sequence of all word trios
 
@@ -292,6 +295,60 @@
 ;(defn g-t-prob "Returns Good-Turing probability of given word" [word] (float (/ (g-t-memo word) N)))
 
 ;(def g-t-prob-memo "Memoized g-t-prob" (memoize g-t-prob))
+
+;Convert to lower case
+
+
+
+;(def formattedTextASCII "Text  converted to lower case" 
+ ; (clojure.string/lower-case lines))
+
+
+
+(println "Getting letters")
+
+(defn make-letter-groups "Creates a sequence of all letter groups of size n from input"
+  [theLetters n] (if (> (count theLetters) n)
+                   (cons (clojure.string/join (take n theLetters)) (lazy-seq (make-letter-groups (rest theLetters) n)))
+                   (cons (clojure.string/join (take n theLetters)) "")))
+
+;(def letters-vector "Vector of all words in text" (split-at 1 formattedTextASCII))
+
+;(defn makeLetters "Creates a sequence of all the letters from the input"
+ ; [theLetters] (if (> (count theLetters) 1)
+  ;   (cons(str (first theLetters))(lazy-seq(makeLetters (rest theLetters))))
+   ;  (cons (str (first theLetters)) "")))
+
+(def letters (make-letter-groups formattedText 1))
+
+(println "Getting letter counts")
+
+; count word frequencies
+
+(def counts-ASCII-1 "Frequencies of each distinct letter in text" (frequencies letters))
+
+(println "getting letter pairs")
+
+;(defn makeLetterPairs "Creates a sequence of all the letter pairs from the input"
+ ; [theLetters] (if (> (count theLetters) 2)
+  ;   (cons (str (first theLetters) (second theLetters))(lazy-seq(makeLetterPairs (rest theLetters))))
+   ;  (cons (str (first theLetters) (second theLetters)) "")))
+
+
+  
+
+
+(def letter-pairs "Sequence of all pairs of letters in text" (make-letter-groups formattedText 2))
+
+(println "Getting letter pair counts")
+
+(def counts-ASCII-2 "Frequencies of each distinct letter pair in text" (frequencies letter-pairs))
+
+(defn p1-letter [theLetter] (float (/ (counts-ASCII-1 theLetter) (count letters))))
+
+(def p1-letter-memo (memoize p1-letter))
+
+(defn p2-letter [theLetters] (float (/ (counts-ASCII-2 theLetters) (counts-ASCII-1 (str (first theLetters))))))
 
 
 
