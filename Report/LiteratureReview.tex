@@ -1,9 +1,9 @@
 
-\section{Literature Review}
+\chapter{Literature Review}
 
 Currently just a load of notes from reading the papers...
 
-\section{A Hierarchical Bayesian Language Model Based on Pitman Yor Processes - \textit{Teh} 2006}
+\section{A Hierarchical Bayesian Language Model Based on Pitman Yor Processes - \textit{Teh} 2006} \cite{teh2006hierarchical}
 
 \textit{n}-gram models approximate the distribution over sentences using the conditional distribution of each work given a context consisting of only the previous \textit{n} - 1 words:
 
@@ -101,7 +101,7 @@ p(w|\boldsymbol u, \boldsymbol S, \boldsymbol \Theta)=\frac{c_{\boldsymbol u w.}
 
 \noindent where the counts are obtained from the seating arrangement $S_{\boldsymbol u}$ in the Chinese Restaurant process corresponding to $G_{\boldsymbol u}$.
 
-\section{A Hierarchical, Hierarchical Pitman Yor Process Language Model - \textit{Wood, Teh}}
+\section{A Hierarchical, Hierarchical Pitman Yor Process Language Model - \textit{Wood, Teh}} \cite{wood2008hierarchical}
 
 \textbf{Normal Pitman Yor process language modelling:} Distribution over words following a particular context:
 
@@ -128,13 +128,13 @@ G_{\{w_{t-2}, w_{t-1}\}}^{D_{i}} \sim PY(d_{j}, \theta_{j}, \pi G_{\{w_{t-1}\}}^
 
 \noindent The distribution over words in a particular context in a particular domain could reasonably back off to a distribution over words given a shorted context in the same domain or a distribution over words given the whole context in a general domain. Here $\pi$ is the parameter that controls how closely the base distribution is tied to the domain specific model or the general model.
 
-\section{Dirichlet Process - \textit{Teh} 2010}
+\section{Dirichlet Process - \textit{Teh} 2010} \cite{teh2010dirichlet}
 
 The Dirichlet Process is a stochastic process used in Bayesian nonparametric models of data. It is a distribution over distributions and has Dirichlet distributed finite dimensional marginal distributions. Distributions drawn from a Dirichlet process are discrete, but cannot be described using a finite number of parameters (nonparametric).
 
 DP is a stochastic process whose sample paths are probability measures with probability 1. Stochastic processes are distributions over function spaces, with sample paths being random functions drawn from the distribution. DP is a distribution over probability measures, which are functions with certain special properties which allow them to be interpreted as distributions over some probability space $\Theta$. Therefore draws from a DP can be interpreted as random distributions. DP is an infinite dimensional generalisation of Dirichlet distributions.
 
-\section{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011}
+\section{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011} \cite{wood2011sequence}
 
 "The Sequence Memoizer is a new hierarchical Bayesian model for discrete sequence data that captures long range dependencies and power-law characteristics, while remaining computationally attractive."
 
@@ -230,17 +230,17 @@ As more data is used to estimate a language model, typically its performance imp
 
 
 
-\section{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009}
+\section{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009} \cite{wood2009hierarchical}
 
-\section{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009}
+\section{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009} \cite{wood2009stochastic}
 
-\section{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006}
+\section{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006} \cite{wood2008nonparametric}
 
 A "spike train" is a temporal sequence containing the times of all action potentials for a given cell. Spike sorting involves detecting all action potentials that occur in a neurophysiological recording and labelling them to indicated from which neurone each came. A distribution over spike trains is esteemed which allows us to express uncertainties that arise during the spike sorting process and in the results of neural data analysis.
 
 If we have $N$ action potential waveforms from a single-channel neurophysiological recording $R=[\overrightarrow{t_{1}}, ..., \overrightarrow{t_{N}}]$, where each waveform is represented by a vector of $n=40$ voltage samples, $\overrightarrow{t_{i}}=[t_{i}^{1}, ..., t_{i}^{n}]^{T}\in \mathbb{R}^{n}$. Our goal is to build a posterior distribution over sortings of this recording; a distribution which simultaneously represents how many neurone are present and which waveforms came from which neurone. We cluster a reduced dimensionality representation of the waveforms where each $\overrightarrow{t_{i}}$ is represented in a lower dimensional basis via principal component analysis (PCA). Given a set of recordings we perform PCA and keep only the first $D=2$ eigenvectors characterising the largest variance in the data and approximate a waveform as $\overrightarrow{t_{i}}\approx \mu +\sum_{d=1}^{D}y_{i}^{d}\overrightarrow{u_{d}}$. Here $\mu$ is the mean wave shape in $R$, $\overrightarrow{u_{d}}$ is the $d$\textsuperscript{th} PCA basis vector, and the $y_{i}^{d}$ are linear coefficients. The spike sorting algorithm clusters the low dimensional representation of the waveforms $\mathcal{Y}=[\overrightarrow{y_{i}}, ..., \overrightarrow{y_{N}}]$ rather than the full waveforms.
 
-\section{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011}
+\section{Deplump for Streaming Data - \textit{Bartlett, Wood} 2011} \cite{bartlett2011deplump}
 
 Deplump is a general purpose, lossless, batch compressor based on a probabilistic model of discrete sequences called the sequence memoizer.
 
