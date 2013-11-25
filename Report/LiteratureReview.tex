@@ -232,6 +232,26 @@ As more data is used to estimate a language model, typically its performance imp
 
 \section{A Hierarchical Nonparametric Bayesian Approach to Statistical Language Model Domain Adaptation - \textit{Wood, Teh} 2009} \cite{wood2009hierarchical}
 
+Corpus $\mathcal{C} =[w_{1}...w_{T}]$ takes simplified form $P(\mathcal{C})=\prod_{t=1}^{T}P(w_{t}|w_{t-1}...w_{t-n+1}])$ where probability of word $w_{t}$ is conditionally dependent on, at most, the $n-1$ preceding words. MLE of \textit{n}-gram model parameters is likely to overfit, particularly when there are zero counts therefore need to regularise through smoothing.
+
+HPYLM is a hierarchical nonparametric Bayesian language model based on the HPYP. Assume a fixed and finite sized dictionary of $\mathcal{L}$ unique words and has following structure:
+
+\begin{equation}
+\begin{split}
+\mathcal{G}_{[]}\sim PY(d_{0}, \alpha_{0}, \mathcal{U})
+\\ 
+\mathcal{G}_{[x_{1}]}\sim PY(d_{1}, \alpha_{1}, \mathcal{G}_{[]})
+\\
+...
+ \\
+\mathcal{G}_{[x_{j}...x_{1}]}\sim PY(d_{j}, \alpha_{j}, \mathcal{G}_{[x_{j-1}...x_{1}]})
+ \\
+w_{t}|w_{t-n+1}...w_{t-1}\sim \mathcal{G}_{[w_{t-n+1}...w_{t-1}]}
+\end{split}
+\end{equation}
+
+where the $w$s are the observed instances of words (\textit{tokens}) and the $x$s range over the unique words (\textit{types}) in the dictionary. $\mathcal{G}\sim PY(d, \alpha, \mathcal{F})$ means that $\mathcal{G}$ is a random distribution drawn from a PY process with concentration parameter $\alpha$, discount parameter $d$ and base measure $\mathcal{F}$. Can think of $\mathcal{F}$ as being the mean distribution on which $\mathcal{G}$ is "centred" in the sense that $E[\mathcal{G}(x)]=\mathcal{F}(x)$. $\mathcal{U}$ is a uniform distribution over word types.
+
 \section{A Stochastic Memoizer for Sequence Data - \textit{Wood, Archambeau, Gasthaus, James, Teh} 2009} \cite{wood2009stochastic}
 
 \section{A Nonparametric Bayesian Alternative to Spike Sorting - \textit{Wood, Black} 2006} \cite{wood2008nonparametric}
