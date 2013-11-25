@@ -212,6 +212,14 @@
   ([word1 word2] (p2-memo word1 word2))
   ([word1 word2 word3] (p3-memo word1 word2 word3)))
 
+(defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2) (map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
+
+(defn find-trio "Finds all word word trios starting with given word pair" [w1 w2] (zipmap (map key counts-3) (map #(if (= (first (key %)) w1) (if (= (second (key %)) w2) (val %) 0.0) 0.0) counts-3)))
+
+(defn next-word "Predicts next word in sequence" 
+  ([word1] (key (apply max-key val (find-pair word1))))
+  ([word1 word2] (key (apply max-key val (find-trio word1 word2)))))
+
 ;(def counts-of-counts-map "Map of counts-of-counts map names for different n" (zipmap [0] [""]))
 
 ;(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts n map-name] ((def counts-of-counts-map (assoc counts-of-counts-map n map-name)) frequencies (map val input-counts)))
