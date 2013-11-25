@@ -29,7 +29,7 @@
 (defn makeWords "Creates a sequence of all the words from the input"
   [theWords] (if (> (count theWords) 1)
      (cons(take 1 theWords)(lazy-seq(makeWords (rest theWords))))
-     (take 1 theWords)))
+     (cons (take 1 theWords) "")))
 
 (def words (makeWords words-vector))
 
@@ -103,7 +103,7 @@
 (defn makePairs "Creates a sequence of all the word pairs from the input"
   [theWords] (if (> (count theWords) 2)
      (cons(take 2 theWords)(lazy-seq(makePairs (rest theWords))))
-     (take 2 theWords)))
+     (cons (take 2 theWords) "")))
 
 
 ;(def pairFreq (frequencies (pairs (map #(nth words (- % 1)) ai) (map #(nth words %) ai))))
@@ -146,7 +146,7 @@
 (defn makeTrios "Creates a sequence of the word trios from the input"
   [theWords] (if (> (count theWords) 3)
      (cons(take 3 theWords)(lazy-seq(makeTrios (rest theWords))))
-     (take 3 theWords)))
+     (cons (take 3 theWords) "")))
 
 ; Create sequence of all word trios
 
@@ -208,17 +208,19 @@
 (def p3-memo "memoized p3" (memoize p3))
 
 (defn p "Returns n-gram probability depending on number of input words"
-  ([word1] (p1-memo word1))
-  ([word1 word2] (p2-memo word1 word2))
-  ([word1 word2 word3] (p3-memo word1 word2 word3)))
+  ([word1] (let [word1 (clojure.string/lower-case word1)] (p1-memo word1)))
+  ([word1 word2] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2)] (p2-memo word1 word2)))
+  ([word1 word2 word3] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2) word3 (clojure.string/lower-case word3)] (p3-memo word1 word2 word3))))
 
 (defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2) (map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
 
-(defn find-trio "Finds all word word trios starting with given word pair" [w1 w2] (zipmap (map key counts-3) (map #(if (= (first (key %)) w1) (if (= (second (key %)) w2) (val %) 0.0) 0.0) counts-3)))
+(defn find-trio "Finds all word trios starting with given word pair" 
+  [w1 w2] (zipmap (map key counts-3) (map #(if (= (first (key %)) w1) (if (= (second (key %)) w2) (val %) 0.0) 0.0) counts-3)))
+
 
 (defn next-word "Predicts next word in sequence" 
-  ([word1] (key (apply max-key val (find-pair word1))))
-  ([word1 word2] (key (apply max-key val (find-trio word1 word2)))))
+  ([word1] (let [word1 (clojure.string/lower-case word1)] (key (apply max-key val (find-pair word1)))))
+  ([word1 word2] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2)] (key (apply max-key val (find-trio word1 word2))))))
 
 ;(def counts-of-counts-map "Map of counts-of-counts map names for different n" (zipmap [0] [""]))
 
@@ -352,13 +354,25 @@
 
 (def counts-ASCII-2 "Frequencies of each distinct letter pair in text" (frequencies letter-pairs))
 
-(defn p1-letter [theLetter] (float (/ (counts-ASCII-1 theLetter) (count letters))))
+(def letter-trios "Sequence of all trios of letters in text" (make-letter-groups formattedText 3))
+
+(def counts-ASCII-3 "Frequencies of each distinct letter trio in text" (frequencies letter-trios))
+
+(defn p1-letter [theLetter] (let [theLetter (clojure.string/lower-case theLetter)] (float (/ (counts-ASCII-1 theLetter) (count letters)))))
 
 (def p1-letter-memo (memoize p1-letter))
 
-(defn p2-letter [theLetters] (float (/ (counts-ASCII-2 theLetters) (counts-ASCII-1 (str (first theLetters))))))
+(defn p2-letter [theLetters] (let [theLetters (clojure.string/lower-case theLetters)] (float (/ (counts-ASCII-2 theLetters) (counts-ASCII-1 (str (first theLetters)))))))
+
+(defn find-letter-pair "Finds all letter pairs starting with given letter" [letter] (zipmap (map key counts-ASCII-2) (map #(if (= (str(first (key %))) letter) (val %) 0.0) counts-ASCII-2)))
+
+(defn find-letter-trio "Finds all letter trios starting with given letter pair" 
+  [l1 l2] (zipmap (map key counts-ASCII-3) (map #(if (= (str(first (key %))) l1) (if (= (str(second (key %))) l2) (val %) 0.0) 0.0) counts-ASCII-3)))
 
 
+(defn next-letter "Predicts next letter in sequence" 
+  [letters] (let [letters (clojure.string/lower-case letters)] (if (= (count letters) 1) (key (apply max-key val (find-letter-pair letters)))
+                                       (key (apply max-key val (find-letter-trio (str (first letters)) (str (second letters))))))))
 
 ; find frequencies of frequencies for single words and sort
 
