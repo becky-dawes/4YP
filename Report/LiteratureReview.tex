@@ -222,7 +222,7 @@ If the context $\boldsymbol u$ does not appear in the compact context tree $\hat
 
 Use stochastic (Monte Carlo) approximations to evaluate Equation \ref{eq:seqMemCompact} where the expectation is approximated using samples from the posterior distribution. Samples are obtained using Gibbs sample, which repeatedly makes local changes to the counts, and using sequential Monte Carlo which iterates through the sequence $x_{1}, x_{2}, ..., x_{T}$, keeping track of a set of samples at each step and updating the samples as each symbol $x_{i}$ is incorporated into the model.
 
-\textbf{Language modelling:} Language model performance is report in terms of a standard measure called \textit{perplexity}, defined as $2^{\ell(\boldsymbol x)}$ where $\ell(\boldsymbol x)=-\frac{1}{|\boldsymbol x|}\sum_{i=1}^{|\boldsymbol x|}log_{2}p(x_{i}|\boldsymbol x_{1:i-1})$ is the average \textit{log-loss} on a sequence $\boldsymbol x$ and the average number of bits per word required to encode the sequence using an optimal code. Another interpretation of perplexity is that it is the average number of guesses the model would have to make before it guessed each word correctly (if it makes these guesses by drawing samples from its estimate of the conditional distribution). For SM, $p(x_{i}|\boldsymbol x_{1:i-1})$ is computed using Equation \ref{eq:seqMemCompact}.
+\textbf{Language modelling:} Language model performance is report in terms of a standard measure called \textit{perplexity}, defined as $2^{\ell(\boldsymbol x)}$ where $\ell(\boldsymbol x)=-\frac{1}{|\boldsymbol x|}\sum_{i=1}^{|\boldsymbol x|}\log_{2}p(x_{i}|\boldsymbol x_{1:i-1})$ is the average \textit{log-loss} on a sequence $\boldsymbol x$ and the average number of bits per word required to encode the sequence using an optimal code. Another interpretation of perplexity is that it is the average number of guesses the model would have to make before it guessed each word correctly (if it makes these guesses by drawing samples from its estimate of the conditional distribution). For SM, $p(x_{i}|\boldsymbol x_{1:i-1})$ is computed using Equation \ref{eq:seqMemCompact}.
 
 As more data is used to estimate a language model, typically its performance improves.Prediction in the SM has real-world time complexity that is essentially the same as that of a smoothed finite-order Markov model, while its memory complexity is linear in the amount of data. The computational complexity of Markov models theoretically does not depend on the amount of data, but is exponential in the Markov order, rendering straightforward extensions to higher orders impractical. The SM model fixes this problem while remaining computationally tractable.
 
@@ -288,6 +288,305 @@ Deplump processes each element of input sequence $\mathcal{I}$ incrementally. Fo
 $PMFNext$ starts by enforcing the bounds on $|\mathcal{R}|$ and $|\mathcal{H}|$ which requires nodes to be removed from tree. Removing leaf nodes from the sequence memoizer results in a coherent approximate inference algorithm for the sequence memoizer. Enforcing the bound on $|\mathcal{H}|<L$ is as simple as incrementally removing leaf nodes uniformly at random. To facilitate random deletion we maintain a count in each node of the number of leaf nodes in the subtree below it. A random leaf node can then be obtained by traversing a weighted random path down the tree.
 
 To use streaming deplump, a choice of approximation parameters must be made. The full set of these parameters consist of $\mathcal{D}, D, T, k, L, \eta$. $\mathcal{D} = [\delta_{0}, \delta_{1}, ..., \delta_{10}, \alpha]$ is a list of discount parameters, each taking a real value in (0, 1). If we define $\delta_{n}=\delta_{10}^{\alpha^{n-10}}$ for $n\geq 10$ and $\delta_{n}$ for $n\leq 10$ then $d^{\mathcal{N}}=\prod_{i=|PA(\mathcal{N}|+1}^{|\mathcal{N}|}\delta_{i}$. $D$ is the maximum depth of the suffix tree which corresponds to both the maximum context length used in modelling and the maximum recursion depth of all of the algorithms. $T$ is the bound on the length of the reference sequence $\mathcal{R}$ and is typically set to a multiple of the upper bound on the number of node instances in the suffix tree $L$. The parameter $k$ is the upper bound on the total count $c^{\mathcal{N}}$ in each node. The parameter $\eta$ is a learning rate for the updating of the discount parameters and is typically set to a very small value.
+
+\section{A Hierarchical Dirichlet Language Model - \textit{MacKay, Peto} 1995}   \cite{mackay1995hierarchical}
+
+\textbf{Bigram model with smoothing: } String of $T$ words $D=w_{1}, w_{2}, ... w_{T}$ is observed and the marginal and conditional frequencies observed. Marginal count $F_{i}$ is number of times that word $i$ occurs. Conditional count $F_{i|j}$ is number of times word $j$ is immediately followed by word $i$. Ignore option of grouping words by a common root. 'Estimators' of marginal probability of word $i$ and conditional probability of word $i$ following word $j$: $f_{i}=\frac{F_{i}+\alpha/W}{T+\alpha}$ and $f_{i|j}=\frac{F_{i|j}+\beta/W}{F_{j}+\beta}$ where the 'initial counts' $\alpha/W$ and $\beta/W$ are commonly set to 0, 1/2 or 1. $0\leq i,j\leq W$ where $W$ is number of distinct words in language. 
+
+If initial counts are set to 0 we obtain ML estimators $f_{i}=F_{i}/T$ and $f_{i|j}=F_{i|j}/F_{j}$, which assign zero frequency to all words and word pairs which didn't occur in data. Could write $\hat{P}(w_{t}|w_{t-1})=f_{w_{t}|w_{t-1}}$ as an estimator, but this conditional probability typically has large variance because there are so many possible couplets $ij$ that only a small fraction of them have been observed in the data. Instead: $\hat{P}(w_{t}|w_{t-1})=\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}$. Deleted interpolation (a cross-validation procedure) is used to set $\lambda$. This involves dividing the data into a number of blocks, computing predictions for each block using the other blocks as training data and adjusting $\lambda$ to optimise predictive performance. It has been found that better predictions can be obtained if contexts $w_{1}$ with similar values of $f_{w_{1}}$ are grouped together, with a separate $\lambda$ for each group determined by deleted interpolation.
+
+\textbf{An explicit model using Dirichlet priors: } Bigram model has conditional distribution $P(w_{t}=i|w_{t-1}=j)$ described by $W(W-1)$ independent parameters, where $W$ is number of words in language ($W$ possible conditioning terms on RHS for each of which a probability distribution with $(W-1)$ independent parameters is specified). These parameters will be denoted $Q$ with $P(w_{t}=i|w_{t-1}=j)\equiv q_{i|j}$. $Q$ is a $WxW$ transition probability matrix. A single row f $Q$, the probability vector for transitions from state $j$, is denoted $\boldsymbol{q}_{|j}$. $Q$ is the natural representation of a Markov process. The marginal distribution $P(w_{t})$ is not independent, but is a deterministic function of the conditional probability matrix $Q$ i.e. $P(w_{t})$ is the principal eigenvector of $Q$. 
+
+A model $\mathscr{H}$ is a specification of the model parameters, the way that the probability of the data depends on those parameters, and a riot probability distribution on those parameters. Given a model $\mathscr{H}$:
+
+\textbf{Infer parameters given data: } Probabilty of parameters $Q$ given data $D$ in terms of likelihood $P(D|Q\mathscr{H})$ and prior distribution $P(Q|\mathscr{H})$:
+
+\begin{equation}
+P(Q|D\mathscr{H})=\frac{P(D|Q, \mathscr{H})P(Q|\mathscr{H})}{P(D|\mathscr{H})}
+\end{equation}
+
+\noindent The normalising constant is given by integrating the numerator over $Q$:
+
+\begin{equation}
+P(D|\mathscr{H})=\int P(D|Q, \mathscr{H})P(Q|\mathscr{H})d^{k}Q
+\end{equation}
+
+\noindent where $k$ is the dimensionality of $Q$.
+
+\textbf{Predict the next word in a given context: } To obtain the probability of $w_{t}$ given $w_{t-1}$ and the data $D$, we use the sum rule of probability $P(A|C)=\int P(A|B, C)P(B|C)dB$ to marginalise over the unknown parameters $Q$:
+
+%\begin{equation}
+\begin{align}
+P(w_{t}|w_{t-1}, D, \mathscr{H}) &= \int P(w_{t}|w_{t-1}, Q, D, \mathscr{H})P(Q|D, \mathscr{H})d^{k}Q
+\\
+&= \int q_{w_{t}|w_{t-1}}P(Q|D, \mathscr{H})d^{k}Q
+\end{align}
+%\end{equation}
+
+\noindent The distribution inside the integral, $P(Q|D, \mathscr{H})$, depends on the likelihood function and the prior.
+
+Assume that first word of data set is given \textit{a priori} and is not to be predicted by the model. The probability of the string of words is then then probability of the second word given the first, times the probability of the third word given the second etc:
+
+\begin{equation}
+P(D|Q, \mathscr{H})=]prod_{t}q_{w_{t}|w_{t-1}}
+\end{equation}
+
+\noindent We can rewrite this by counting how often each variable $w_{i|j}$ appears in the product. This is given by the conditional count $F_{i|j}$:
+
+\begin{equation}
+P(D|Q, \mathscr{H})=\prod_{j}\prod_{i}q_{i|j}^{F_{i|j}}
+\end{equation}
+
+\noindent So given the assumed bigram model, the conditional counts $F_{i|j}$ contain all the relevant information that data convey about $Q$.
+
+\textbf{Dirichlet distribution priors: }The Dirichlet distribution for a probability vector $\boldsymbol{p}$ with $I$ components is parameterised by a measure $\boldsymbol{u}$ (a vector with all coefficients $u_{i}>0$) , which we write as $\boldsymbol{u}=\alpha\boldsymbol{m}$, where $\boldsymbol{m}$ is a normalised measure over the $I$ components ($\sum m_{i}=1$) and $\alpha$ is a positive scalar:
+
+\begin{equation}
+P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m}}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta\left (\sum_{i}-1\right )\equiv Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
+\end{equation}
+
+\noindent The function $\delta(x)$ is the Dirac delta function, which simply restricts the distribution to the simplex such that $\boldsymbol{p}$ is normalised, i.e. $\sum_{i}p_{i}=1$. The normalising constant of the Dirichlet distribution:
+
+\begin{equation}
+Z(\alpha\boldsymbol{m})=\prod_{i}\Gamma(\alpha m_{i})/\Gamma(\alpha)
+\end{equation}
+
+\noindent The vector $\boldsymbol{m}$ is the mean probability of the distribution:
+
+\begin{equation}
+\int Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})\boldsymbol{p}d^{I}\boldsymbol{p}=\boldsymbol{m}
+\end{equation}
+
+$\alpha$ firstly measure the sharpness of the distribution - it measures how different we expect typical samples $\boldsymbol{p}$ from the distribution to be from the mean $\boldsymbol{m}$. A large value of $\alpha$ produces a distribution over $\boldsymbol{p}$ which is sharply peaked around $\boldsymbol{m}$. For small $\alpha$, typically one component $p_{i}$ receives an overwhelming share of the probability, and of the probability that remains to be shared among the other components, another component $p_{i'}$ receives a similarly large share. In the limit as $\alpha$ goes to zero, the plot tends to an increasingly steep power law.
+
+We can also characterise $\alpha$ in terms of the predictive distribution that results when we observe samples from $\boldsymbol{p}$ and obtain counts $\boldsymbol{F}=(F_{1}, F_{2}, ..., F_{I})$ of the possible outcomes. The posterior probability of $\boldsymbol{p}$ is another Dirichlet distribution:
+
+\begin{align}
+P(\boldsymbol{p}|\boldsymbol{F}, \alpha\boldsymbol{m}) &= \frac{P(\boldsymbol{F}|\boldsymbol{p})P(\boldsymbol{p}|\alpha\boldsymbol{m})}{P(\boldsymbol{F}|\alpha\boldsymbol{m})}
+\\
+&= \frac{\prod_{i}p_{i}^{F_{i}}\prod_{i}p_{i}^{\alpha m_{i}-1} \delta \left (\sum_{i}p_{i}-1 \right)/Z(\alpha \boldsymbol{m})}{P(\boldsymbol{F}|\alpha\boldsymbol{m})}
+\\
+&= \frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1} \delta \left(\sum_{i}p_{i}-1\right)}{P(\boldsymbol{F}|\alpha\boldsymbol{m})Z(\alpha\boldsymbol{m})}
+\\
+&= Dirichlet^{(I)}(\boldsymbol{p}|boldsymbol{F}+\alpha\boldsymbol{m})
+\end{align}
+
+\noindent The predictive distribution given the data $\boldsymbol{F}$ is then:
+
+\begin{align}
+P(i|\boldsymbol{F},\alpha\boldsymbol{m}) &=\int Dirichlet^{(I)}(\boldsymbol{p}|\boldsymbol{F}+\alpha\boldsymbol{m})\boldsymbol{p}d^{I}\boldsymbol{p}
+\\
+&= \frac{F_{i}+\alpha m_{i}}{\sum_{i'}F_{i'}+\alpha m_{i'}}
+\end{align}
+
+\noindent The term $\alpha m_{i}$ appears as an effective initial count in bin $i$. The value of $\alpha$ defines the number of sample from $\boldsymbol{p}$ that are required in order that that data dominate over the prior in subsequent predictions. If $\alpha \gg \sum_{i}F_{i}$ then $P(i|\boldsymbol{F},\alpha\boldsymbol{m})\simeq m_{i}$. If $\alpha\ll\sum_{i}F_{i}$ then $P(i|\boldsymbol{F},\alpha\boldsymbol{m})\simeq F_{i}/\left(\sum_{i'}F_{i'}\right)$.
+
+The 'evidence' for $\alpha\boldsymbol{m}$ is:
+
+\begin{equation}
+P(\boldsymbol{F}|\alpha\boldsymbol{m})=\frac{Z(\boldsymbol{F}+\alpha\boldsymbol{m})}{Z(\alpha\boldsymbol{m})}=\frac{\prod_{i}\Gamma(F_{i}+\alpha m_{i})}{\Gamma\left(\sum_{i}F_{i}+\alpha\right)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}
+\end{equation}
+
+\textbf{Definition of hierarchical model $\mathscr{H}_{D}$: } $D$ for Dirichlet. Hierarchical because as well as containing unknown parameters $Q$, which place a probability distribution on data, it contains unknown 'hyper parameters' which define a probability distribution over the parameters $Q$.
+
+We assign a \textit{coupled} prior to parameters $Q$ - a prior under which learning the probability vector for one context $\boldsymbol{q}_{j}$ gives us information about what the probability vectors $\boldsymbol{q}_{j'}$ in other contexts might be. We introduce an unknown measure on the words, $\boldsymbol{u}=\alpha\boldsymbol{m}$, and define a separable prior, given $\alpha\boldsymbol{m}$, on the vectors $\boldsymbol{q}_{|j}$ that make up $Q$:
+
+\begin{equation}
+P(Q|\alpha\boldsymbol{m}, \mathscr{H}_{D})=\prod_{j}Dirichlet^{(I)}(\boldsymbol{q}_{|j}|\alpha\boldsymbol{m})
+\end{equation}
+
+\noindent We produce a dependence between the vectors $\boldsymbol{q}_{|j}$ by putting an uninformative prior $P(\alpha\boldsymbol{m})$ on the measure $\alpha\boldsymbol{m}$ (a flat prior on $\boldsymbol{m}$ and a broad gamma prior over $\alpha$). The prior on $Q$ defined by this hierarchical model is then:
+
+\begin{equation}
+P(Q|\mathscr{H}_{D})=\int\prod_{j}[Dirichlet^{(I)}(\boldsymbol{q}_{|j}|\alpha\boldsymbol{m})]P(\alpha\boldsymbol{m})d^{I}\alpha\boldsymbol{m}
+\end{equation}
+
+Method is different from many empirical Bayes prescriptions in that we use Bayesian inference to control the hyper parameters and we motivate this procedure as an approximation to the ideal predictive Bayesian approach.
+
+\textbf{Level 1 inference: } Interested in plausible values of parameters $Q=\{q_{i|j}\}$. Assume we know $\boldsymbol{m}$ and $\alpha$. Then easy to infer a posterior distribution for $Q$ and get a predictive distribution. Bayes' Theorem gives posterior:
+
+\begin{equation}
+P(Q|D, \alpha\boldsymbol{m}, \mathscr{H}_{D})=\frac{P(D|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m}, \mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m}, \mathscr{H}_{D})}
+\end{equation}
+
+\noindent Equation is separable into a product over contexts $j$ because both the prior $P(Q|\alpha\boldsymbol{m}, \mathscr{H}_{D})$ and the likelihood $P(Q|D, \alpha\boldsymbol{m}, \mathscr{H}_{D})$ are separable:
+
+\begin{equation}
+P(Q|D, \alpha\boldsymbol{m}, \mathscr{H}_{D})=\prod_{j}P(\boldsymbol{q}_{|j}|D, \alpha\boldsymbol{m}, \mathscr{H}_{D})
+\end{equation}
+
+\noindent The posterior distribution of each conditional probability vector is another Dirichlet distribution:
+
+\begin{equation}
+P(\boldsymbol{q}_{|j}|D, \alpha\boldsymbol{m}, \mathscr{H}_{D})\propto \prod_{i}q_{i|j}^{F_{i|j}+\alpha m_{i}+1}\delta\left(\sum_{i}q_{i|j}-1\right)=Dirichlet^{(I)}(\boldsymbol{q}_{|j}|\boldsymbol{F}+\alpha\boldsymbol{m})
+\end{equation}
+
+\noindent The posterior can be used for prediction:
+
+\begin{align}
+P(i|j, D, \alpha\boldsymbol{m}, \mathscr{H}_{D})&=\frac{F_{i|j}+\alpha m_{i}}{\sum_{i'}F_{i'|j}+\alpha m_{i'}}
+\\
+&= \lambda_{j}m_{i}+(1-\lambda_{j})f_{i|j}
+\end{align}
+
+\noindent where $f_{i|j}=F_{i|j}/F_{j}$ and 
+
+\begin{equation}
+\lambda_{j}=\frac{\alpha}{F_{j}+\alpha}
+\end{equation}
+
+\textbf{Level 2 inference: } Interested in plausible values of 'hyper parameters' $\alpha\boldsymbol{m}$. Posterior distribution of $\alpha\boldsymbol{m}$ by Bayes' Theorem:
+
+\begin{equation}
+P(\alpha\boldsymbol{m}|D, \mathscr{H}_{D})=\frac{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m}|\mathscr{H}_{D})}{P(D|\mathscr{H}_{D})}
+\end{equation}
+
+\noindent The data-dependent term $P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})$ is the normalising constant from the first level of inference - the \textit{evidence} for $\alpha\boldsymbol{m}$. If (as we expect) the posterior distribution $P(\alpha\boldsymbol{m}|D\mathscr{H}_{D})$ is sharply peaked in $\alpha\boldsymbol{m}$ so that it is effectively a delta function, relative to $P(i|j, D, \alpha\boldsymbol{m},\mathscr{H}_{D})$ then we may approximate:
+
+\begin{equation}
+P(i|j,D\mathscr{H}_{D})\simeq P(i|j,D[\alpha\boldsymbol{m}]^{MP},\mathscr{H}_{D})
+\end{equation}
+
+\noindent where $[\alpha\boldsymbol{m}]^{MP}$ is the maximum of the posterior distribution. Therefore, instead of marginalising over the hyper parameters, we optimise them (computationally more convenient an often gives predictive distributions that are indistinguishable from the true predictive distribution). Assume a non informative prior $P(\alpha\boldsymbol{m}|\mathscr{H}_{D})$ so the posterior probability maximum $[\alpha\boldsymbol{m}]^{MP}$ is found by maximising the evidence $P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})$.
+
+\textbf{'You see' text example: } 
+\\ \\
+\noindent \textit{"Imagine, you see, that the language, you see, has, you see, a frequently occurring couplet, 'you see', you see, in which the second word of the couplet, see, follows the first word, you, with very high probability, you see.. Then the marginal statistics, you see, are going to become hugely dominated, you see, by the words you and see, with equal frequency, you see."}
+\\ \\
+\indent Where the Dirichlet model would assign probabilities $m_{i}^{MP}$, the smoothing formula would assign probabilities proportional to $f_{i}$. So, using the smoothing formal, the predictions $\hat{P}(you|novel)$ and $\hat{P}(see|novel)$ would come out equal, since 'you' and 'see' both have occurred equally often so far. 'You' evidently has a relatively high probability in any context, whereas 'see' only has a high frequency because it has a high probability f following 'you'. Therefore intuitively $P(you|novel)$ should be greater than $P(see|novel)$.
+
+\textbf{The dice factory: } A factory produces biased $I$-sided dice. Model the probability vector $\boldsymbol{q}$ of a single dies as coming from a Dirichlet prior with unknown hyper parameters $\boldsymbol{u}=\alpha\boldsymbol{m}$ that characterise the factory. The data are outcomes of rolls of $J$ dice labelled by $j$. Each die $j$ is rolled a number of times $F_{j}$ and we are told the counts of the outcomes $F_{i|j}$ which give us imperfect information about the parameters $Q=\{q_{i|}\}$. Given these measurements, our task is to infer the hyper parameters $\boldsymbol{u}=\alpha\boldsymbol{m}$ of the factory in order to make better predictions about future rolls of individual dice.
+
+In a language modelling problem, the number of dice $J$ and the number of classes $I$ are the number of words $W$. Can imagine the language being generated by a dice rolling procedure in which the outcome of roll $t$ determines which die is rolled at time $t+1$
+
+\textbf{The evidence for $\alpha\boldsymbol{m}$: } Posterior probability of $\alpha\boldsymbol{m}$ is proportional to $P(D|\alpha\boldsymbol{m})=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\boldsymbol{m})$ from:
+
+\begin{equation}
+P(D|\alpha\boldsymbol{m})=]prod_{j}\left(\frac{\prod_{i}\Gamma(F_{i|j}+\alpha m_{i})}{\Gamma(F_{j}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}\right)
+\end{equation}
+
+Let $u_{i}=\alpha m_{i}$. To find the most probable $\boldsymbol{u}=\alpha\boldsymbol{m}$, we differentiate, using digamma functions defined by $\Psi(x)\equiv \frac{\partial \log \Gamma(x)}{\partial x}$. 
+
+\begin{equation}
+\frac{\partial}{\partial u_{i}}\log P(D|\boldsymbol{u})=\sum_{j}[\Psi(F_{i|j}+u_{i})-\Psi(F_{j}+\sum_{i'}u_{i'})+\Psi(\sum_{i'}u_{i'})-\Psi(w_{i})]
+\end{equation}
+
+\noindent This gradient may be fed into any optimisation program to find $\boldsymbol{u}^{MP}$.
+
+\textbf{Inferring $\boldsymbol{u}=\alpha\boldsymbol{m}$: } Assume $\alpha>1$ (corresponds to rough number of data points needed to overwhelm the Dirichlet prior) and $u_{i}<1$ ($m_{i}$s sum to 1 and a typical $m_{i}$ will be $\frac{1}{size of vocabulary}$ therefore) to derive an algorithm specialised for the parameter regimes expected in language modelling.
+
+Use relationship $\Psi(x+1)=\Psi(x)+\frac{1}{x}$ to combine terms:
+
+\begin{equation}
+\Psi(F_{i|j}+u_{i})-\Psi(u_{i})=\frac{1}{F_{i|j}-1+u_{i}}+\frac{1}{F_{i|j}-2+u_{i}}+...+\frac{1}{2+u_{i}+\frac{1}{1+u_{i}}+\frac{1}[u_{i}}
+\end{equation}
+
+\noindent The number of terms is $F_{i|j}$. Assuming $u_{i}<1$, we can approximate for $F_{i|j}>1$:
+
+\begin{equation}
+\frac{1}{u_{i}}+\sum_{f=2}^{F_{i|j}}\frac{1}{f-1}-u_{i}\sum_{f=2}^{F_{i|j}}\frac{1}{(f-1)^{2}}+O(u_{i}^{2})
+\end{equation}
+
+Approximating the other terms $\Psi(\alpha)-\Psi(F_{j}+\alpha)$, we obtain the following prescription for the maximum evidence hyper parameters $\boldsymbol{u}^{MP}$. For each $F$ and $i$, let $N_{Fi}$ be the number of context $j$ such that $F_{i|j}\geq F$, and let $F_{i}^{max}$ be the largest $F$ such that $N_{Fi}>0$. Denote the number of entries in row $i$ of $F_{i|j}$ that are non-zero, $N_{1i}$ by $V_{i}$.
+
+\begin{align}
+G_{i} &= \sum_{f=2}^{F_{i}^{max}}\frac{N_{fi}}{f-1}
+\\
+H_{i} &= \sum_{f=2}^{F_{i}^{max}}\frac{N_{fi}}{(f-1)^{2}}
+\end{align}
+
+\noindent and define:
+
+\begin{equation}
+K(\alpha)=\sum_{j}\log\left[\frac{F_{j}+\alpha}{\alpha}\right]+\frac{1}{2}\sum_{j}\left[\frac{F_{j}}{\alpha(F_{j}+\alpha)}\right]
+\end{equation}
+
+\noindent then the optimal hyper parameters $\boldsymbol{u}$ satisfy the implicit equation:
+
+\begin{equation}
+u_{i}^{MP}=\frac{2V_{i}}{K(\alpha^{MP})-G_{i}+\sqrt{(K(\alpha^{MP})-G_{i})^{2}+4H_{i}V_{i}}}
+\end{equation}
+
+\noindent This defines a 1D problem: to find the $\alpha$ such that the $u_{i}$ satisfy $\sum_{i}u_{i}=\alpha$. The optimal $\alpha$ can be found by a bracketing procedure or by a reestimation procedure in which we alternately use the above equation to set $u_{i}$ given $\alpha$ and then set $\alpha:=\sum_{i}u_{i}$.
+
+\textbf{Application to a small corpus: } Perplexity is defined as $2^{H(Q;\hat{P})}$ where $H(Q;\hat{P})$ is the cross-entropy between the unknown 'true' model $Q$ and the assumed model $\hat{P}$. For the bigram model and large enough test corpus, the perplexity of the test corpus can be approximated as:
+
+\begin{equation}
+Perplexity\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-]frac{1}{T}}
+\end{equation}
+
+\noindent where $T$ is the number of words in the corpus. For the deleted interpolation method, the number of $\lambda$s is chosen subjectively. In the new hierarchical model, there is one hyper parameter $u_{i}$ for each type in the training data vocabulary.
+
+Experiment:
+\begin{enumerate}
+\item Raw frequencies and relative frequencies of tokens and bigrams obtained from training data as a whole.
+\item Most probable values for parameters of each model solved for iteratively: 
+\indent\begin{itemize}
+ \item Dirichlet model: solve simultaneous equations to obtain $\boldsymbol{u}^{MP}$.
+\item Smoothing method: separate frequencies first calculated for each block, then $\lambda$s obtained using deleted interpolation.
+\end{itemize}
+\item Optimisation halted when on average each parameter of model converged to 8dp.
+\item Optimised parameter values for each model used to compute predictive probabilities $\hat{P}(i|j)$ for each bigram in test data.
+\item Perplexity of test data samples evaluated using each model and results compared.
+\end{enumerate}
+
+\noindent Perplexities under the deleted interpolation model and under the Dirichlet model are nearly the same. Effect of altering $\lambda$s for deleted interpolation very small. Values of $\lambda$ decreased with frequency $F_{j}$.
+
+The number of iterations required for each algorithm to converge was comparable. However, a single iteration of the Dirichlet model requires time linear in the size of the vocabulary, while an iteration of deleted interpolation requires time linear in the size of the training corus. The large the training corpus, the more significant would be this advantage of the Dirichlet model. Deleted interpolation also requires more memory because it keeps separate count and frequency data for each block of the training corpus. 
+
+\textbf{Discussion: }Dirichlet model does away with cross-validation and therefore makes full use of the data while requiring fewer computational resources.
+
+An alternative density over probabilities to the Dirichlet distribution is the \textit{entropic prior}:
+
+\begin{equation}
+P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z}\frac{1}{\prod_{i}p_{i}^{1/2}}exp\left(\alpha\sum_{i}p_{i}\log\frac{m_{i}}{p_{i}}\right)\delta\left(\sum p_{i}-1\right)
+\end{equation}
+
+\noindent The entropic prior, like the Dirichlet prior, characterises a language by a single mean and spread of a distribution of conditional probabilities $\boldsymbol{q}_{|j}$ for all contexts $j$.
+
+Could assert that there are different types of contexts, such that for all contexts of the same type, the conditional probabilities $\boldsymbol{q}$ are similar. If we do not know \textit{a priori} what the type of each context is, then this model is a \textbf{mixture model}. A mixture model $\mathscr{H}_{M}$ defines a density over $\boldsymbol{q}$ as a weighted combination of $C$ independently parameterised simple distributions, where each mixture component $c=1...C$ might be a Dirichlet or entropic distribution. Various algorithms can be used t implement mixture model: both Monte Carlo methods and Gaussian approximations. 
+
+Alternatively, a model might define the context to be the last two words, with the type of the context being defined by the most recent word. With a coupled prior for the context hyper parameters, this model would give predictions similar to those of the smoothed trigram language model. 
+
+\textbf{Gamma function and Digamma function: }
+
+\begin{equation}
+\Gamma(x)\equiv\int_{0}^{\inf}du\ u^{x-1}e^{-u}
+\end{equation}
+
+\noindent for $x>0$. In general $\Gamma(x+1)=x\Gamma(x)$ and for integer arguments, $\Gamma(x+1)=x!$. The digamma function is denoted by $\Psi(x)\equiv\frac{d}{dx}\log\Gamma(x)$. For large $x$ ($0.1\leq x \leq \inf$), the following approximations are useful:
+
+\begin{equation}
+\begin{split}
+\log\Gamma(x) \simeq (x-\frac{1}{2})\log(x)-x+\frac{1}{2}\log2\pi+O(\frac{1}{x})
+\\
+\Psi(x) = \frac{d}{dx}\log\Gamma(x)\simeq \log(x)-\frac{1}{2x}+O(\frac{1}{x^{2}})
+\end{split}
+\end{equation}
+
+\noindent And for small $x$ ($0\leq x \leq 0.5$):
+
+\begin{equation}
+\begin{split}
+\log \Gamma(x) \simeq \log\frac{1}{x}-\gamma_{e}x+O(x^{2})
+\\
+\Psi(x)\simeq-\frac{1}{x}-\gamma_{e}+O(x)
+\end{split}
+\end{equation}
+
+\noindent where $\gamma_{e}$ is Euler's constant. The digamma function satisfies the following recurrence relation exactly:
+
+\begin{equation}
+\Psi(x+1)=\Psi(x)+\frac{1}{x}
+\end{equation}
+
+\textbf{Formula for a more general algorithm: }Gives an approximation to the difference $\Psi(F+u)-\Psi(u)$ that is accurate to within 2\% for all $u$ and all positive integers $F$:
+
+\begin{equation}
+\Psi(F+u)-\Psi(u)\simeq\frac{1}{u}+\log\frac{F+u-1/2}{u+1/2}
+\end{equation}
+
+\noindent This approximation is useful for gradient-based optimisation of Dirichlet distributions.
 
 \section{Other Notes}
 
