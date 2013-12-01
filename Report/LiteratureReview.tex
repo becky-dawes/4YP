@@ -295,7 +295,7 @@ To use streaming deplump, a choice of approximation parameters must be made. The
 
 If initial counts are set to 0 we obtain ML estimators $f_{i}=F_{i}/T$ and $f_{i|j}=F_{i|j}/F_{j}$, which assign zero frequency to all words and word pairs which didn't occur in data. Could write $\hat{P}(w_{t}|w_{t-1})=f_{w_{t}|w_{t-1}}$ as an estimator, but this conditional probability typically has large variance because there are so many possible couplets $ij$ that only a small fraction of them have been observed in the data. Instead: $\hat{P}(w_{t}|w_{t-1})=\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}$. Deleted interpolation (a cross-validation procedure) is used to set $\lambda$. This involves dividing the data into a number of blocks, computing predictions for each block using the other blocks as training data and adjusting $\lambda$ to optimise predictive performance. It has been found that better predictions can be obtained if contexts $w_{1}$ with similar values of $f_{w_{1}}$ are grouped together, with a separate $\lambda$ for each group determined by deleted interpolation.
 
-\textbf{An explicit model using Dirichlet priors: } Bigram model has conditional distribution $P(w_{t}=i|w_{t-1}=j)$ described by $W(W-1)$ independent parameters, where $W$ is number of words in language ($W$ possible conditioning terms on RHS for each of which a probability distribution with $(W-1)$ independent parameters is specified). These parameters will be denoted $Q$ with $P(w_{t}=i|w_{t-1}=j)\equiv q_{i|j}$. $Q$ is a $WxW$ transition probability matrix. A single row f $Q$, the probability vector for transitions from state $j$, is denoted $\boldsymbol{q}_{|j}$. $Q$ is the natural representation of a Markov process. The marginal distribution $P(w_{t})$ is not independent, but is a deterministic function of the conditional probability matrix $Q$ i.e. $P(w_{t})$ is the principal eigenvector of $Q$. 
+\textbf{An explicit model using Dirichlet priors: } Bigram model has conditional distribution $P(w_{t}=i|w_{t-1}=j)$ described by $W(W-1)$ independent parameters, where $W$ is number of words in language ($W$ possible conditioning terms on RHS for each of which a probability distribution with $(W-1)$ independent parameters is specified). These parameters will be denoted $Q$ with $P(w_{t}=i|w_{t-1}=j)\equiv q_{i|j}$. $Q$ is a $W\times W$ transition probability matrix. A single row f $Q$, the probability vector for transitions from state $j$, is denoted $\boldsymbol{q}_{|j}$. $Q$ is the natural representation of a Markov process. The marginal distribution $P(w_{t})$ is not independent, but is a deterministic function of the conditional probability matrix $Q$ i.e. $P(w_{t})$ is the principal eigenvector of $Q$. 
 
 A model $\mathscr{H}$ is a specification of the model parameters, the way that the probability of the data depends on those parameters, and a riot probability distribution on those parameters. Given a model $\mathscr{H}$:
 
@@ -328,7 +328,7 @@ P(w_{t}|w_{t-1}, D, \mathscr{H}) &= \int P(w_{t}|w_{t-1}, Q, D, \mathscr{H})P(Q|
 Assume that first word of data set is given \textit{a priori} and is not to be predicted by the model. The probability of the string of words is then then probability of the second word given the first, times the probability of the third word given the second etc:
 
 \begin{equation}
-P(D|Q, \mathscr{H})=]prod_{t}q_{w_{t}|w_{t-1}}
+P(D|Q, \mathscr{H})=\prod_{t}q_{w_{t}|w_{t-1}}
 \end{equation}
 
 \noindent We can rewrite this by counting how often each variable $w_{i|j}$ appears in the product. This is given by the conditional count $F_{i|j}$:
@@ -342,7 +342,7 @@ P(D|Q, \mathscr{H})=\prod_{j}\prod_{i}q_{i|j}^{F_{i|j}}
 \textbf{Dirichlet distribution priors: }The Dirichlet distribution for a probability vector $\boldsymbol{p}$ with $I$ components is parameterised by a measure $\boldsymbol{u}$ (a vector with all coefficients $u_{i}>0$) , which we write as $\boldsymbol{u}=\alpha\boldsymbol{m}$, where $\boldsymbol{m}$ is a normalised measure over the $I$ components ($\sum m_{i}=1$) and $\alpha$ is a positive scalar:
 
 \begin{equation}
-P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m}}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta\left (\sum_{i}-1\right )\equiv Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
+P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m})}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta\left (\sum_{i}-1\right )\equiv Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
 \end{equation}
 
 \noindent The function $\delta(x)$ is the Dirac delta function, which simply restricts the distribution to the simplex such that $\boldsymbol{p}$ is normalised, i.e. $\sum_{i}p_{i}=1$. The normalising constant of the Dirichlet distribution:
@@ -354,7 +354,7 @@ Z(\alpha\boldsymbol{m})=\prod_{i}\Gamma(\alpha m_{i})/\Gamma(\alpha)
 \noindent The vector $\boldsymbol{m}$ is the mean probability of the distribution:
 
 \begin{equation}
-\int Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})\boldsymbol{p}d^{I}\boldsymbol{p}=\boldsymbol{m}
+\int Dirichlet^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})\boldsymbol{p}\ d^{I}\boldsymbol{p}=\boldsymbol{m}
 \end{equation}
 
 $\alpha$ firstly measure the sharpness of the distribution - it measures how different we expect typical samples $\boldsymbol{p}$ from the distribution to be from the mean $\boldsymbol{m}$. A large value of $\alpha$ produces a distribution over $\boldsymbol{p}$ which is sharply peaked around $\boldsymbol{m}$. For small $\alpha$, typically one component $p_{i}$ receives an overwhelming share of the probability, and of the probability that remains to be shared among the other components, another component $p_{i'}$ receives a similarly large share. In the limit as $\alpha$ goes to zero, the plot tends to an increasingly steep power law.
@@ -368,7 +368,7 @@ P(\boldsymbol{p}|\boldsymbol{F}, \alpha\boldsymbol{m}) &= \frac{P(\boldsymbol{F}
 \\
 &= \frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1} \delta \left(\sum_{i}p_{i}-1\right)}{P(\boldsymbol{F}|\alpha\boldsymbol{m})Z(\alpha\boldsymbol{m})}
 \\
-&= Dirichlet^{(I)}(\boldsymbol{p}|boldsymbol{F}+\alpha\boldsymbol{m})
+&= Dirichlet^{(I)}(\boldsymbol{p}|\boldsymbol{F}+\alpha\boldsymbol{m})
 \end{align}
 
 \noindent The predictive distribution given the data $\boldsymbol{F}$ is then:
@@ -462,18 +462,18 @@ In a language modelling problem, the number of dice $J$ and the number of classe
 \textbf{The evidence for $\alpha\boldsymbol{m}$: } Posterior probability of $\alpha\boldsymbol{m}$ is proportional to $P(D|\alpha\boldsymbol{m})=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\boldsymbol{m})$ from:
 
 \begin{equation}
-P(D|\alpha\boldsymbol{m})=]prod_{j}\left(\frac{\prod_{i}\Gamma(F_{i|j}+\alpha m_{i})}{\Gamma(F_{j}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}\right)
+P(D|\alpha\boldsymbol{m})=\prod_{j}\left(\frac{\prod_{i}\Gamma(F_{i|j}+\alpha m_{i})}{\Gamma(F_{j}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}\right)
 \end{equation}
 
 Let $u_{i}=\alpha m_{i}$. To find the most probable $\boldsymbol{u}=\alpha\boldsymbol{m}$, we differentiate, using digamma functions defined by $\Psi(x)\equiv \frac{\partial \log \Gamma(x)}{\partial x}$. 
 
 \begin{equation}
-\frac{\partial}{\partial u_{i}}\log P(D|\boldsymbol{u})=\sum_{j}[\Psi(F_{i|j}+u_{i})-\Psi(F_{j}+\sum_{i'}u_{i'})+\Psi(\sum_{i'}u_{i'})-\Psi(w_{i})]
+\frac{\partial}{\partial u_{i}}\log P(D|\boldsymbol{u})=\sum_{j}\left[\Psi(F_{i|j}+u_{i})-\Psi\left(F_{j}+\sum_{i'}u_{i'}\right)+\Psi\left(\sum_{i'}u_{i'}\right)-\Psi(w_{i})\right]
 \end{equation}
 
 \noindent This gradient may be fed into any optimisation program to find $\boldsymbol{u}^{MP}$.
 
-\textbf{Inferring $\boldsymbol{u}=\alpha\boldsymbol{m}$: } Assume $\alpha>1$ (corresponds to rough number of data points needed to overwhelm the Dirichlet prior) and $u_{i}<1$ ($m_{i}$s sum to 1 and a typical $m_{i}$ will be $\frac{1}{size of vocabulary}$ therefore) to derive an algorithm specialised for the parameter regimes expected in language modelling.
+\textbf{Inferring $\boldsymbol{u}=\alpha\boldsymbol{m}$: } Assume $\alpha>1$ (corresponds to rough number of data points needed to overwhelm the Dirichlet prior) and $u_{i}<1$ ($m_{i}$s sum to 1 and a typical $m_{i}$ will be $\frac{1}{size\ of\ vocabulary}$ therefore) to derive an algorithm specialised for the parameter regimes expected in language modelling.
 
 Use relationship $\Psi(x+1)=\Psi(x)+\frac{1}{x}$ to combine terms:
 
@@ -512,7 +512,7 @@ u_{i}^{MP}=\frac{2V_{i}}{K(\alpha^{MP})-G_{i}+\sqrt{(K(\alpha^{MP})-G_{i})^{2}+4
 \textbf{Application to a small corpus: } Perplexity is defined as $2^{H(Q;\hat{P})}$ where $H(Q;\hat{P})$ is the cross-entropy between the unknown 'true' model $Q$ and the assumed model $\hat{P}$. For the bigram model and large enough test corpus, the perplexity of the test corpus can be approximated as:
 
 \begin{equation}
-Perplexity\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-]frac{1}{T}}
+Perplexity\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-\frac{1}{T}}
 \end{equation}
 
 \noindent where $T$ is the number of words in the corpus. For the deleted interpolation method, the number of $\lambda$s is chosen subjectively. In the new hierarchical model, there is one hyper parameter $u_{i}$ for each type in the training data vocabulary.
@@ -551,10 +551,10 @@ Alternatively, a model might define the context to be the last two words, with t
 \textbf{Gamma function and Digamma function: }
 
 \begin{equation}
-\Gamma(x)\equiv\int_{0}^{\inf}du\ u^{x-1}e^{-u}
+\Gamma(x)\equiv\int_{0}^{\infty}du\ u^{x-1}e^{-u}
 \end{equation}
 
-\noindent for $x>0$. In general $\Gamma(x+1)=x\Gamma(x)$ and for integer arguments, $\Gamma(x+1)=x!$. The digamma function is denoted by $\Psi(x)\equiv\frac{d}{dx}\log\Gamma(x)$. For large $x$ ($0.1\leq x \leq \inf$), the following approximations are useful:
+\noindent for $x>0$. In general $\Gamma(x+1)=x\Gamma(x)$ and for integer arguments, $\Gamma(x+1)=x!$. The digamma function is denoted by $\Psi(x)\equiv\frac{d}{dx}\log\Gamma(x)$. For large $x$ ($0.1\leq x \leq \infty$), the following approximations are useful:
 
 \begin{equation}
 \begin{split}
