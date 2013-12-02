@@ -15,16 +15,34 @@
 (def lines "All lines in file" (with-open [rdr (reader file-name)] 
              (doall (line-seq rdr))))
 
+
+
 (println "Formatting text")
 
 ;Remove all punctuation (except apostrophes) and convert to lower case
 
-(def formattedText "Text with all punctuation (except apostrophes) removed and converted to lower case" 
-  (clojure.string/lower-case (clojure.string/replace lines #"[\p{P}&&[^'][\n]]" "")))
+(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" 
+  (clojure.string/lower-case (clojure.string/replace text #"[\p{P}&&[^'][\n]]" "")))
+
+(def formattedText (format-text lines))
 
 ; split tokens at whitespace (reg. expr.)
 
-(def words-vector "Vector of all words in text" (clojure.string/split formattedText #"\s+"))
+(defn split-words [text] "Vector of all words in text" (clojure.string/split text #"\s+"))
+
+(def words-vector (split-words formattedText))
+
+(def unique-words (distinct words-vector))
+
+(def unknown "<unk>")
+
+(defn replace-first-word [text distinct-words] (if (< 0 (count distinct-words)) (clojure.string/replace-first (replace-first-word text (rest distinct-words)) (re-pattern (first distinct-words)) unknown) text))
+
+(def replaced-lines (replace-first-word lines unique-words))
+
+(def formatted-new-text (format-text replaced-lines))
+
+(def words-vector (split-words formatted-new-text))
 
 (defn makeWords "Creates a sequence of all the words from the input"
   [theWords] (if (> (count theWords) 1)
@@ -219,8 +237,20 @@
 
 
 (defn next-word "Predicts next word in sequence" 
-  ([word1] (let [word1 (clojure.string/lower-case word1)] (key (apply max-key val (find-pair word1)))))
-  ([word1 word2] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2)] (key (apply max-key val (find-trio word1 word2))))))
+  ([word1] (let [word1 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word1)])) unknown (clojure.string/lower-case word1))] (key (apply max-key val (find-pair word1)))))
+  ([word1 word2] (let [word1 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word1)])) unknown (clojure.string/lower-case word1)) word2 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word2)])) unknown (clojure.string/lower-case word2))] (key (apply max-key val (find-trio word1 word2))))))
+
+(defn get-last-two "Returns last two words of sequence"
+  [theWords] [ (last (butlast theWords))  (last theWords)])
+
+(defn loop-next-words "Predicts certain length of text"
+  [word1 word2 n] (if (< 0 n) (let [next-words (next-word word1 word2) last-two (get-last-two next-words)] (cons (first next-words)  (loop-next-words (first last-two) (second last-two) (- n 1))))  [word1 word2]))
+
+(defn join-words "Joins input words together into one string"
+  [theWords] (if (< 0 (count theWords)) (let [word (str (first theWords) " ")] (str word (join-words (rest theWords)))) (str (first theWords))))
+
+(defn predict-text "Predicts a certain length of text based on context"
+  [context n] (if (< 0 n) (str (join-words (butlast (butlast context))) (join-words (loop-next-words (first (get-last-two context)) (second (get-last-two context)) n)))))
 
 ;(def counts-of-counts-map "Map of counts-of-counts map names for different n" (zipmap [0] [""]))
 
