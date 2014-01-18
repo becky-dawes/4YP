@@ -134,6 +134,146 @@ The Dirichlet Process is a stochastic process used in Bayesian nonparametric mod
 
 DP is a stochastic process whose sample paths are probability measures with probability 1. Stochastic processes are distributions over function spaces, with sample paths being random functions drawn from the distribution. DP is a distribution over probability measures, which are functions with certain special properties which allow them to be interpreted as distributions over some probability space $\Theta$. Therefore draws from a DP can be interpreted as random distributions. DP is an infinite dimensional generalisation of Dirichlet distributions.
 
+Consider a Bayesian mixture model consisting of $K$ components (Equation \ref{eq:DPBayesianMixtureModel}).
+
+\begin{subequations}
+\label{eq:DPBayesianMixtureModel}
+\begin{align}
+\pi|\alpha&\sim Dir(\frac{\alpha}{K},...,\frac{\alpha}{K})
+\\
+z_{i}|\pi&\sim Mult(\pi)
+\\
+\theta_{k}^{*}|H&\sim H
+\\
+x_{i}|z_{i},\{\theta_{k}^{*}\}&\sim F(\theta_{z_{i}}^{*})
+\end{align}
+\end{subequations}
+
+\noindent where $\pi$ is the mixing proportion, $\alpha$ is the pseudo count hyper parameter of the Dirichlet prior, $H$ is the prior distribution over component parameters $\theta_{k}^{*}$ and $F(\theta)$ is the component distribution parameterised by $\theta$. It can be shown that for large $K$, because of the particular way that we parameterised the Dirichlet prior over $\pi$, the number of components typically used to model $n$ data items becomes independent of $K$ and is approximately $O(\alpha\log n)$. This implies that the mixture model stays well-defined as $K\rightarrow \infty$, leading to what is known as an infinite mixture model. The DP appears as the $K\rightarrow\infty$ limit of the random discrete probability measure $\sum_{k=1}^{K}\pi_{k}\delta_{\theta_{k}^{*}}$, there $\delta_{\theta}$ is a point mass centred at $\theta$.
+
+For a random distribution $G$ to be distributed according to a DP, its marginal distributions have to be Dirichlet distributed. Specifically, let $H$ be a distribution over $\Theta$ and $\alpha$ be a positive real number. Then, for any finite measurable partition $A_{1},...,A_{r}$ of $\Theta$, the vector $(G(A_{1}),...,F(A_{r}))$ is random since $G$ is random. We say that $G$ is Dirichlet process distributed with base distribution $H$ and concentration parameter $\alpha$, written $G\sim DP(\alpha,H)$ if $(G(A_{1}),...,G(A_{r}))\sim Dir(\alpha H(A_{1}),...,\alpha H(A_{r}))$ for every finite measurable partition $A_{1},...,A_{r}$ of $\Theta$.
+
+The base distribution is basically the mean of the DP: for any measurable set $A\subset\Theta$, we have $E[G(A)]=H(A)$. The concentration parameter can be understood as an inverse variance: $V[G(A)]=H(A)(1-H(A))/(\alpha+1)$. The larger $\alpha$ is, the smaller the variance, and the DP will concentrate more of its mass around the mean. The concentration parameter is also called the strength parameter, referring to the strength of the prior when using the DP as a nonparametric prior over distributions in a Bayesian nonparametric model, and the mass parameter, as this prior strength can be measured in units of sample size (or mass) of observations. Can write $\tilde{H}=\alpha H$.
+
+Since $\alpha$ describes the concentration of mass around the mean of the DP, as $\alpha\rightarrow\infty$ we will have $G(A)\rightarrow H(A)$ for any measurable $A$, that is $G\rightarrow H$ weakly or pointwise. This is not equivalent to saying that $G\rightarrow H$. Draws from a DP will be discrete with probability one, even if $H$ is smooth. Therefor $G$ and $H$ need not even be absolutely continuous wrt one another. 
+
+\textbf{Posterior Distribution:} Let $G\sim DP(\alpha,H)$. Since $G$ is a (random) distribution, we can in turn draw samples from $G$ itself. Let $\theta_{1},...,\theta_{n}$ be a sequence of independent draws from $G$. The $\theta_{i}$s take values in $\Theta$ since $G$ is a distribution over $\Theta$, Let $A_{1},...,A_{r}$ be a finite measurable partition of $\Theta$ and let $n_{k}=\#\{i:\theta_{i}\in A_{k}\}$ be the number of observed values in $A_{k}$. This gives $(G(A_{1}),...,G(A_{r}))|\theta_{1},...,\theta_{n}\sim Dir(\alpha H(A_{1})+n_{1},...,\alpha H(A_{r})+n_{r})$.  Since this is true for all finite measurable partitions, the posterior distribution over $G$ must be a DP as well. The posterior distribution has updated concentration parameter $\alpha+n$ and base distribution $\frac{\alpha H+\sum_{i=1}^{n}\delta_{\theta_{i}}}{\alpha+n}$, where $\delta_{i}$ is a point mass located at $\theta_{i}$ and $n_{k}=\sum_{i=1}^{n}\delta_{i}(A_{k})$. Rewriting the posterior DP we get Equation \ref{eq:DPPosterior}.
+
+\begin{equation}
+\label{eq:DPPosterior}
+G|\theta_{1},...,\theta_{n}\sim DP\left(\alpha+n, \frac{\alpha}{\alpha+n}H+\frac{n}{\alpha+n}\frac{\sum_{i=1}^{n}\delta_{\theta_{i}}}{n}\right)
+\end{equation}
+
+\noindent The posterior base distribution is a weighted average between the prior base distribution $H$ and the empirical distribution $\frac{\sum_{i=1}^{n}\delta_{\theta_{i}}}{n}$. The weight associated with the prior base distribution is proportional to $\alpha$, while the empirical distribution has weight proportional to the number of observations $n$. Therefore we interpret $\alpha$ as the strength or mass associated with the prior. Taking $\alpha\rightarrow 0$, the prior becomes non-informative in the sense that the predictive distribution is just given by the empirical distribution. As the amount of observations grows large, $n\gg\alpha$, the posterior is simply dominated by the empirical distribution, which is in turn a close approximation of the true underlying distribution. This gives a consistency property of the DP: the posterior DP approaches the true underlying distribution.
+
+\textbf{Predictive Distribution and the Blackwell-MacQueen Urn Scheme:} Consider again drawing $G\sim DP(\alpha,H)$ and drawing an i.i.d. sequence $\theta_{1},\theta_{2},...\sim G$. Consider the predictive distribution for $\theta_{n+1}$, conditioned on $\theta_{1},...,\theta_{n}$ and with $G$ marginalised out. Since $\theta_{n+1}|G,\theta_{1},...,\theta_{n}\sim G$, for a measurable $A\subset\Theta$, we have Equation \ref{eq:DPEq5}, where the last step follows from the posterior base distribution of $G$ given the first $n$ observations. Therefore with $G$ marginalised out, we get Equation \ref{eq:DPEq6}. Therefore the posterior base distribution given $\theta_{1},...,\theta_{n}$ is also the predictive distribution of $\theta_{n+1}$.
+
+\begin{align}
+P(\theta_{n+1}\in A|\theta_{1},...,\theta_{n})&=E[G(A)|\theta_{1},...,\theta_{n}] \nonumber
+\\
+&=\frac{1}{\alpha+n}\left(\alpha J(A)+\sum_{i=1}^{n}\delta_{\theta_{i}}(A)\right)
+\label{eq:DPEq5}
+\end{align}
+
+\begin{equation}
+\label{eq:DPEq6}
+\theta_{n+1}|\theta_{1},...,\theta_{n}\sim\frac{1}{\alpha+n}\left(\alpha H+\sum_{i=1}^{n}\delta_{\theta_{i}}\right)
+\end{equation}
+
+The sequence of predictive distributions for $\theta_{1},\theta_{2},...$ is called the \textit{Blackwell-MacQueen urn scheme}: each value in $\Theta$ is a unique colour and draws $\theta\sim G$ are balls with the drawn value being the colour of the ball. In addition, we have an urn containing previously seen balls. In the beginning there are no balls in the urn and we pick a colour drawn from $H$, i.e. draw $\theta_{1}\sim H$, paint a ball with that colour and drop it into the urn. In subsequent steps, say the $n+1$\textsuperscript{st}, we will either, with probability $\frac{\alpha}{\alpha+n}$ pick a new colour (draw $\theta_{n+1}\sim H$), paint a ball with that colour and drop the ball into the urn, or, with probability $\frac{n}{\alpha+n}$ reach into the urn to pick a random ball (draw $\theta_{n+1}$ from the empirical distribution), paint a new ball with the same colour and drop both balls back into the urn.
+
+We can construct a distribution over sequences $\theta_{1},\theta_{2},...$ by iteratively drawing each $\theta_{i}$ given $\theta_{1},...,\theta_{I-1}$. For $n\geq1$ let $P(\theta_{1},...,\theta_{n})=\prod_{i=1}^{n}P(\theta_{i}|\theta_{1},...,\theta_{i-1})$ be the joint distribution over the fist $n$ observations, where the conditional distributions are given by Equation \ref{eq:DPEq6}. This random sequence is infinitely exchangeable, i.e. for every $n$, the probability of generating $\theta_{1},...,\theta_{n}$ using Equation \ref{eq:DPEq6}, in that order, is equal to the probability of drawing them in any alternative order. More precisely, given any permutation $\sigma$ on $1,...,n$ we have $P(\theta_{1},...,\theta_{n})=P(\theta_{\sigma(1)},...,\theta_{\sigma(n)})$.
+
+De Finetti's theorem states that for any infinitely exchangeable sequence $\theta_{1},\theta_{2},...$ there is a random distribution $G$ such that the sequence is composed of i.i.d. draws from it: $P(\theta_{1},...,\theta_{n})=\int\prod_{i=1}^{n}G(\theta_{i})dP(G)$. The prior over the random distribution $P(G)$ is precisely the Dirichlet process $DP(\alpha,H)$.
+
+The predictive distribution (Equation \ref{eq:DPEq6}) has point masses located at the previous draws $\theta_{1},...,\theta_{n}$. A first observation is that with positive probability draws from $G$ will take on the same value, regardless of smoothness of $H$. This implies that the distribution $G$ itself has point masses. A further observation is that for a long enough sequence of draws from $G$, the value of any draw will be repeated by another draw, implying that $G$ is composed only of a weighted sum of point masses, i.e. it is a discrete distribution.
+
+\textbf{Clustering, Partitions and the Chinese Restaurant Process:} Assume $H$ is smooth, so that all repeated values are due to the discreteness property of the DP and not due to $H$ itself. Since the values of draws are repeated, let $\theta_{1}^{*},...,\theta_{m}^{*}$ be the unique values among $\theta_{1},...,\theta_{n}$, and $n_{k}$ be the number of repeates of $\theta_{k}^{*}$. The predictive distribution can be equivalently written as Equation \ref{eq:DPEq10}.
+
+\begin{equation}
+\label{eq:DPEq10}
+\theta_{n+1}|\theta_{1},...,\theta_{n}\sim\frac{1}{\alpha+n}\left(\alpha H+\sum_{k=1}^{m}n_{k}\delta_{\theta_{k}^{*}}\right)
+\end{equation}
+
+\noindent The value $\theta_{k}^{*}$ will be repeated by $\theta_{n+1}$ with probability proportional to $n_{k}$, the number of times it has already been observed. The larger $n_{k}$ is, the higher the probability that it will grow. This is a rich-gets-richer phenomenon, where large clusters (a set of $\theta_{i}$s with identical values $\theta_{k}^{*}$ being considered a cluster) grow larger faster.
+
+Partitioning: the unique values of $\theta_{1},...,\theta_{n}$ induce a partitioning of the set $[n]=\{1,...,n\}$ into clusters such that within each cluster, say cluster $k$, the $\theta_{i}$s take on the same value $\theta_{k}^{*}$. Given that $\theta_{1},...,\theta_{n}$ are random, this induces a random partition of $[n]$. This random partition encapsulates all the properties of the DP. To see how, we simply invert the generative process. Starting from the distribution over random partitions, we can reconstruct the joint distribution over $\theta_{1},...,\theta_{n}$ by first drawing a random partition on $[n]$, then for each cluster $k$ in the partition draw a $\theta_{k}^{*}\sim H$, and finally assign $\theta_{i}=\theta_{k}^{*}$ for each $i$ in cluster $k$. From the joint distribution we can obtain the DP by appealing to de Finetti's theorem.
+
+The distribution over partitions is called the Chinese restaurant process: we have a Chinese restaurant with an infinite number of tables, each of which can seat an infinite number of customers. The first customer enters the restaurant and sits at the first table. The second customer enters and decides either to sit with the first customer, r by herself at a new table. In general, the $n+1$\textsuperscript{st} customer either joins an already occupied table $k$ with probability proportional to the number $n_{k}$ of customers already sitting there, or sits at a new table with probability proportional to $\alpha$. Identifying the customers with integers $1,2,...$ and tables as clusters, after $n$ customers have sat down, the tables define a partition of $[n]$ with the distribution over partitions being the same as the one above. The fact that most Chinese restaurants have round tables is an important aspect. This is because it does not just define a distribution over partitions of $[n]$, it also denies a distribution over permutations of $[n]$, with each table corresponding to a cycle of the permutation.
+
+Distribution of the number of clusters among $n$ observations: notice that for $i\geq1$, observation $\theta_{i}$ takes on a new value (thus incrementing $m$ by one) with probability $\frac{\alpha}{\alpha+i-1}$ independently of the number of clusters among the previous $\theta$s. Thus the number of clusters has mean as Equation \ref{eq:DPEq11} and variance as Equation \ref{eq:DPEq12}, where $\psi(\cdot)$ is the digamma function. The number of clusters grows only logarithmically in the number of observations. The slow growth of the number of clusters makes sense because of the rich-gets-richer phenomenon: we expect there to be large clusters, thus the number of clusters $m$ has to be smaller than the number of observations $n$. $\alpha$ controls the number of clusters in a direct manner, with larger $\alpha$ implying a larger number of clusters a priori.
+
+\begin{align}
+\label{eq:DPEq11}
+E[m|n]&=\sum_{i=1}^{n}\frac{alpha}{\alpha+i-1}=\alpha(\psi(\alpha+n)-\psi(\alpha)) \nonumber
+\\
+&\simeq\alpha\log\left(1+\frac{n}{\alpha}\right) \ \ \ \ \ \ \ \ \text{for }N,\alpha\gg0
+\end{align}
+
+\begin{align}
+\label{eq:DPEq12}
+V[m|n]&=\alpha(\psi(\alpha+n)-\psi(\alpha))+\alpha^{2}(\psi'(\alpha+n)\psi'(\alpha)) \nonumber
+\\
+&\simeq\alpha\log\left(1+\frac{n}{\alpha}\right) \ \ \ \ \ \ \ \ \text{for }n>\alpha\gg0
+\end{align}
+
+\textbf{Stick-breaking Construction:} 
+
+\begin{subequations}
+\begin{align}
+\beta_{k}&\sim\text{Beta}(1,\alpha)
+\\
+\theta_{k}^{*}&\sim H
+\\
+\pi_{k}&=\beta_{k}\prod_{l=1}^{k-1}(1-\beta_{k})
+\\
+G&=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}
+\label{eq:DPEq13}
+\end{align}
+\end{subequations}
+
+\noindent Then $G\sim DP(\alpha,H)$. The construction of $\pi$ can be understood metaphorically as follows: starting with a stick f length $1$, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ and so forth. The stick-breaking distribution over $\pi$ is sometimes written $\pi\sim GEM(\alpha)$, where the letters stands for Griffiths, Engen and McCloskey.
+
+\textbf{Applications:} Bayesian model validation, density estimation, clustering via mixture models.
+
+Validating that a model gives a good fit to some observed data: Bayesian approach usually involves computing the marginal probability of the observed data under the model and comparing this marginal probability to that for other models. If the marginal probability of the model of interest is highest, we may conclude that we have a good fit. Choice of models is an issue - desirable to compare against as large a class of models as possible. Bayesian nonparametric approach uses the space of all possible distributions as our comparison class, with a prior over distributions. The DP is a popular choice for this prior, due to its simplicity, wide coverage of the class of all distributions, and recent advances in computationally efficient inference in DP models. The approach is usually to use the given nonparametric model as the base distribution of the DP, with the DP serving as a nonparametric relaxation around this parametric model. If the parametric model performs as well or better than the DP relaxed model, we have convincing evidence of the validity of the model.
+
+Density estimation: we are interested in modelling the density from which a given set of observations is drawn. To avoid limiting ourselves to any parametric class, we may again use a nonparametric prior over all densities. DPs are again popular. However, distributions from a DP are discrete, thus do not have densities. The solution is to smooth out draws from the DP with a kernel. Let $G\sim DP(\alpha,H)$ and let $f(x|\theta)$ be a family of densities (kernels) indexed by $\theta$. We use the following as our nonparametric density of $x$: $p(x)=\int f(x|\theta)G(\theta)d\theta$. Smoothing out DPs in this way is also useful in the nonparametric relaxation setting above. This way of smoothing DPs is equivalent to DP mixture models, if the data distributions $F(\theta)$ below are smooth with densities given by $f(x|\theta)$.
+
+\textbf{Dirichlet Process Mixture Models:} The most common application of the Dirichlet process is in clustering data using mixture models. Here the nonparametric nature of the Dirichlet process translates to mixture models with a countably infinite number of components. We model a set of observations $\{x_{1},...,x_{n}\}$ using a set of latent parameters $\{\theta_{1},...,\theta_{n}\}$. Each $\theta_{i}$ is drawn independently and identically from $G$, while each $x_{i}$ has distribution $F(\theta_{i})$ parameterised by $\theta_{i}$ (see Equation \ref{eq:DPEq15}).
+
+\begin{subequations}
+\begin{align}
+x_{i}|\theta_{i}&\sim F(\theta_{i}) 
+\\
+\theta_{i}|G&\sim G
+\\
+G|\alpha,H&\sim DP(\alpha,H)
+\end{align}
+\label{eq:DPEq15}
+\end{subequations}
+
+\noindent Because $G$ is discrete, multiple $\theta_{i}$s can take on the same value simultaneously and the above model can be seen as a mixture model, where $x_{i}$s with the same value of $\theta_{i}$ belong to the same cluster. The mixture perspective can be made more in agreement with the usual representation of mixture models using the stick-breaking construction. Let $z_{i}$ be a cluster assignment variable, which takes on value $k$ with probability $\pi_{k}$. Then Equation \ref{eq:DPEq15} can be equivalently expressed as in Equation \ref{eq:DPEq16}, with $G=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}$ and $\theta_{i}=\theta_{z_{i}}^{*}$. $\pi$ is the mixing proportion, $\theta_{k}^{*}$ are the cluster parameters, $F(\theta_{k}^{*})$ is the distribution over data in cluster $k$, and $H$ the prior over cluster parameters.
+
+\begin{subequations}
+\begin{align}
+\pi|\alpha&\sim GEM(\alpha)
+\\
+\theta_{k}^{*}|H&\sim H
+\\
+z_{i}|\pi&\sim \text{Mult}(\pi)
+\\
+x_{i}|z_{i},\{\theta_{k}^{*}\}&\sim F(\theta_{z_{i}}^{*})
+\end{align}
+\label{eq:DPEq16}
+\end{subequations}
+
+The DP mixture is an infinite mixture model (a mixture model with a countably infinite number of clusters). However, because the $\pi_{k}$s decrease exponentially quickly, only a small number of clusters will be used to model the data a priori. This is different from a finite mixture model, which uses a fixed number of clusters to model the data. In the DP mixture model, the actual number of clusters used to model the data is not fixed, and can be automatically inferred from data using the usual Bayesian posterior inference framework. The equivalent operation for finite mixture models would be model averaging or model selection for the appropriate number of components (difficult therefore infinite models better).
+
+\textbf{Generalisations and Extensions:} The DP is a canonical distribution over probability measures and a wide range of generalisations have been proposed. The Pitman-Yor process includes a third parameter $d\in[0,1]$ with $d=0$ reducing to the DP. The various representations of the DP, including the Chinese restaurant process and the stick-breaking construction, have analogues for the Pitman-Yor process. Other generalisations of the DP are obtained by generalising one of its representations - these include P\'{o}lay trees, normalised random measure, Poisson-Kingman models, species sampling models and stick-breaking priors.
+
+The DP has also been used in more complex models involving more than one random probability measure e.g. in nonparametric regression we might have one probability measure for each value of a covariate (dependent DP), and in multi-task settings each task might be associated with a probability measure with dependence across tasks implemented using a hierarchical Bayesian model (hierarchical DP).
+
 \section{The Sequence Memoizer - \textit{Wood, Gasthaus, Archambeau, James, Teh} 2011} \cite{wood2011sequence}
 
 "The Sequence Memoizer is a new hierarchical Bayesian model for discrete sequence data that captures long range dependencies and power-law characteristics, while remaining computationally attractive."
@@ -148,7 +288,7 @@ G_{\boldsymbol{u}}(s)=\frac{N(\boldsymbol{u}s)}{\sum_{s' \in \Sigma}N(\boldsymbo
 \label{eq:seqMemRelativeFreqContext}
 \end{equation}
 
-\noindent is the estimated probability go $s$ occurring after $\boldsymbol{u}$, where $N(\boldsymbol{u}s)$ is the number os occurrences of the subsequence $\boldsymbol{u}s$ in $\boldsymbol{x}$. $G_{\boldsymbol{u}}$ is a discrete distribution over the symbols in $\Sigma$, but it is a conditional distribution as the probability assigned to each symbol $s$ depends on the context $\boldsymbol{u}$.
+\noindent is the estimated probability go $s$ occurring after $\boldsymbol{u}$, where $N(\boldsymbol{u}s)$ is the number of occurrences of the subsequence $\boldsymbol{u}s$ in $\boldsymbol{x}$. $G_{\boldsymbol{u}}$ is a discrete distribution over the symbols in $\Sigma$, but it is a conditional distribution as the probability assigned to each symbol $s$ depends on the context $\boldsymbol{u}$.
 
 \textbf{Maximum Likelihood:} An optimistic procedure - assumes $\boldsymbol{x}$ is an accurate reflection of the true underlying process that generated it, to the ML parameters will be an accurate estimate of the true parameters - leads to overfitting. if $\boldsymbol{u}$ is long, the chance that it nevers occurs in $\boldsymbol{x}$ is high, therefore the denominator in Equation \ref{eq:seqMemRelativeFreqContext} is 0. If $\boldsymbol{u}$ did occur in $\boldsymbol{x}$, a high probability will be assigned to the symbols that followed $\boldsymbol{u}$ and zero probability to all other symbols. The amount of data in $\boldsymbol{x}$ is insufficient to characterise the conditional distribution $G_{\boldsymbol{u}}$. Avoid this by making a fixed-order Markov assumption and restricting to estimating collections of distributions conditioned on short contexts.
 
@@ -167,7 +307,7 @@ p(\boldsymbol{x}_{T+1}=s|\boldsymbol{x})=\int(\boldsymbol{x}_{T+1}=s | G)p(G|\bo
 
 \noindent where $\mathbb E$ stands for expectation wrt posterior distribution $p(G|\boldsymbol{x})$. This equation doesn't always have an analytic solution therefore use numerical integration approaches, including sampling and Monte Carlo integration. 
 
-In addition to the counts $\{N(s')\}_{s' \in \Sigma}$ assume that there is another set of random "counts" $\{M(s')\}_{s' \in \Sigma}$ satisfying $1/leq M(s') /leq N(s')$ if $N(s') >)$ and $M(s')>0$ otherwise. Probability of a symbol $s$ occurring next:
+In addition to the counts $\{N(s')\}_{s' \in \Sigma}$ assume that there is another set of random "counts" $\{M(s')\}_{s' \in \Sigma}$ satisfying $1\leq M(s') \leq N(s')$ if $N(s') >0$ and $M(s')>0$ otherwise. Probability of a symbol $s$ occurring next:
 
 \begin{equation}
 \mathbb E [G(s)]=\mathbb E \left [\frac {N(s)-\alpha M(s)+\sum_{s' \in \Sigma}\alpha M(s')G_{0}(s)}{\sum_{s' \in \Sigma}N(s')}\right ]

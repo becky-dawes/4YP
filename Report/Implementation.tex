@@ -1,7 +1,428 @@
 \chapter{Implementation}
 
+\section{$n$-gram Model}
+
+An $n$-gram language model predicts the next item in a sequence as an $(n-1)$-Markov model, i.e. $p(w_{1}, w_{2}, w_{3}, ..., w_{n})\simeq p(w_{1})p(w_{2}|w_{1})p(w_{3}|w_{2})...p(w_{n}|w_{n-1})$ for a 2-gram (bigram) model. We can use these to perform maximum likelihood estimation (MLE). This uses Bayes' Rule (Equation \ref{eq:Bayes}).%, ignoring the prior and taking the likelihood as a delta function at its maximum as in Equations \ref{eq:MLE1}-\ref{eq:MLE8}.
+
+\begin{equation}
+\label{eq:Bayes}
+p(A,B)=p(A|B)p(B)=p(B|A)p(A)
+\end{equation}
+
+
+
+%\begin{subequations}
+%\label{eq:MLE}
+%\begin{align}
+%p(f_{*}|D)&=\frac{p(f_{*}, D)}{p(D)} \label{eq:MLE1}
+%\\
+%&=\frac{\int p(f_{*}, D, \theta)d\theta}{p(D)} \label{eq:MLE2}
+%\\
+%&=\frac{\int p(f_{*}|D, \theta)p(D|\theta)p(\theta)d\theta}{p(D)} \label{eq:MLE3}
+%\\
+%p(\theta)=1 \label{eq:MLE4}
+%\\
+%p(D|\theta)=\delta(\theta-\hat{\theta}) \label{eq:MLE5}
+%\\
+%\hat{\theta}=\argmax{\theta}p(D|\theta) \label{eq:MLE6}
+%\\
+%p(f_{*}|D)&=\frac{\int p(f_{*}|D, \theta)\delta(\theta-\hat{\theta})1d\theta}{\int\delta(\theta-\hat{\theta})1d\theta} \label{eq:MLE7}
+%\\
+%&=p(f_{*}|D, \hat{\theta}) \label{eq:MLE8}
+%\end{align}
+%\end{subequations}
+
+For a bigram model, the maximum likelihood estimate is as in Equation \ref{eq:n-gramMLE}, where $N$ is the total number of words in the corpus.
+
+\begin{subequations}
+\begin{align}
+p(w_{2}|w_{1})&=\frac{p(w_{1}, w_{2})}{p(w_{1})}
+\\
+&= \frac{count(w_{1}, w_{2})}{N} \times \frac{N}{count(w_{1})}
+\\
+&=\frac{count(w_{1}, w_{2})}{count(w_{1})} \label{eq:n-gramMLE}
+\end{align}
+\end{subequations}
+
+\noindent This can be used to find the probabilities of $n$-grams which appear in the corpus. However, it cannot cater for words which do not appear in the training corpus as these will have 0 counts and therefore will be estimated to have 0 probability of appearing in the future. Smoothing can be used to combat this problem.
+
+\subsection{Formatting the Text} \label{sec:formattingText}
+
+Training corpus text is supplied in the form of a plain text \textit{.txt} file. This then needs to be read into memory and formatted. In this case, formatting involves converting all text to lower case and removing all punctuation (except apostrophes). The text is then split up into individual words whose counts are found:
+
+\begin{lstlisting}
+(def lines "All lines in file" (with-open [rdr (reader file-name)] (doall (line-seq rdr))))
+\end{lstlisting}
+
+The code above reads the file line by line. The \lstinline!with-open! macro ensures that the \lstinline!reader! is closed after the file has been read. The \lstinline!reader! function puts the string into a \lstinline!BufferedReader!. \lstinline!line-seq! then delivers a lazy sequence. A lazy sequence is not actually computed until it is used. However, it does remember already computed elements. This allows us to work with large streams.
+
+\begin{lstlisting}
+(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" (clojure.string/lower-case (clojure.string/replace text #"[\p{P}&&[^'][\n]]" "")))
+(def format-text-memo "Memoized format-text" (memoize format-text))
+(def formattedText "Formatted text" (format-text-memo lines))
+(defn split-words [text] "Vector of all words in text" (clojure.string/split text #"\s+"))
+(def split-words-memo "Memoized split-words" (memoize split-words))
+(def words-vector "Vector of all words in text" (split-words-memo formattedText))
+; 1-gram
+\end{lstlisting}
+
+The functions \lstinline!format-text! and \lstinline!split-words! use regular expressions to find and replace all punctuation (except apostrophes) and then to split the text on all spaces. 
+
+\begin{lstlisting}
+(defn make-words "Creates a sequence of all the words from the input" [theWords] (if (> (count theWords) 1) (cons(take 1 theWords)(lazy-seq(make-words (rest theWords)))) (cons (take 1 theWords) "")))
+(def make-words-memo "Memoized make-words" (memoize make-words))
+(def words (make-words-memo words-vector)) ; all words in text
+; 2-gram
+(defn make-pairs "Creates a sequence of all the word pairs from the input" [theWords] (if (> (count theWords) 2) (cons(take 2 theWords)(lazy-seq(make-pairs (rest theWords)))) (cons (take 2 theWords) "")))
+(def make-pairs-memo "Memoized make-pairs" (memoize make-pairs))
+(def pairs "Sequence of all pairs of words in text" (make-pairs-memo words-vector))
+\end{lstlisting}
+
+The functions \lstinline!make-words! is recursive. If the number of words in the input argument is greater than one, it will return a sequence consisting of the first word and the result of calling itself again using all but the first word as the input argument. This therefore returns a sequence of all the words in the text. The function \lstinline!make-pairs! performs similarly, but returns a sequence consisting of the first two words and the result of calling itself again on all but the first word, therefore returning a sequence of all word pairs in the text.
+
+\begin{lstlisting}
+(def counts-1 "Frequencies of each distinct word in text" (frequencies words))
+(def counts-2 "Map of frequencies of all pairs of words in text" (frequencies pairs))
+\end{lstlisting}
+
+The hash maps \lstinline!counts-1! and \lstinline!counts-2! are generated by calling the standard Clojure function \lstinline!frequencies! on the sequences of all words and all word pairs respectively to return the counts of each distinct word or word pair in the text. 
+
+\subsection{Additive Smoothing}
+
+Additive or Laplace smoothing consists of adding to the counts of all $n$-grams equally to allow for any $n$-grams which do not appear in the training corpus. These must then be normalised so that the total probability of all $n$-grams is still 1. Equations \ref{eq:1-gramAdditiveSmoothing}-\ref{eq:3-gramAdditiveSmoothing} shows the adjusted probabilities for unigrams, bigrams and trigrams, where $N$ is the total number of words in the corpus, $M$ is the total number of words in the vocabulary and $\alpha_{1}, \alpha_{2}, \alpha_{3}$ are the values added to the counts (for simplicity these are often set to 1).
+
+\begin{subequations}
+\begin{align}
+p(w_{1})&=\frac{count(w_{1})+\alpha_{1}}{N+M\alpha_{1}} \label{eq:1-gramAdditiveSmoothing}
+\\
+p(w_{2}| w_{1})&=\frac{count(w_{1}, w_{2})+\alpha_{2}}{((N-1)+M^{2}\alpha_{2})p(w_{1})} \label{eq:2-gramAdditiveSmoothing}
+\\
+p(w_{3}| w_{1}, w_{2}) &= \frac{count(w_{1}, w_{2}, w_{3})+\alpha_{3}}{((N-2)+M^{3}\alpha_{3})p(w_{1}, w_{2})} \label{eq:3-gramAdditiveSmoothing}
+\end{align}
+\end{subequations}
+
+Implementation of this smoothing method was straightforward:
+
+\begin{lstlisting}
+(def N "Count of all words in text" (count words))
+(def M "Size of vocabulary" (count counts-1))
+(def alpha1 "alpha for 1-gram" 1)
+(defn p1 "1-gram probability" [word1] (float (/ (+ (get-count-memo counts-1 word1) alpha1) (+ N (* M alpha1))))) ; get-count-memo returns the count if the word is found, or 0 otherwise
+\end{lstlisting}
+
+\noindent Similar code was written for bi- and tri-gram probabilities.
+
+\subsection{Good-Turing Smoothing}
+
+Good-Turing smoothing is a slightly more complex way of adjusting the counts. It relies on the formula given in Equation \ref{eq:goodTuring} where $r^{*}$ is the adjusted count, $r$ the actual count and $N_{r}$ the number of $n$-grams that appear with count $r$ in the corpus (i.e. $N_{r+1}$ is the number of $n$-grams that appear with the next highest probability after $r$ and $N_{0}$ is the total number of $n$-grams).
+
+\begin{equation}
+r^{*}=(r+1)\frac{N_{r+1}}{N_{r}}
+\label{eq:goodTuring}
+\end{equation}
+
+This smoothing method was a little more difficult to implement. I wrote functions (below) to generate the maps required to find all the necessary values in Equation \ref{eq:goodTuring}. The probabilities of the $n$-grams are then found in the same way as in Equation \ref{eq:n-gramMLE}, but substituting the actual counts for the Good-Turing counts.
+
+\begin{lstlisting}
+(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts] (frequencies (map val input-counts))) 
+(defn generate-cumulative-sum "Generates sequence of cumulative sum of items in map" [input-map] (cumsum (repeat (count input-map) 1))) 
+(defn generate-sorted-r-sequence "Generates sorted sequence of keys in map" [input-counts] (map key (sort-by key input-counts)))
+\end{lstlisting}
+
+\lstinline!generate-counts-of-counts! returns a map of all values of $r$ and their counts ($N_{r}$). \lstinline!generate-cumulative-sum! uses the function \lstinline!cumsum!, which returns a lazy cumulative sequence of the elements in its input argument, to return a lazy cumulative sequence of the number of elements in \lstinline!input-map!. \lstinline!generate-sorted-r-sequence! sorts the keys ($r$ values) of the map generated by \lstinline!generate-counts-of-counts! into a sequence.
+
+These functions are then memoized and the maps are generated:
+
+\begin{lstlisting}
+; Memoize functions
+(def generate-counts-of-counts-memo "Memoized generate-counts-of-counts" (memoize generate-counts-of-counts))
+(def generate-cumulative-sum-memo "Memoized generate-cumulative-sum" (memoize generate-cumulative-sum))
+(def generate-sorted-r-sequence-memo "Memoized generate-sorted-r-sequence" (memoize generate-sorted-r-sequence))
+; Generate the maps
+; 1-gram:
+(def counts-of-counts-1 "1-gram counts-of-counts map" (generate-counts-of-counts-memo counts-1))
+(def cumsum-counts-of-counts-1 "Cumulative sum of all word counts" (generate-cumulative-sum-memo counts-of-counts-1))
+(def sorted-r-1 "1-gram n-r sequence" (generate-sorted-r-sequence-memo counts-of-counts-1))
+(def n-r-counts-keys-1 "1-gram map of counts-of-counts and indices with counts as keys"  (zipmap sorted-r-1 cumsum-counts-of-counts-1))
+(def n-r-index-keys-1 "1-gram map of counts-of-counts and indices with indices as keys" (zipmap cumsum-counts-of-counts-1 sorted-r-1))
+\end{lstlisting}
+
+In the above code, \lstinline!counts-of-counts-1! refers to the map of all $r$ and $N_{r}$ values for uni-grams, \lstinline!cumsum-counts-of-counts-1! refers to the cumulative sum of the number of all word counts and \lstinline!sorted-r-1! refers to the sorted values of $r$. \lstinline!n-r-counts-keys! is a map with the sorted $r$ values as keys and the cumulative sum of of the number of counts (indices) as values. \lstinline!n-r-index-keys! is a map with the indices as keys and the sorted $r$ values as values. These maps create a relationship between the position in the sorted list of $r$ values and an index, so that finding the the value for $r+1$ is simple. Two maps are necessary as it is possible to search a map only by key.
+
+\begin{lstlisting}
+; Functions to find the relevant values in the equation:
+(defn r "Returns count of given n-gram" [n-gram n] (get-count-memo (resolve (symbol (str "counts-" n))) n-gram)) 
+(def r-memo "Memoized r" (memoize r))
+(defn n-r "Returns count of given count" [freq n] (if (> freq 0) ((resolve (symbol (str "counts-of-counts-" n))) freq) (count (var-get (resolve (symbol (str "counts-" n)))))))
+(def n-r-memo "Memoized n-r" (memoize n-r))
+(defn n-r-plus-one "Returns count of next biggest count" [freq n] (let [n-r-index (get-count-memo (resolve (symbol (str "n-r-counts-keys-" n))) freq)] (if (= n-r-index (count (var-get (resolve (symbol (str "counts-of-counts-" n)))))) (n-r-memo freq n) ((resolve (symbol (str "counts-of-counts-" n))) ((resolve (symbol (str "n-r-index-keys-" n))) (+ n-r-index 1)))))) 
+(def n-r-plus-one-memo "Memoized n-r-plus-one" (memoize n-r-plus-one))
+(defn g-t "Returns Good-Turing count of given word" [n-gram n] (let [freq (if (= (type n-gram) (type "")) (r-memo [n-gram] n) (r-memo n-gram n))] (* (+ freq 1) (/ (n-r-plus-one-memo freq n) (n-r-memo freq n))))) ; inputs all values found into equation
+(def g-t-memo "Memoized g-t" (memoize g-t))
+\end{lstlisting}
+
+The above code is designed to be used with any size $n$-gram, provided that the variables follow a strict naming pattern. \lstinline!(resolve (symbol (str "counts-" n)))! returns the object referred to by the symbol named \lstinline!counts-n!, where \lstinline!n! is an input argument to the function call. This means that the function will use the relevant map based on value of \lstinline!n! inputted (\lstinline!counts-1!, \lstinline!counts-2!, \lstinline!counts-3!, etc.). The function \lstinline!r! simply returns the count for the $n$-gram inputted. The function \lstinline!n-r! returns the number of distinct words with a given count ($N_{r}$). If the count is zero, then the total number of $n$-grams is returned ($N_{0}$).
+
+\lstinline!n-r-plus-one! finds the index (\lstinline!n-r-index!) of a given $r$ by searching for it in the map \lstinline!n-r-counts-keys-n!. If this value is equal to the total number of $N_{r}$ values, the value of $N_{r}$ corresponding to the $r$ inputted is returned. Otherwise, we search for the $r$ value ($r+1$) corresponding to the index \lstinline!n-r-index!$+1$ in \lstinline!n-r-index-keys!. We then search for this new $r$ value using the function \lstinline!n-r! to find $N_{r+1}$.
+
+The function \lstinline!g-t! uses the values found above to compute the Good-Turing count using Equation \ref{eq:goodTuring}.
+
+\subsection{Text Prediction}
+
+Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but I did not pursue this).
+
+Prediction began at a very basic level of just predicting the next word in a bi-gram. This involves finding all word pairs starting with word $w_{1}$ and then selecting the pair with the highest count:
+
+\begin{lstlisting}
+(defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2)(map #(if (= (first (key \%)) w) (val \%) 0.0) counts-2)))
+(def find-pair-memo "Memoized find-pair" (memoize find-pair))
+(defn next-word "Predicts next word in sequence" ([word1] (let [word1 (if (= 0 (get-count-memo counts-1 [(lower-case word1)])) "<unk>" (lower-case word1))] (last (key (apply max-key val (find-pair-memo word1)))))))
+\end{lstlisting}
+
+\lstinline!find-pair! returns a map of all bi-grams with a matching first word and their counts. The \lstinline!#! symbol represents an anonymous function and the \lstinline!\%! symbol represents the input argument to this function. This means that \lstinline!#(if (= (first (key \%)) w) (val \%) 0.0) counts-2)! will return the value (count) of the entry in \lstinline!counts-2! if the first word of the key is the same as the input word, \lstinline!w!. Otherwise it will return zero. Therefore the whole function returns a map of all bigrams in the text, with their counts as values if their first word matches, or with a value of zero otherwise.
+
+The function \lstinline!next-word! takes an argument \lstinline!word1!. If this word does not exist in the text (i.e. if its count as a uni-gram is zero), then it sets \lstinline!word1! to be \lstinline!<unk>!. It then calls \lstinline!find-pair! with \lstinline!word1! and finds the entry in the map with the highest count (i.e. the most probable bi-gram beginning with that word) and returns the second word of it.
+
+This is easily extended for tri-grams by searching for the most probable tri-gram starting with the given two words.
+
+I wrote a function that would take this a step further by predicting the next $n$ words from any given context input. This required the use of a recursive function which cycles through $n$ times to create the desired length of text:
+
+\begin{lstlisting}
+(defn loop-next-words "Predicts certain length of text" [word1 word2 n] (let [the-next-word (next-word-memo word1 word2) ](if (< 0 n)  (cons word2 (loop-next-words word2 the-next-word (- n 1))) (cons word2 [the-next-word])))) 
+(def loop-next-words-memo "Memoized loop-next-words" (memoize loop-next-words))
+\end{lstlisting}
+
+\lstinline!loop-next-words! defines a variable \lstinline!the-next-word!, which is the predicted result from calling \lstinline!next-word! for the two words inputted. \lstinline!n! affects the number of words to be predicted. If \lstinline!n! is greater than zero, the function recursively calls itself to return a sequence of the second word inputted \lstinline!word2! and \lstinline!loop-next-words! called with \lstinline!word2!, \lstinline!the-next-word! and \lstinline!n-1! as input arguments. If \lstinline!n! is zero, then the function returns a sequence of \lstinline!word2! and \lstinline!the-next-word!. Therefore it returns an overall sequence of length \lstinline!n!$+2$ starting with the original \lstinline!word2! predicting the following \lstinline!n!$+1$ words.
+
+\begin{lstlisting}
+(defn join-words "Joins input words together into one string" [theWords] (if (< 0 (count theWords)) (let [word (str (first theWords) " ")] (str word (join-words (rest theWords)))) (str (first theWords))))
+(def join-words-memo "Memoized join-words" (memoize join-words))
+\end{lstlisting}
+
+\lstinline!join-words! takes the words which as individual elements in a sequence and joined them together to form a continuous string with spaces between them. This is purely to make the results more readable.
+
+\begin{lstlisting}
+(defn predict-text "Predicts a certain length of text based on context" [context n] (if (< 0 n) (str (join-words-memo context) (join-words-memo (loop-next-words (last context) (next-word-memo (last (butlast context)) (last context)) (- n 2)))))) 
+(def predict-text-memo "Memoized predict-text" (memoize predict-text))
+\end{lstlisting}
+
+\lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. It joins the original input context to the results from \lstinline!loop-next-words! called with the final word of the context, the next predicted word of the context and \lstinline!n!$-2$ as arguments.
+
+All the code discussed in this chapter refers to prediction by word. However, it is very straightforward to predict by letter instead (although it uses more memory. The text is simply split after each character rather than after each space (as in Section \ref{sec:formattingText}). The vocabulary size is a much simpler matter though, as there is a finite number of characters, as opposed to possible infinite number of words.
+
+\section{Hierarchical Dirichlet Language Model}
+
+Typical bi-gram language models as described above often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance because there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}.
+
+\begin{equation}
+\hat{P}(w_{t}|w_{t-1})=\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}
+\label{eq:MacKayPetoKludge}
+\end{equation}
+
+\noindent This model performs much better as...
+
+MacKay and Peto \cite{mackay1995hierarchical} used a hierarchical Dirichlet model to explain Equation \ref{eq:MacKayPetoKludge}...
+
+\subsection{...}
+
+This model is based on the idea that there is a $W\times W$ transition matrix, $Q$, which represents some unknown parameters. This means that $P(w_{t}=i|w_{t-1}=j)\equiv q_{i|j}$, where $q_{i|j}$ is an element in the matrix $Q$. A single row of $Q$ may be denoted $\boldsymbol{q}_{|j}$ and represents the probability transitions from state $j$.
+
+Denoting the model $\mathscr{H}$, we can then begin finding values of interest. Using Bayes theorem, we can infer the parameters, as in Equation \ref{eq:HD-Q|DH}, where $D$ is the data and $k$ is dimensionality of $Q$. Here $P(D|Q,\mathscr{H})$ is the likelihood and $P(Q|\mathscr{H})$ is the prior distribution. We can then use this to find the probability of the next word in a given context, as in Equation \ref{eq:HD-wt|wt-1DH}.
+
+\begin{align}
+P(Q|D,\mathscr{H})&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})}{P(D|\mathscr{H})} \nonumber
+\\
+&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})}{\int P(D|Q,\mathscr{H})P(Q|\mathscr{H})d^{k}Q}
+\label{eq:HD-Q|DH}
+\end{align}
+
+\begin{align}
+P(w_{t}|W_{t-1},D,\mathscr{H})&=\int P(w_{t}|w_{t-1},Q,D,\mathscr{H})P(Q|D,\mathscr{H})d^{k}Q \nonumber
+\\
+&=\int q_{w_{t}|w_{t-1}}P(Q|D,\mathscr{H})d^{k}Q
+\label{eq:HD-wt|wt-1DH}
+\end{align}
+
+We can now use our knowledge of the language model to define the likelihood function more clearly. If $F_{i|j}$ is the $n$-gram count of word $i$ appearing given word $j$, then it simplifies to Equation \ref{eq:HD-D|QHsimple}.
+
+\begin{align}
+P(D|Q,\mathscr{H})&=\prod_{t}q_{w_{t}|w_{t-1}} \nonumber
+\\
+&=\prod_{j}\prod_{i}q_{i|j}^{F_{i|j}}
+\label{eq:HD-D|QHsimple}
+\end{align}
+
+\subsection{Using Dirichlet Distributions as Priors}
+
+The Dirichlet distribution is a good choice of prior for this situation, as it is a distribution over distributions, i.e. we acknowledge that we don't know the distribution of the words in the text and so we must infer this. The Dirichlet distribution (Equation \ref{eq:HD-Dir-p|alpha-m}) is parameterised by a measure $\boldsymbol{u}=\alpha\boldsymbol{m}$, where $\boldsymbol{m}$ is a normalised measure of the $I$ components ($\sum_{i}m_{i}=1$), and $\alpha$ is a positive scalar. The normalising constant $Z(\alpha\boldsymbol{m})$ is given by Equation \ref{eq:HD-Z}, where $\Gamma(x)$ is the Gamma function (Equation \ref{eq:HD-Gamma}). $\delta(x)$ is the Dirac delta function. This normalises the distribution such that $\sum_{i}p_{i}=1$. $\alpha$ measures the sharpness of the distribution. Large $\alpha$ gives a distribution over $\boldsymbol{p}$ (a probability vector) which is sharply peaked around $\boldsymbol{m}$, the mean of the probability distribution (Equation \ref{eq:HD-DirMean}).
+
+\begin{equation}
+P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m})}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)\equiv \text{Dirichlet}^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
+\label{eq:HD-Dir-p|alpha-m}
+\end{equation}
+
+\begin{equation}
+Z(\alpha\boldsymbol{m})=\prod_{i}\frac{\Gamma(\alpha m_{i})}{\Gamma(\alpha)}
+\label{eq:HD-Z}
+\end{equation}
+
+\begin{equation}
+\Gamma(x)\equiv\int_{0}^{\infty}du\ u^{x-1}e^{-u} \ \ \ \ \ \text{for }x>0
+\label{eq:HD-Gamma}
+\end{equation}
+
+\begin{equation}
+\int\text{Dirichlet}^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})\boldsymbol{p}d^{I}\boldsymbol{p}=\boldsymbol{m}
+\label{eq:HD-DirMean}
+\end{equation}
+
+Taking $\boldsymbol{F}=(F_{1},F_{2},...,F_{I})$ as the counts obtained, we can find the posterior of $\boldsymbol{p}$ (Equation \ref{eq:HD-p|F-alpham}). This gives a predictive distribution as in Equation \ref{eq:HD-i|F-alpham}.
+
+\begin{align}
+P(\boldsymbol{p}|\boldsymbol{F},\alpha\boldsymbol{m})&=\frac{P(\boldsymbol{F}|\boldsymbol{p})P(\boldsymbol{p}|\alpha\boldsymbol{m})}{P(\boldsymbol{F}|\alpha\boldsymbol{m})} \nonumber
+\\
+&=\frac{\prod_{i}p_{i}^{F_{i}}\prod_{i}p_{i}^{\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)}{Z(\alpha\boldsymbol{m})P(\boldsymbol{F}|\alpha\boldsymbol{m})} \nonumber
+\\
+&=\frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)}{P(\boldsymbol{F}|\alpha\boldsymbol{m})Z(\alpha\boldsymbol{m})} \nonumber
+\\
+&=\text{Dirichlet}^{(I)}(\boldsymbol{p}|\boldsymbol{F}+\alpha\boldsymbol{m})
+\label{eq:HD-p|F-alpham}
+\end{align}
+
+\begin{align}
+P(i|\boldsymbol{F},\alpha\boldsymbol{m})&=\int\text{Dirichlet}^{(I)}(\boldsymbol{p}|\boldsymbol{F}+\alpha\boldsymbol{m})\boldsymbol{p}d^{I}\boldsymbol{p} \nonumber
+\\
+&=\frac{F_{i}+\alpha m_{i}}{\sum_{i'}F_{i'}+\alpha m_{i'}}
+\label{eq:HD-i|F-alpham}
+\end{align}
+
+\noindent Rearranging this, we can find the evidence to $\alpha\boldsymbol{m}$ (Equation \ref{eq:HD-F|alpham}).
+
+\begin{align}
+P(\boldsymbol{F}|\alpha\boldsymbol{m})&=\frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)}{P(\boldsymbol{p}|\boldsymbol{F},\alpha\boldsymbol{m})Z(\alpha\boldsymbol{m})} \nonumber
+\\
+&=\frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)Z(\boldsymbol{F}+\alpha\boldsymbol{m})}{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)Z(\alpha\boldsymbol{m})} \nonumber
+\\
+&=\frac{Z(\boldsymbol{F}+\alpha\boldsymbol{m})}{Z(\alpha\boldsymbol{m})} \nonumber
+\\
+&=\frac{\prod_{i}\Gamma(F_{i}+\alpha m_{i})}{\Gamma(\sum_{i}F_{i}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}
+\label{eq:HD-F|alpham}
+\end{align}
+
+\subsection{The Hierarchical Model $\mathscr{H}_{D}$}
+
+We denote a hierarchical Dirichlet model $\mathscr{H}_{D}$. Hyperparameters define a probability distribution over the parameters $Q$ (hence the name "hierarchical"). Our prior on the vectors $\boldsymbol{q}_{|j}$ (which make up $Q$) uses an unknown measure $\boldsymbol{u}=\alpha\boldsymbol{m}$, as seen in the previous section. We define this prior as in Equation \ref{eq:HD-Q|alpham-H}. We can then marginalise out $\alpha\boldsymbol{m}$, as in Equation \ref{eq:HD-Q|H}.
+
+\begin{equation}
+P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})=\prod_{j}\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\alpha\boldsymbol{m})
+\label{eq:HD-Q|alpham-H}
+\end{equation}
+
+\begin{equation}
+P(Q|\mathscr{H}_{D})=\int\prod_{j}\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\alpha\boldsymbol{m})P(\alpha\boldsymbol{m})D^{I}\alpha\boldsymbol{m}
+\label{eq:HD-Q|H}
+\end{equation}
+
+\subsection{Inferring the Parameters and Hyperparameters}
+
+Level 1 inference involves inferring a distribution for $Q$. For this, we assume that we know $\boldsymbol{m}$ and $\alpha$. Equation \ref{eq:HD-Q|D-alpham-H} then gives the posterior for $Q$. (\textit{explain})
+
+\begin{align}
+P(Q|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{P(D|Q,\mathscr{H}){D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})} \nonumber
+\\
+&=\prod_{j}P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})
+\label{eq:HD-Q|D-alpham-H}
+\end{align}
+
+\noindent $P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ is then given by Equation \ref{eq:HD-q|D-alpham-H}. This can be used for prediction, as in Equation \ref{eq:HD-i|j-D-alpham-D}, where $f_{i|j}=\frac{F_{i|j}}{F_{j}}$ and $\lambda_{j}=\frac{\alpha}{F_{j}+\alpha}$.
+
+\begin{align}
+P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&\propto\prod_{i}q_{i|j}^{F_{i|j}+\alpha m_{i}-1}\delta(\sum_{i}q_{i|j}-1) \nonumber
+\\
+&=\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\boldsymbol{F}+\alpha\boldsymbol{m})
+\label{eq:HD-q|D-alpham-H}
+\end{align}
+
+\begin{align}
+P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{F_{i|j}+\alpha m_{i}}{\sum_{i'}F_{i'|j}+\alpha m_{i'}} \nonumber
+\\
+&=\lambda_{j}m_{i}+(1-\lambda_{j})f_{i|j}
+\label{eq:HD-i|j-D-alpham-D}
+\end{align}
+
+Level 2 inference involves inferring the hyperparameters. We find that the posterior distribution for $\alpha\boldsymbol{m}$ is as in Equation \ref{eq:HD-alpham|D-H}. We are interested in finding the maximum $[\alpha\boldsymbol{m}]^{MP}$ of this posterior distribution. This leads us to Equation \ref{eq:HD-i|j-D-H}. We expect the posterior to be sharply peaked in $\alpha\boldsymbol{m}$, therefore it is effectively a delta function (hence the approximation in the second line). This means that we optimise for $\alpha\boldsymbol{m}$ instead of marginalising it out. 
+
+\begin{equation}
+P(\alpha\boldsymbol{m}|D,\mathscr{H}_{D})=\frac{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m}|\mathscr{H}_{D})}{P(D|\mathscr{H}_{D})}
+\label{eq:HD-alpham|D-H}
+\end{equation}
+
+\begin{align}
+P(i|j,D,\mathscr{H}_{D})&=\int P(\alpha\boldsymbol{m}|D,\mathscr{H}_{D})P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})d^{W}(\alpha\boldsymbol{m}) \nonumber
+\\
+&\simeq P(i|j,D,[\alpha\boldsymbol{m}]^{MP},\mathscr{H}_{D})
+\label{eq:HD-i|j-D-H}
+\end{align}
+
+\subsection{Finding the Hyperparameters}
+
+The evidence for $\alpha\boldsymbol{m}$ is given by Equation \ref{eq:HD-D|alpham}. This can be optimised by differentiating with respect to $u_{i}=\alpha m_{i}$ and setting the result to be equal to zero. For this we use the digamma function, $\Psi(x)\equiv\frac{\partial log\Gamma(x)}{\partial x}$, as in Equation \ref{eq:HD-diff-logPD|u}. Note that $\sum_{i'}u_{i'}=\alpha$.
+
+\begin{align}
+P(D|\alpha\boldsymbol{m})&=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\boldsymbol{m}) \nonumber
+\\
+&=\prod_{j}\left(\frac{\prod_{i}\Gamma(F_{i|j}+\alpha m_{i})}{\Gamma(F_{j}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}\right)
+\label{eq:HD-D|alpham}
+\end{align}
+
+\begin{equation}
+\frac{\partial}{\partial u_{i}}\log P(D|\boldsymbol{u})=\sum_{j}[\Psi(F_{i|j}+u_{i})-\Psi(F_{j}+\sum_{i'}u_{i'})+\Psi(\sum_{i'}u_{i'})-\Psi(u_{i})] 
+\label{eq:HD-diff-logPD|u}
+\end{equation}
+
+We can now make some assumptions to make finding $\boldsymbol{u}=\alpha\boldsymbol{m}$ simpler. Since we know that $\sum_{i}m_{i}=1$, it is clear that each $m_{i}$ will be approximately equal to $\frac{1}{\text{size of vocabulary}}$. Therefore we can assume that $u_{i}=\alpha m_{i}<1$. We use the digamma recurrence relationship, $\Psi(x+1)=\Psi(x)+\frac{1}{x}$, to simplify the differential, as in Equation \ref{eq:HD-digamma-F-u}. The final line is based on the assumption that $F_{i|j}\geq 1$. We can also approximate the terms $\Psi(\alpha)-\Psi(F_{j}+\alpha)$ using the equation $Psi(x)=\frac{d}{dx}\log\Gamma(x)\simeq\log(x)-\frac{1}{2x}+O(\frac{1}{x^{2}})$.
+
+\begin{align}
+\Psi(F_{i|j}+u_{i})-\Psi(u_{i})&=\frac{1}{F_{i|j}-1+u_{i}}+\Psi(F_{i|j}-1+u_{i})-\Psi(u_{i}) \nonumber
+\\
+&=\frac{1}{F_{i|j}-1+u_{i}}+\frac{1}{F_{i|j}-2+u_{i}}+\Psi(F_{i|j}-2+u_{i})-\Psi(u_{i}) \nonumber
+\\
+&=\frac{1}{F_{i|j}-1+u_{i}}+\frac{1}{F_{i|j}-2+u_{i}}+...+\frac{1}{1+u_{i}}+\Psi(1+u_{i})-\Psi(u_{i}) \nonumber
+\\
+&=\frac{1}{F_{i|j}-1+u_{i}}+...+\frac{1}{1+u_{i}}+\frac{1}{u_{i}} \nonumber
+\\
+&\simeq \frac{1}{u_{i}}+\sum_{f=2}^{F_{i|j}}\frac{1}{f-1}-u_{i}\sum_{f=2}^{F_{i|j}}\frac{1}{(f-1)^{2}}+O(u_{i}^{2})
+\label{eq:HD-digamma-F-u}
+\end{align}
+
+NEED TO EXPLAIN ALL OF THIS PROPERLY
+
+We can then find the optimal hyperparameters by Equation \ref{eq:HD-u-i-MP}, where $K(\alpha)$ is given by Equation \ref{eq:HD-K}. For each count $F$ and word $i$, we let $N_{Fi}$ be the number of context $j$ such that $F_{i|j}\geq F$. $F_{i}^{\text{max}}$ is the largest $F$ such that $N_{Fi}>0$. This gives Equations \ref{eq:HD-Gi} and \ref{eq:HD-Hi} for the values $G_{i}$ and $H_{i}$ respectively. $V_{i}$ is the number of entries in row $i$ of $F_{i|j}$ that are non-zero.
+
+\begin{equation}
+u_{i}^{MP}=\frac{2V_{i}}{K(\alpha^{MP})-G_{i}+\sqrt{(K(\alpha^{MP})-G_{i})^{2}+4H_{i}V_{i}}}
+\label{eq:HD-u-i-MP}
+\end{equation}
+
+\begin{equation}
+K(\alpha)=\sum_{j}\log\left[\frac{F_{j}+\alpha}{\alpha}\right]+\frac{1}{2}\sum_{j}\left[\frac{F_{j}}{\alpha(F_{j}+\alpha)}\right]
+\label{eq:HD-K}
+\end{equation}
+
+\begin{equation}
+G_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{f-1}
+\label{eq:HD-Gi}
+\end{equation}
+
+\begin{equation}
+H_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{(f-1)^{2}}
+\label{eq:HD-Hi}
+\end{equation}
+
+
+\section{Other}
 Coding and implementation
-
+\\ \\
 Size of data
-
+\\ \\
 Number of runs

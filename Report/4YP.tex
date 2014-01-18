@@ -27,11 +27,18 @@
 \usepackage{fixltx2e} 
 \usepackage{mathbbol}
 \usepackage{mathrsfs}
+%\usepackeage[usenames]{xcolor}
+\usepackage{listings}
+\usepackage{color}
+\input{NewLanguage}
+\lstset{language=clojure}
 \graphicspath{{../pdf/}{figures/}}
 %\lfoot{}\cfoot{\thepage}\rfoot{}
 \captionsetup[subfigure]{format=hang, width=0.9\textwidth}
 \captionsetup[wrapfigure]{format=hang}
 \usepackage{pdfpages}
+
+\newcommand{\argmax}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{max}}\;}
 
 \title{4YP}
 \author{Rebecca Dawes}
