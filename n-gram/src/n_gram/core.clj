@@ -1,194 +1,21 @@
-(ns n-gram.core)
+(ns n-gram.core (:require [n-gram.words.file-reader :refer :all]
+                          [n-gram.letters.file-reader :refer :all]
+                          [n-gram.words.word-maker :refer :all] 
+                          [n-gram.letters.letter-maker :refer :all]
+                          [n-gram.words.word-predictor :refer :all]
+                          [n-gram.letters.letter-predictor :refer :all]
+                          [n-gram.words.word-probs :refer :all]
+                          [n-gram.letters.letter-probs :refer :all]
+                          [n-gram.words.good-turing :refer :all]
+                          [n-gram.misc.misc-functions :refer :all]
+                          [n-gram.words.interpolation :refer :all]
+                          [n-gram.words.hierarchical-dirichlet :refer :all]))
 
-(use 'clojure.java.io)
 
-; read in file
 
 ;(def txt (slurp "the-wonderful-wizard-of-oz.txt"))
 
 (println "Reading file")
-
-(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz.txt")) ;"the-wonderful-wizard-of-oz.txt"
-
-
-
-(def lines "All lines in file" (with-open [rdr (reader file-name)] 
-             (doall (line-seq rdr))))
-
-
-
-(println "Formatting text")
-
-;Remove all punctuation (except apostrophes) and convert to lower case
-
-(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" 
-  (clojure.string/lower-case (clojure.string/replace text #"[\p{P}&&[^'][\n]]" "")))
-
-(def formattedText (format-text lines))
-
-; split tokens at whitespace (reg. expr.)
-
-(defn split-words [text] "Vector of all words in text" (clojure.string/split text #"\s+"))
-
-(def words-vector (split-words formattedText))
-
-(def unique-words (distinct words-vector))
-
-(def unknown "<unk>")
-
-(defn replace-first-word [text distinct-words] (if (< 0 (count distinct-words)) (clojure.string/replace-first (replace-first-word text (rest distinct-words)) (re-pattern (first distinct-words)) unknown) text))
-
-(def replaced-lines (replace-first-word lines unique-words))
-
-(def formatted-new-text (format-text replaced-lines))
-
-(def words-vector (split-words formatted-new-text))
-
-(defn makeWords "Creates a sequence of all the words from the input"
-  [theWords] (if (> (count theWords) 1)
-     (cons(take 1 theWords)(lazy-seq(makeWords (rest theWords))))
-     (cons (take 1 theWords) "")))
-
-(def words (makeWords words-vector))
-
-(println (str (count words) " words"))
-
-(println "Finding word frequencies")
-
-; count word frequencies
-
-(def counts-1 "Frequencies of each distinct word in text" (frequencies words))
-
-;(def n-gram-count-maps (zipmap [1] ["counts-1"]))
-
-(println (str (count counts-1) " distinct words"))
-
-(def word-vals "Map of word frequency values" (map val counts-1))
-
-(def word-keys "Map of word frequency keys" (map key counts-1))
-
-(def total-word-count "Count of all words in text" (count words))
-
-; normalize word frequencies by total count
-
-;(def freqs-1 "Normalised frequencies of all words" (zipmap word-keys (map #(/ % total-word-count) word-vals)))
-
-
-
-
-(defn cumsum
-
-   "With one arg x returns lazy cumulative sum sequence y with (= (nth y) (cumsum x))
-
-    With two args t, x returns lazy cumulative sum sequence y with (= (nth y) (+ t (cumsum x)))"
-
-  ([x] (cumsum 0 x))
-
-  ([t x] (if (empty? x) ()           
-
-           (let [y (+ t (first x))]
-
-             (cons y ( lazy-seq (cumsum y (rest x))))))))
-
-; Cumulative sum of all words
-
-;(def ai  (cumsum (repeat (- (count words) 1) 1)))
-
-
-
-; slow and inefficient but interesting to understand
-
-;(defn combine [lst1 lst2]
-
-;  (mapcat (fn [x] (map #(list % x) lst1)) lst2))
-
-
-
-;(def wp (interleave  (map #(nth words (- % 1)) ai) (map #(nth words %) ai)))
-
-
-
-;(defn pairs [x y] 
-
- ;(if (not= (count x) 0) 
-
-  ; (cons (list (first x) (first y)) (lazy-seq (pairs (rest x) (rest y))))
-
-   ;(list)))
-   
-   (println "Making pairs")
-
-(defn makePairs "Creates a sequence of all the word pairs from the input"
-  [theWords] (if (> (count theWords) 2)
-     (cons(take 2 theWords)(lazy-seq(makePairs (rest theWords))))
-     (cons (take 2 theWords) "")))
-
-
-;(def pairFreq (frequencies (pairs (map #(nth words (- % 1)) ai) (map #(nth words %) ai))))
-
-; Create sequence of all word pairs
-
-(def pairs "Sequence of all pairs of words in text" (makePairs words-vector))
-
-(println "Finding pair frequencies")
-
-; Find frequency of each word pair
-
-(def counts-2 "Map of frequencies of all pairs of words in text" (frequencies pairs))
-
-;(def n-gram-count-maps (assoc n-gram-count-maps 2 "counts-2"))
-
-; Normalise pair frequencies
-
-(def total-pair-count "Count of all pairs of words in text"(count pairs))
-
-(def pair-vals "Map of pair frequency values" (map val counts-2))
-
-(def pair-keys "Map of pair frequency keys" (map key counts-2))
-
-;(def freqs-2 "Map of normalised frequencies of all pairs of words in text" (zipmap pair-keys (map #(/ % total-pair-count) pair-vals)))
-
-
-
-
-(println (str (count counts-2) " distinct pairs"))
-
-;(defn p1 "Returns unigram probability of input word"
- ; ([word1] (float (nh word1))))
-         
-;(defn p2 "Returns bigram probability of input words" 
- ; ([word1 word2] (float (/ (pairFreqNorm [word1 word2]) (nh word1)))))
-
-(println "Making trios")
-
-(defn makeTrios "Creates a sequence of the word trios from the input"
-  [theWords] (if (> (count theWords) 3)
-     (cons(take 3 theWords)(lazy-seq(makeTrios (rest theWords))))
-     (cons (take 3 theWords) "")))
-
-; Create sequence of all word trios
-
-(def trios "Sequence of all trios of words in text" (makeTrios words-vector))
-
-(println "Finding trio frequencies")
-
-; Find frequency of each word trio
-
-(def counts-3 "Frequencies of all trios of words in text" (frequencies trios))
-
-;(def n-gram-count-maps (assoc n-gram-count-maps 3 "counts-3"))
-
-; Normalise trio frequencies
-
-(def trio-vals "Map of trio frequency values" (map val counts-3))
-
-(def trio-keys "Map of trio frequency keys" (map key counts-3))
-
-(def total-trio-count "Count of all trios of words in text" (count trios))
-
-;(def freqs-3 "Map of normalised frequencies of all trios of words in text" (zipmap trio-keys (map #(/ % total-trio-count) trio-vals)))
-
-(println (str (count counts-3) " distinct trios"))
 
 
 ;(defn p3 "Returns trigram probability of input words"
@@ -198,139 +25,17 @@
 
 
 
-(def N "number of words in text" total-word-count)
-
-;(def K 1000000)
-
-(def M "Size of vocabulary" (count counts-1))
-
-(def alpha1 "alpha for 1-gram" 1)
-
-(def alpha2 "alpha for 2-gram" 1)
-
-(def alpha3 "alpha for 3-gram" 1)
-
-(defn get-count "Returns 0 if word not found, otherwise returns count"[func args] (if (nil? (func args)) 0 (func args)))
-
-(defn p1 "1-gram probability" [word1] (float (/ (+ (get-count counts-1 words) alpha1) (+ N (* M alpha1)))))
-
-(def p1-memo "Memoized p1" (memoize p1))
-
-(defn p2 "2-gram probability" [word1 word2] (float (/ (/ (+ (get-count counts-2 [word1 word2]) alpha2) (+ (- N 1) (* M M alpha2))) (p1-memo word1))))
-
-(def p2-memo "memoized p2" (memoize p2))
-
-(defn p3 "3-gram probability" [word1 word2 word3]
-  (float (/ (/ (+ (get-count counts-3 [word1 word2 word3]) alpha3) (+ (- N 2) (* M M M alpha3))) (p2-memo word1 word2))))
-
-(def p3-memo "memoized p3" (memoize p3))
-
-(defn p "Returns n-gram probability depending on number of input words"
-  ([word1] (let [word1 (clojure.string/lower-case word1)] (p1-memo word1)))
-  ([word1 word2] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2)] (p2-memo word1 word2)))
-  ([word1 word2 word3] (let [word1 (clojure.string/lower-case word1) word2 (clojure.string/lower-case word2) word3 (clojure.string/lower-case word3)] (p3-memo word1 word2 word3))))
-
-(defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2) (map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
-
-(defn find-trio "Finds all word trios starting with given word pair" 
-  [w1 w2] (zipmap (map key counts-3) (map #(if (= (first (key %)) w1) (if (= (second (key %)) w2) (val %) 0.0) 0.0) counts-3)))
 
 
-(defn next-word "Predicts next word in sequence" 
-  ([word1] (let [word1 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word1)])) unknown (clojure.string/lower-case word1))] (key (apply max-key val (find-pair word1)))))
-  ([word1 word2] (let [word1 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word1)])) unknown (clojure.string/lower-case word1)) word2 (if (= 0 (get-count counts-1 [(clojure.string/lower-case word2)])) unknown (clojure.string/lower-case word2))] (key (apply max-key val (find-trio word1 word2))))))
 
-(defn get-last-two "Returns last two words of sequence"
-  [theWords] [ (last (butlast theWords))  (last theWords)])
 
-(defn loop-next-words "Predicts certain length of text"
-  [word1 word2 n] (if (< 0 n) (let [next-words (next-word word1 word2) last-two (get-last-two next-words)] (cons (first next-words)  (loop-next-words (first last-two) (second last-two) (- n 1))))  [word1 word2]))
 
-(defn join-words "Joins input words together into one string"
-  [theWords] (if (< 0 (count theWords)) (let [word (str (first theWords) " ")] (str word (join-words (rest theWords)))) (str (first theWords))))
-
-(defn predict-text "Predicts a certain length of text based on context"
-  [context n] (if (< 0 n) (str (join-words (butlast (butlast context))) (join-words (loop-next-words (first (get-last-two context)) (second (get-last-two context)) n)))))
 
 ;(def counts-of-counts-map "Map of counts-of-counts map names for different n" (zipmap [0] [""]))
 
 ;(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts n map-name] ((def counts-of-counts-map (assoc counts-of-counts-map n map-name)) frequencies (map val input-counts)))
 
-(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts] (frequencies (map val input-counts)))
 
-;(def counts-of-word-counts "1-gram counts-of-counts map" (generate-counts-of-counts counts-1 1 "counts-of-word-counts"))
-
-(defn generate-cumulative-sum "Generates sequence of cumulative sum of items in map" [input-map] (cumsum (repeat (count input-map) 1)))
-
-(defn generate-n-r-map "Generates sorted counts-of-counts map" [input-counts] (map key (sort-by key input-counts)))
-
-
-;1-gram maps
-
-(def counts-of-counts-1 "1-gram counts-of-counts map" (generate-counts-of-counts counts-1))
-
-(def cumsum-counts-of-counts-1 "Cumulative sum of all normalised word frequencies" (generate-cumulative-sum counts-of-counts-1))
-
-(def n-r-1 "1-gram counts-of-counts map" (generate-n-r-map counts-of-counts-1))
-
-(def n-r-counts-keys-1 "1-gram map of counts-of-counts and indices with counts as keys" (zipmap n-r-1 cumsum-counts-of-counts-1))
-
-(def n-r-index-keys-1 "1-gram map of counts-of-counts and indices with indices as keys" (zipmap cumsum-counts-of-counts-1 n-r-1))
-
-;2-gram maps
-
-(def counts-of-counts-2 "2-gram counts-of-counts map" (generate-counts-of-counts counts-2))
-
-(def cumsum-counts-of-counts-2 "Cumulative sum of all normalised pair frequencies" (generate-cumulative-sum counts-of-counts-2))
-
-(def n-r-2 "2-gram counts-of-counts map" (generate-n-r-map counts-of-counts-2))
-
-(def n-r-counts-keys-2 "2-gram map of counts-of-counts and indices with counts as keys" (zipmap n-r-2 cumsum-counts-of-counts-2))
-
-(def n-r-index-keys-2 "2-gram map of counts-of-counts and indices with indices as keys" (zipmap cumsum-counts-of-counts-2 n-r-2))
-
-;3-gram maps
-
-(def counts-of-counts-3 "3-gram counts-of-counts map" (generate-counts-of-counts counts-3))
-
-(def cumsum-counts-of-counts-3 "Cumulative sum of all normalised pair frequencies" (generate-cumulative-sum counts-of-counts-3))
-
-(def n-r-3 "3-gram counts-of-counts map" (generate-n-r-map counts-of-counts-3))
-
-(def n-r-counts-keys-3 "3-gram map of counts-of-counts and indices with counts as keys" (zipmap n-r-3 cumsum-counts-of-counts-3))
-
-(def n-r-index-keys-3 "3-gram map of counts-of-counts and indices with indices as keys" (zipmap cumsum-counts-of-counts-3 n-r-3))
-
-
-;Good-Turing methods
-
-(defn r "Returns count of given n-gram" [n-gram n] (get-count (resolve (symbol (str "counts-" n))) n-gram))
-
-(def r-memo "Memoized r" (memoize r))
-
-(defn n-r "Returns count of given count" [freq n] (if (> freq 0) ((resolve (symbol (str "counts-of-counts-" n))) freq) 
-                                                    (count (var-get (resolve (symbol (str "counts-" n)))))))
-
-(def n-r-memo "Memoized n-r" (memoize n-r))
-
-(defn n-r-plus-one "Returns count of next biggest count" [freq n] 
-  (let [n-r-index (get-count (resolve (symbol (str "n-r-counts-keys-" n))) freq)] 
-    (if (= n-r-index (count (var-get (resolve (symbol (str "counts-of-counts-" n)))))) 
-      (n-r-memo freq n) ((resolve (symbol (str "counts-of-counts-" n))) ((resolve (symbol (str "n-r-index-keys-" n))) (+ n-r-index 1))))))
-
-(def n-r-plus-one-memo "Memoized n-r-plus-one" (memoize n-r-plus-one))
-
-(defn g-t "Returns Good-Turing count of given word" [n-gram n] 
-  (let [freq (if (= (type n-gram) (type "")) (r-memo [n-gram] n) (r-memo n-gram n))] (* (+ freq 1) (/ (n-r-plus-one-memo freq n) (n-r-memo freq n)))))
-
-(def g-t-memo "Memoized g-t" (memoize g-t))
-
-(defn g-t-prob "Returns probability of a given n-gram using Good-Turing smoothing" [n-gram] 
-  (let [n (if (= (type n-gram) (type "")) (count [n-gram]) (count n-gram))] 
-    (if (> n 1) (float (/ (g-t-memo n-gram n) (g-t-memo (butlast n-gram) (- n 1)))) 
-      (float (/ (g-t-memo n-gram n) (count (var-get (resolve (symbol (str "counts-" n)))))))))) ;<- don't think this is right
-  
-(def g-t-prob-memo "Memoized g-t-prob" (memoize g-t-prob))
 
 ;(defn g-t-prob "Returns Good-Turing probability of given word" [word] (float (/ (g-t-memo word) N)))
 
@@ -347,10 +52,7 @@
 
 (println "Getting letters")
 
-(defn make-letter-groups "Creates a sequence of all letter groups of size n from input"
-  [theLetters n] (if (> (count theLetters) n)
-                   (cons (clojure.string/join (take n theLetters)) (lazy-seq (make-letter-groups (rest theLetters) n)))
-                   (cons (clojure.string/join (take n theLetters)) "")))
+
 
 ;(def letters-vector "Vector of all words in text" (split-at 1 formattedTextASCII))
 
@@ -359,84 +61,14 @@
   ;   (cons(str (first theLetters))(lazy-seq(makeLetters (rest theLetters))))
    ;  (cons (str (first theLetters)) "")))
 
-(def letters (make-letter-groups formattedText 1))
-
-(println "Getting letter counts")
-
-; count word frequencies
-
-(def counts-ASCII-1 "Frequencies of each distinct letter in text" (frequencies letters))
-
-(println "getting letter pairs")
-
-;(defn makeLetterPairs "Creates a sequence of all the letter pairs from the input"
- ; [theLetters] (if (> (count theLetters) 2)
-  ;   (cons (str (first theLetters) (second theLetters))(lazy-seq(makeLetterPairs (rest theLetters))))
-   ;  (cons (str (first theLetters) (second theLetters)) "")))
 
 
-  
 
 
-(def letter-pairs "Sequence of all pairs of letters in text" (make-letter-groups formattedText 2))
-
-(println "Getting letter pair counts")
-
-(def counts-ASCII-2 "Frequencies of each distinct letter pair in text" (frequencies letter-pairs))
-
-(def letter-trios "Sequence of all trios of letters in text" (make-letter-groups formattedText 3))
-
-(def counts-ASCII-3 "Frequencies of each distinct letter trio in text" (frequencies letter-trios))
 
 
-(def N-letter "number of letters in text" (count formattedText))
-
-(def M-letter "Size of letter vocabulary" 256)
-
-(def alpha1-letter "alpha for 1-gram letters" 1)
-
-(def alpha2-letter "alpha for 2-gram letters" 1)
-
-(def alpha3-letter "alpha for 3-gram letters" 1)
 
 
-(defn p1-letter "1-gram probability for letters" [theLetter] 
-  (let [theLetter (clojure.string/lower-case theLetter)] 
-                (float (/ (+ (get-count counts-ASCII-1 theLetter) alpha1-letter) 
-                          (+ N-letter (* M-letter alpha1-letter))))))
-
-(def p1-letter-memo "Memoized p1-letter" (memoize p1-letter))
-
-(defn p2-letter "2-gram probability for letters" [theLetters] 
-  (let [theLetters (clojure.string/lower-case theLetters)] 
-                  (float (/ (/ (+ (get-count counts-ASCII-2 theLetters) alpha2-letter)
-                            (+ (- N-letter 1) (* M-letter M-letter alpha2-letter))) 
-                            (p1-letter-memo (str (first theLetters)))))))
-
-(def p2-letter-memo "Memoized p2-letter" (memoize p2-letter))
-
-(defn p3-letter "3-gram probability for letters" [theLetters] 
-  (let [theLetters (clojure.string/lower-case theLetters)] 
-                  (float (/ (/ (+ (get-count counts-ASCII-3 theLetters) alpha3-letter)
-                            (+ (- N-letter 2) (* M-letter M-letter M-letter alpha3-letter))) 
-                            (p2-letter-memo (str (first theLetters) (second theLetters)))))))
-
-(defn p-letter "Returns n-gram probability depending on number of input letters"
-  [theLetters] (let [n (count theLetters)] 
-                 (cond (= 1 n) (p1-letter-memo theLetters) 
-                       (= 2 n) (p2-letter-memo theLetters)
-                       (= 3 n) (p2-letter-memo theLetters)
-                       :else (println "Please enter a letter string of length 3 or less"))))
-
-(defn find-letter-pair "Finds all letter pairs starting with given letter" [letter] (zipmap (map key counts-ASCII-2) (map #(if (= (str(first (key %))) letter) (val %) 0.0) counts-ASCII-2)))
-
-(defn find-letter-trio "Finds all letter trios starting with given letter pair" 
-  [l1 l2] (zipmap (map key counts-ASCII-3) (map #(if (= (str(first (key %))) l1) (if (= (str(second (key %))) l2) (val %) 0.0) 0.0) counts-ASCII-3)))
-
-
-(defn next-letter "Predicts next letter in sequence" 
-  [letters] (let [letters (clojure.string/lower-case letters)] (if (= (count letters) 1) (key (apply max-key val (find-letter-pair letters)))
-                                       (key (apply max-key val (find-letter-trio (str (first letters)) (str (second letters))))))))
 
 ; find frequencies of frequencies for single words and sort
 
