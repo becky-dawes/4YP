@@ -8,3 +8,7 @@
 
 (def make-letter-groups-memo "Memoized make-letter-groups" (memoize make-letter-groups))
 
+(defn update-counts-map [all-the-chars the-text-chars] (zipmap all-the-chars (map #(get-count the-text-chars %) all-the-chars)))
+
+(def update-counts-map-memo "Memoized update-counts-map" (memoize update-counts-map))
+

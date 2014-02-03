@@ -47,7 +47,7 @@ removed and converted to lower case"
 
 ;(def words (make-words-memo words-vector))
 
-(def words (make-words-memo raw-words-vector))
+(def words (make-words-memo words-vector))
 
 
 (def N "Count of all words in text" (count words))
@@ -113,7 +113,7 @@ removed and converted to lower case"
 
 ;(def pairs "Sequence of all pairs of words in text" (make-pairs-memo words-vector))
 
-(def pairs "Sequence of all pairs of words in text" (make-pairs-memo raw-words-vector))
+(def pairs "Sequence of all pairs of words in text" (make-pairs-memo words-vector))
 
 (println "Finding pair frequencies")
 
