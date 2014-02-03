@@ -174,12 +174,12 @@ Instead of using one of the smoothing techniques mentioned above, we can train a
 Prediction began at a very basic level of just predicting the next word in a bi-gram. This involves finding all word pairs starting with word $w_{1}$ and then selecting the pair with the highest count:
 
 \begin{lstlisting}
-(defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2)(map #(if (= (first (key \%)) w) (val \%) 0.0) counts-2)))
+(defn find-pair "Finds all word pairs starting with given word" [w] (zipmap (map key counts-2)(map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
 (def find-pair-memo "Memoized find-pair" (memoize find-pair))
 (defn next-word "Predicts next word in sequence" ([word1] (let [word1 (if (= 0 (get-count-memo counts-1 [(lower-case word1)])) "<unk>" (lower-case word1))] (last (key (apply max-key val (find-pair-memo word1)))))))
 \end{lstlisting}
 
-\lstinline!find-pair! returns a map of all bi-grams with a matching first word and their counts. The \lstinline!#! symbol represents an anonymous function and the \lstinline!\%! symbol represents the input argument to this function. This means that \lstinline!#(if (= (first (key \%)) w) (val \%) 0.0) counts-2)! will return the value (count) of the entry in \lstinline!counts-2! if the first word of the key is the same as the input word, \lstinline!w!. Otherwise it will return zero. Therefore the whole function returns a map of all bigrams in the text, with their counts as values if their first word matches, or with a value of zero otherwise.
+\lstinline!find-pair! returns a map of all bi-grams with a matching first word and their counts. The \lstinline!#! symbol represents an anonymous function and the \lstinline!%! symbol represents the input argument to this function. This means that \lstinline!#(if (= (first (key %)) w) (val %) 0.0) counts-2)! will return the value (count) of the entry in \lstinline!counts-2! if the first word of the key is the same as the input word, \lstinline!w!. Otherwise it will return zero. Therefore the whole function returns a map of all bigrams in the text, with their counts as values if their first word matches, or with a value of zero otherwise.
 
 The function \lstinline!next-word! takes an argument \lstinline!word1!. If this word does not exist in the text (i.e. if its count as a uni-gram is zero), then it sets \lstinline!word1! to be \lstinline!<unk>!. It then calls \lstinline!find-pair! with \lstinline!word1! and finds the entry in the map with the highest count (i.e. the most probable bi-gram beginning with that word) and returns the second word of it.
 
@@ -418,6 +418,44 @@ G_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{f-1}
 H_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{(f-1)^{2}}
 \label{eq:HD-Hi}
 \end{equation}
+
+Equations \ref{eq:HD-u-i-MP}-\ref{eq:HD-Hi} were all implemented in code to find the optimal values for the hyperparameters. $K(\alpha)$ (Equation \ref{eq:HD-K}) is shown in line 1 of the code below. This uses a function \lstinline!sum!, which sums all elements in an input vector. Line 2 defines the function \lstinline!F-w2-given-w1!, which corresponds to $\boldsymbol{F}_{i|}$ and returns all bigrams with $i$ (or \lstinline!w2!) as the second word, i.e. returns row $i$ of $F_{i|j}$. $V_{i}$ is then found by simply summing the number of non-zero entries in this matrix, as in line 3 of the code. $N_{Fi}$ (line 4) is found by summing the number of elements in $\boldsymbol{F}_{i|}$ that have a value greater than \lstinline!f! (the input argument). We use this function to find $F_{i}^{\text{max}}$ by calling it repeatedly and incrementing \lstinline!f! each time until $N_{Fi}$ is zero (\lstinline!find-F-max!, line 5). $G_{i}$ and $H_{i}$ (lines 6 and 7) simply create a vector of values by iterating the count \lstinline!f! and then use the function \lstinline!sum! to sum all elements. $u_{i}^{MP}$ (line 8) merely takes the results from all the above equations to find the optimum value of $u_{i}$ for any  given $i$. We can find all elements in $\boldsymbol{u}$ by calling \lstinline!u-i-MP! for all unique words in the text (\lstinline!find-all-u!, line 9). $\alpha^{MP}$ is then found by summing all elements in $\boldsymbol{u}$ (line 10). This process is then repeated iteratively until the values for $\alpha$ converge. We begin by giving $\alpha$ some initial value and then call the function \lstinline!find-all-u! until the previous and new values for $\alpha$ agree to (in this case) two decimal places.
+
+\begin{lstlisting}
+(defn K "Returns K (MacKay and Peto Equation 34)" [alpha] (let [count-vals (vals counts-1)] (+ (sum (map #(/ (+ % alpha) alpha) count-vals)) (* 0.5 (sum (map #(/ % (* alpha (+ % alpha))) count-vals))))))
+(defn F-w2-given-w1  "Returns all counts of bigrams with word w2 as the second word" [w2] (zipmap (map key counts-2) (map #(if (= (second (key %)) w2) (val %) 0.0) counts-2)))
+(defn V-i "Returns the number of entries in row 'i' of F-w2-given-w1 that are non-zero" [F-w2-w1] (sum (map #(if (= 0 %) 0 1) F-w2-w1)))
+(defn N-f-i "Returns the number of contexts w1 such that F-w2-given-w1 is greater than or equal to f" [f F-w2-w1] (sum (map #(if (>= f %) 0 1) F-w2-w1)))
+(defn find-F-max "Returns the largest F such that N-f-i is greater than zero" [F-w2-w1 f] (if (> (N-f-i-memo f F-w2-w1) 0) (find-F-max F-w2-w1 (inc f)) f))
+(defn G-i "Returns G-i (MacKay and Peto Equation 32)" [i] (let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] (sum (map #(/ (N-f-i-memo % F-vals) (- % 1)) f-vector))))
+(defn H-i "Returns H-i (MacKay and Peto Equation 33)" [i] (let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] (sum (map #(/ (N-f-i-memo % F-vals)(Math/pow (- % 1) 2)) f-vector))))
+(defn u-i-MP "Returns the optimal value for u-i" [alpha i] (let [F-w2-w1 (vals (F-w2-given-w1-memo i)) V (V-i-memo F-w2-w1) K-alpha (K-memo alpha) G (G-i-memo i) H (H-i-memo i)] (/ (* 2 V) (+ K-alpha (- G) (java.lang.Math/sqrt (+ (Math/pow (- K-alpha G) 2) (* 4 H V)))))))
+(defn find-all-u [alpha] (zipmap (keys counts-1) (map #(u-i-MP-memo alpha %) (keys counts-1))))
+(defn alpha-MP "Returns alpha based on the u-i values inputted" [u] (sum (vals u)))
+(defn find-optimum-u ([] (let [u (find-all-u-memo initial-alpha) alpha (alpha-MP-memo u)] (if (equal initial-alpha alpha 2) u (find-optimum-u alpha)))) ([old-alpha] (let [u (find-all-u-memo old-alpha) alpha (alpha-MP-memo u)] (if (equal old-alpha alpha 2) u (find-optimum-u alpha)))))
+\end{lstlisting}
+
+Having found optimum values for $\alpha$ and $\boldsymbol{u}$ (and therefore also for $\boldsymbol{m}$), we can then very simply find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ as in Equation \ref{eq:HD-i|j-D-alpham-H}: we search the map \lstinline!counts-2!, which contains the counts of all bigrams, for the bigram $i|j$ to find $F_{i|j}$; $F_{j}$ is found by searching \lstinline!counts-1!, which contains the counts of all uni-grams, for the word $j$; $m_{i}$ is simply the corresponding element of $\boldsymbol{m}$ for word $i$.
+
+\subsection{Comparing Models}
+
+Language models are compared by evaluating the perplexity of the data for each. A better model has a smaller perplexity. Perplexity is defined in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. We can approximate this to Equation \ref{eq:HD-perplexity-approx}.
+
+\begin{equation}
+\text{Perplexity}=2^{H(Q;\hat{P})}
+\label{eq:HD-perplexity}
+\end{equation}
+
+\begin{equation}
+\text{Perplexity}\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-\frac{1}{T}}
+\label{eq:HD-perplexity-approx}
+\end{equation}
+
+Perplexity was found for the hierarchical Dirichlet model as in the following code. We find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ for all bigrams as a vector, using the optimal values for $\alpha$ and $\boldsymbol{m}$. All elements in the vector are then multiplied together and the result is raised to the power $-\frac{1}{T}$, where $T$ is the total number of words in the corpus.
+
+\begin{lstlisting}
+(defn perplexity [] (Math/pow (reduce * (map #(P (second %) (first %) alpha-optimum m-optimum) pairs)) (- (/ 1 N))))
+\end{lstlisting}
 
 
 \section{Other}
