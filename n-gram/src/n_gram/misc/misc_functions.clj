@@ -56,3 +56,5 @@
   "All the ways of taking n (possibly the same) elements from the sequence of items"
   [items n]
   (apply cartesian-product (take n (repeat items))))
+
+

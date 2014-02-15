@@ -11,24 +11,40 @@
 (def find-letter-pair-memo "Memoized find-letter-pair" (memoize find-letter-pair))
 
 (defn find-letter-trio "Finds all letter trios starting with given letter pair" 
-  ([l1 l2] (zipmap (map key all-char-trio-counts) (map #(if (= (str(first (key %))) l1) 
-                           (if (= (str(second (key %))) l2) (val %) 0.0) 0.0) all-char-trio-counts)))
-  ([l1 l2 the-map] (zipmap (map key the-map) (map #(if (= (str(first (key %))) l1) 
-                          (if (= (str(second (key %))) l2) (val %) 0.0) 0.0) the-map))))
+  ([l1 l2] (zipmap (map key all-char-trio-counts) (map #(if (and (= (str(first (key %))) l1) 
+                           (= (str(second (key %))) l2)) (val %) 0.0) all-char-trio-counts)))
+  ([l1 l2 the-map] (zipmap (map key the-map) (map #(if (and (= (str(first (key %))) l1) 
+                          (= (str(second (key %))) l2)) (val %) 0.0) the-map))))
 
 (def find-letter-trio-memo "Memoized find-letter-trio" (memoize find-letter-trio))
+
+(defn find-letter-4 "Finds all letter groups of 4 starting with given letter trio" 
+  ([l1 l2 l3] (zipmap (map key all-char-4-counts) (map #(if (and (= (str(first (key %))) l1) 
+                           (= (str(second (key %))) l2) (= (str (nth (key %) 3)) l3))(val %) 0.0) all-char-4-counts)))
+  ([l1 l2 l3 the-map] (zipmap (map key the-map) (map #(if (and (= (str(first (key %))) l1) 
+                             (= (str(second (key %))) l2)(= (str (nth (key %) 3)) l3))  (val %) 0.0) the-map))))
+
+(def find-letter-4-memo "Memoized find-letter-4" (memoize find-letter-4))
 
 
 (defn next-letter "Predicts next letter in sequence" 
   ([letters] (let [letters (clojure.string/lower-case letters)] 
-               (if (= (count letters) 1) (key (apply max-key val (find-letter-pair-memo (str (last letters)))))
-                            (key (apply max-key val (find-letter-trio-memo (str (butlast letters)) 
-                                                                  (str (last letters))))))))
+               (cond (= (count letters) 1) (key (apply max-key val (find-letter-pair-memo (str (last letters)))))
+                            (= (count letters) 2) (key (apply max-key val (find-letter-trio-memo (str (butlast letters)) 
+                                                                                        (str (last letters)))))
+                            (= (count letters) 3) (key (apply max-key val (find-letter-4-memo (str (butlast (butlast letters))) (str (butlast letters)) 
+                                                                                        (str (last letters))))))))
   ([letters the-map] (let [letters (clojure.string/lower-case letters)] 
-               (if (= (count letters) 1) (key (apply max-key val (find-letter-pair-memo (str (last letters)) the-map)))
+               (cond (= (count letters) 1) (key (apply max-key val (find-letter-pair-memo (str (last letters)) the-map)))
+                     (= (count letters) 2)
                             (let [results-map (find-letter-trio-memo (str (butlast letters)) (str (last letters)) the-map)]
                               (if (zero? (sum (vals results-map))) 
-                                (key (apply max-key val (find-letter-pair-memo (str (last letters)) the-map)))
+                                (next-letter (str (last letters)) the-map)
+                                (key (apply max-key val results-map))))
+                            (= (count letters) 3) 
+                            (let [results-map (find-letter-4-memo (str (butlast letters)) (str (last letters)) the-map)]
+                              (if (zero? (sum (vals results-map))) 
+                                (next-letter (str (butlast letters) (last letters)) the-map)
                                 (key (apply max-key val results-map))))))))
 
 (def next-letter-memo "Memoized next-letter" (memoize next-letter))

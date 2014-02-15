@@ -9,7 +9,9 @@
                           ;[n-gram.words.good-turing :refer :all]
                           [n-gram.misc.misc-functions :refer :all]
                           ;[n-gram.words.interpolation :refer :all]
-                          [n-gram.letters.hierarchical-dirichlet :refer :all]))
+                          [n-gram.letters.hierarchical-dirichlet :refer :all]
+                          [n-gram.misc.suffix :refer :all]
+                          [clojure.inspector :refer :all]))
 
 
 
