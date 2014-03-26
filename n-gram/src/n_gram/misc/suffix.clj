@@ -1,8 +1,10 @@
 (ns n-gram.misc.suffix
   (:gen-class
-   :methods [#^{:static true} [is_sub_java [String String] Boolean]]
-   :require clojure.inspector)
+    :methods [#^{:static true} [is_sub_java [String String] Boolean]]
+    :require clojure.inspector)
   )
+
+(use 'clojure.pprint)
 
 
 
@@ -10,42 +12,42 @@
 (defrecord suffix_node [children cnt])
 
 (defn build_suffix_node "Builds suffix_node with no children and 0 count" [] (suffix_node. (hash-map)  0))
- 
+
 
 
 (defn dissoc-in
-     "Dissociates an entry from a nested associative structure returning a new
+  "Dissociates an entry from a nested associative structure returning a new
      nested structure. keys is a sequence of keys. Any empty maps that result
      will not be present in the new structure."
-     [m [k & ks :as keys]]
-     (if ks
-       (if-let [nextmap (get m k)]
-         (let [newmap (dissoc-in nextmap ks)]
-           (if (seq newmap)
-             (assoc m k newmap)
-             (dissoc m k)))
-         m)
-       (dissoc m k)))
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
 
 (defn search_tree "Searches tree for given word" [word node params] (let [children  (keys (get-in node params))  ;get keys of all children of the node
-                                           results (apply merge (for [[k v] (zipmap children (map #(re-find (re-pattern (str "^" word)) %) children)) :when (not (nil? v))] {k v}))] ;find all non-nil matches for the word in the node's children
-                                       (if (and (nil? results) (> (count word) 1)) (search_tree (subs word 0 (dec (count word))) node params) results))) ;if no matches are found, repeat with the last character of the word removed
+                                                                          results (apply merge (for [[k v] (zipmap children (map #(re-find (re-pattern (str "^" word)) %) children)) :when (not (nil? v))] {k v}))] ;find all non-nil matches for the word in the node's children
+                                                                      (if (and (nil? results) (> (count word) 1)) (search_tree (subs word 0 (dec (count word))) node params) results))) ;if no matches are found, repeat with the last character of the word removed
 
 (def search_tree_memo "Memoized search_tree" (memoize search_tree))
-  ;([original_word word node] [original_word (search_tree word node)]))
+;([original_word word node] [original_word (search_tree word node)]))
 
 (defn is_exact_match "Determines whether search results match exactly" [results word]  [((comp not nil?)(re-find (re-pattern (str "^" (key results) "$")) (val results))) ;does the matching pattern in the node's children exactly match a pattern in the beginning of the node?
-                                      ((comp not nil?) (re-find (re-pattern (str "^" word "$")) (val results))) ;does the word exactly match the pattern in the node's children?
-                                      (val results)]) ;the pattern found
+                                                                                        ((comp not nil?) (re-find (re-pattern (str "^" word "$")) (val results))) ;does the word exactly match the pattern in the node's children?
+                                                                                        (val results)]) ;the pattern found
 
 (def is_exact_match_memo "Memoized is_exact_match" (memoize is_exact_match))
-                                
+
 
 (defn add_children "Adds all children to given node" [root_node node children params] (cond (= (count children) 1)
-                                                       (assoc-in root_node (into params [node :children (key (first children))]) (val (first children))) ;add the first child to the node
-                                                       (> (count children) 1)
-                                                       (assoc-in (add_children root_node node (rest children) params) (into params [node :children (key (first children))]) (val (first children))) ;recursively call add_children with one less child
-                                                       :else root_node))
+                                                                                            (assoc-in root_node (into params [node :children (key (first children))]) (val (first children))) ;add the first child to the node
+                                                                                            (> (count children) 1)
+                                                                                            (assoc-in (add_children root_node node (rest children) params) (into params [node :children (key (first children))]) (val (first children))) ;recursively call add_children with one less child
+                                                                                            :else root_node))
 
 (def add_children_memo "Memoized add_children" (memoize add_children))
 
@@ -53,11 +55,11 @@
 (defn branch_node "Branches node" [root-node params old-node new-node] (let [new-sub-node (subs old-node (count new-node) (count old-node))
                                                                              children (assoc (get-in root-node (into params [old-node :children])) new-sub-node (get-in root-node (into params [old-node])))
                                                                              ;find all children of old node and associate them with the rest of the old node (i.e. child of new node)
-                                                             new-root-node (dissoc-in root-node (into params [old-node]))] ;dissociate old node from root node
-                                                         (add_children_memo (assoc-in new-root-node (into params  [new-node]) (build_suffix_node)) new-node children params))) ;associate new node with root node and add all children
+                                                                             new-root-node (dissoc-in root-node (into params [old-node]))] ;dissociate old node from root node
+                                                                         (add_children_memo (assoc-in new-root-node (into params  [new-node]) (build_suffix_node)) new-node children params))) ;associate new node with root node and add all children
 
 (def branch_node_memo "Memoized branch_node" (memoize branch_node))
-                                                                
+
 
 ;(defn print-function [fun & args] (do (println (str fun args)) (fun args)))
 
@@ -66,27 +68,27 @@
 (defn build_suffix_tree "Builds suffix tree for word" ([word] (build_suffix_tree word (build_suffix_node)))
   ([word root_node] (build_suffix_tree word root_node nil))
   ([word root_node params](let [root_node (if (nil? params) (cond (> 2 (count word)) root_node 
-                                         (= 2 (count word)) (build_suffix_tree (str (reduce str (rest word))) root_node)
-                                         :else (build_suffix_tree (reduce str (rest word)) root_node))
+                                                                  (= 2 (count word)) (build_suffix_tree (str (reduce str (rest word))) root_node)
+                                                                  :else (build_suffix_tree (reduce str (rest word)) root_node))
                                             root_node)
                                 params (if (nil? params) [:children] params)
-                                            match-results (search_tree_memo word root_node params)] ;is there a match for the beginning of the word already in the root node's children?
-                                                                (if (nil? match-results) (update-in (assoc-in root_node (into params [word]) (build_suffix_node)) (into params [word :cnt]) inc) ;if there is no match then add a new child
-                                                                  (let [exact-match-results (is_exact_match_memo (first match-results) word)] ;is there an exact match [(node exactly matches beginning of word) (node exactly matches whole word) (pattern matched)]
-                                                                    (if  (first exact-match-results) ;if node exactly matches some length of the beginning of the word
-                                                                      (if (second exact-match-results) (update-in root_node (into params [(last exact-match-results) :cnt]) inc) ;if whole word is exactly matched, update count of node
-                                                     
-                                                                        ;(let [params (if (nil? params) [:children (last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))]
-                                                                                      ; (into params [:children (subs word  (count (last exact-match-results)) (count word))]))]
-                                                                          (build_suffix_tree (subs word  (count (last exact-match-results)) (count word)) root_node
-;                                                                                             (assoc-in root_node (into params [(last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))])
-;                                                                                                       (build_suffix_node)) 
-                                                                                             (into params [(last exact-match-results) :children]))) ;otherwise add a child to node with the end of the word
-                                                                   (update-in (assoc-in (branch_node_memo root_node params      (key (first match-results)) (val (first match-results)) )
-                                                                                                     (into params [ (last exact-match-results) :children 
-                                                                                                   (subs word  (count (last exact-match-results)) (count word))]) 
-                                                                                        (build_suffix_node)) (into params [ (last exact-match-results) :children 
-                                                                                                   (subs word  (count (last exact-match-results)) (count word)) :cnt]) inc))))))) ;if the beginning of the word matches the beginning of the node, branch the node and add the rest of the word as a child
+                                match-results (search_tree_memo word root_node params)] ;is there a match for the beginning of the word already in the root node's children?
+                            (if (nil? match-results) (update-in (assoc-in root_node (into params [word]) (build_suffix_node)) (into params [word :cnt]) inc) ;if there is no match then add a new child
+                              (let [exact-match-results (is_exact_match_memo (first match-results) word)] ;is there an exact match [(node exactly matches beginning of word) (node exactly matches whole word) (pattern matched)]
+                                (if  (first exact-match-results) ;if node exactly matches some length of the beginning of the word
+                                  (if (second exact-match-results) (update-in root_node (into params [(last exact-match-results) :cnt]) inc) ;if whole word is exactly matched, update count of node
+                                    
+                                    ;(let [params (if (nil? params) [:children (last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))]
+                                    ; (into params [:children (subs word  (count (last exact-match-results)) (count word))]))]
+                                    (build_suffix_tree (subs word  (count (last exact-match-results)) (count word)) root_node
+                                                       ;                                                                                             (assoc-in root_node (into params [(last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))])
+                                                       ;                                                                                                       (build_suffix_node)) 
+                                                       (into params [(last exact-match-results) :children]))) ;otherwise add a child to node with the end of the word
+                                  (update-in (assoc-in (branch_node_memo root_node params      (key (first match-results)) (val (first match-results)) )
+                                                       (into params [ (last exact-match-results) :children 
+                                                                     (subs word  (count (last exact-match-results)) (count word))]) 
+                                                       (build_suffix_node)) (into params [ (last exact-match-results) :children 
+                                                                                          (subs word  (count (last exact-match-results)) (count word)) :cnt]) inc))))))) ;if the beginning of the word matches the beginning of the node, branch the node and add the rest of the word as a child
 
 (def build_suffix_tree_memo "Memoized build_suffix_tree" (memoize build_suffix_tree))
 
@@ -96,7 +98,7 @@
   [word sub-word] (let [first-char-index (.indexOf word sub-word)] [first-char-index (+ first-char-index (count sub-word))]))
 
 (def create-indices-memo "Memoized create-indices" (memoize create-indices))
-  
+
 (defn dereference-indices "Returns the sub-word from word given the first and last character indicies"
   [word indices] (str (subs word (first indices) (second indices))))
 
@@ -104,8 +106,8 @@
 
 (defn search_tree_indices "Searches tree for any matches to given word with node keys as a vector of charcater indices"
   [word node params tree-text] (let [children  (keys (get-in node params))  ;get keys of all children of the node
-results (apply merge (for [[k v] (zipmap (map #(dereference-indices-memo tree-text %) children) (map #(re-find (re-pattern (str "^" word)) (dereference-indices-memo tree-text %)) children)) :when (not (nil? v))] {k v}))] ;find all non-nil matches for the word in the node's children
-(if (and (nil? results) (> (count word) 1)) (search_tree_indices (subs word 0 (dec (count word))) node params tree-text) results))) ;if no matches are found, repeat with the last character of the word removed
+                                     results (apply merge (for [[k v] (zipmap (map #(dereference-indices-memo tree-text %) children) (map #(re-find (re-pattern (str "^" word)) (dereference-indices-memo tree-text %)) children)) :when (not (nil? v))] {k v}))] ;find all non-nil matches for the word in the node's children
+                                 (if (and (nil? results) (> (count word) 1)) (search_tree_indices (subs word 0 (dec (count word))) node params tree-text) results))) ;if no matches are found, repeat with the last character of the word removed
 
 (def search_tree_indices_memo "Memoized search_tree_indices" (memoize search_tree_indices))
 
@@ -115,11 +117,11 @@ results (apply merge (for [[k v] (zipmap (map #(dereference-indices-memo tree-te
   [root-node params old-node new-node tree-text] (let [old-node-indices (create-indices-memo tree-text old-node) new-node-indices (create-indices-memo tree-text new-node) 
                                                        new-sub-node-indices (create-indices-memo tree-text (subs old-node (count new-node) (count old-node)))
                                                        children (assoc (get-in root-node (into params [old-node-indices :children])) new-sub-node-indices (get-in root-node (into params [old-node-indices]))) ;find all children of old node and associate them with the rest of the old node (i.e. child of new node)
-new-root-node (dissoc-in root-node (into params [old-node-indices]))] ;dissociate old node from root node
-(add_children_memo (assoc-in new-root-node (into params  [new-node-indices]) (build_suffix_node)) new-node-indices children params))) ;associate new node with root node and add all children
+                                                       new-root-node (dissoc-in root-node (into params [old-node-indices]))] ;dissociate old node from root node
+                                                   (add_children_memo (assoc-in new-root-node (into params  [new-node-indices]) (build_suffix_node)) new-node-indices children params))) ;associate new node with root node and add all children
 
 (def branch_node_indices_memo "Memoized branch_node_indices" (memoize branch_node_indices))
-                                                                
+
 
 ;(defn print-function [fun & args] (do (println (str fun args)) (fun args)))
 
@@ -128,80 +130,163 @@ new-root-node (dissoc-in root-node (into params [old-node-indices]))] ;dissociat
 (defn build_suffix_tree_indices "Builds suffix tree with node keys as character indicies" ([word] [word (build_suffix_tree_indices word (build_suffix_node) word)])
   ([word root_node tree-text] (build_suffix_tree_indices word root_node nil tree-text))
   ([word root_node params tree-text](let [root_node (if (nil? params) (cond (> 2 (count word)) root_node 
-                                                   (= 2 (count word)) (build_suffix_tree_indices (str (reduce str (rest word))) root_node tree-text)
-                                                   :else (build_suffix_tree_indices (reduce str (rest word)) root_node tree-text))
+                                                                            (= 2 (count word)) (build_suffix_tree_indices (str (reduce str (rest word))) root_node tree-text)
+                                                                            :else (build_suffix_tree_indices (reduce str (rest word)) root_node tree-text))
                                                       root_node)
                                           params (if (nil? params) [:children] params)
-                                                      match-results (search_tree_indices_memo word root_node params tree-text)
-                                                      word-indices (create-indices-memo tree-text word)] ;is there a match for the beginning of the word already in the root node's children?
-                                                                          (if (nil? match-results) (update-in (assoc-in root_node (into params [word-indices]) (build_suffix_node)) (into params [word-indices :cnt]) inc) ;if there is no match then add a new child
-                                                                            (let [exact-match-results (is_exact_match_memo (first match-results) word)] ;is there an exact match [(node exactly matches beginning of word) (node exactly matches whole word) (pattern matched)]
-                                                                              (if  (first exact-match-results) ;if node exactly matches some length of the beginning of the word
-                                                                                (if (second exact-match-results) (update-in root_node (into params [(create-indices-memo tree-text (last exact-match-results)) :cnt]) inc) ;if whole word is exactly matched, update count of node
-                                                     
-                                                                                  ;(let [params (if (nil? params) [:children (last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))]
-                                                                                                ; (into params [:children (subs word  (count (last exact-match-results)) (count word))]))]
-                                                                                    (build_suffix_tree_indices (subs word  (count (last exact-match-results)) (count word)) root_node
-;                                                                                             (assoc-in root_node (into params [(last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))])
-;                                                                                                       (build_suffix_node)) 
-                                                                                             (into params [(create-indices-memo tree-text (last exact-match-results)) :children]) tree-text)) ;otherwise add a child to node with the end of the word
-                                                                   (update-in (assoc-in (branch_node_indices_memo root_node params      (key (first match-results)) (val (first match-results)) tree-text)
-                                                                                                     (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
-                                                                                                   (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word)))]) 
-                                                                                        (build_suffix_node)) (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
-                                                                                                   (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word))) :cnt]) inc))))))) ;if the beginning of the word matches the beginning of the node, branch the node and add the rest of the word as a child
+                                          match-results (search_tree_indices_memo word root_node params tree-text)
+                                          word-indices (create-indices-memo tree-text word)] ;is there a match for the beginning of the word already in the root node's children?
+                                      (if (nil? match-results) (update-in (assoc-in root_node (into params [word-indices]) (build_suffix_node)) (into params [word-indices :cnt]) inc) ;if there is no match then add a new child
+                                        (let [exact-match-results (is_exact_match_memo (first match-results) word)] ;is there an exact match [(node exactly matches beginning of word) (node exactly matches whole word) (pattern matched)]
+                                          (if  (first exact-match-results) ;if node exactly matches some length of the beginning of the word
+                                            (if (second exact-match-results) (update-in root_node (into params [(create-indices-memo tree-text (last exact-match-results)) :cnt]) inc) ;if whole word is exactly matched, update count of node
+                                              
+                                              ;(let [params (if (nil? params) [:children (last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))]
+                                              ; (into params [:children (subs word  (count (last exact-match-results)) (count word))]))]
+                                              (build_suffix_tree_indices (subs word  (count (last exact-match-results)) (count word)) root_node
+                                                                         ;                                                                                             (assoc-in root_node (into params [(last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))])
+                                                                         ;                                                                                                       (build_suffix_node)) 
+                                                                         (into params [(create-indices-memo tree-text (last exact-match-results)) :children]) tree-text)) ;otherwise add a child to node with the end of the word
+                                            (update-in (assoc-in (branch_node_indices_memo root_node params      (key (first match-results)) (val (first match-results)) tree-text)
+                                                                 (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
+                                                                               (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word)))]) 
+                                                                 (build_suffix_node)) (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
+                                                                                                    (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word))) :cnt]) inc))))))) ;if the beginning of the word matches the beginning of the node, branch the node and add the rest of the word as a child
 
-(def build_suffix_tree_indices_memo "Memoized buil_suffix_tree_indices" (memoize build_suffix_tree_indices))
+(def build_suffix_tree_indices_memo "Memoized build_suffix_tree_indices" (memoize build_suffix_tree_indices))
 
 
- (defn loop-find-children [node] (let [child (first (keys (get node :children)))] (if ((comp not nil?) child) (str child (loop-find-children (get-in node [:children child]))))))
- 
- (defn loop-through-nodes [node key children] (if (> (count children) 0) (loop-through-nodes (get-in node [:children (first (keys children))]) 
-                                                                                             (get-in node [:children (first (keys children)) :children]))
-                                                key))
- 
- (defn find_branch [tree params] (str "{" (first (keys (get-in tree params))) (find_branch tree (into params [(first (keys (get-in tree params))) :children])) "}"))
- 
- (defn print-tree ([tree] (print-tree tree [:children]))
-   ([tree params] (print-tree tree params ""))
-    ([tree params output] (let [children (keys (get-in tree params))](if ((comp not empty?) children) (print-tree tree (into params [(first children) :children]) (str output "{" (first children) ) )
-                                                                                                
-                                                                        (println (str output "{" (first children) "}"))))))
- 
- (defrecord restaurant_node [children tables])
- 
- (defn build_restaurant_node [] (restaurant_node. (hash-map) (hash-map)))
- 
- ;(defn add_word [node word] (if (nil? (get-in node [:tables word])) (assoc-in node [:tables word] 1) (update-in node [:tables word] inc)))
- 
- (defn conj-in [node params element] (let [children (get-in node params) new-children (conj children element)] (assoc-in node [:children] new-children)))
- 
- (defn build_suffix_tree_rest "Builds suffix tree with node keys as character indicies using Chinese Restaurant Model" ([word] [word (build_suffix_tree_rest word (build_suffix_node) word)])
-  ([word root_node tree-text] (build_suffix_tree_rest word root_node nil tree-text))
-  ([word root_node params tree-text](let [root_node (if (nil? params) (cond (> 2 (count word)) root_node 
-                                                   (= 2 (count word)) (build_suffix_tree_rest (str (reduce str (rest word))) root_node tree-text)
-                                                   :else (build_suffix_tree_rest (reduce str (rest word)) root_node tree-text))
-                                                      root_node)
-                                          params (if (nil? params) [:children] params)
-                                                      match-results (search_tree_indices_memo word root_node params tree-text)
-                                                      word-indices (create-indices-memo tree-text word)] ;is there a match for the beginning of the word already in the root node's children?
-                                                                          (if (nil? match-results) (assoc-in (assoc-in root_node params (build_restaurant_node)) (into params [:tables word-indices]) 1) ;if there is no match then add a new child
-                                                                            (let [exact-match-results (is_exact_match_memo (first match-results) word)] ;is there an exact match [(node exactly matches beginning of word) (node exactly matches whole word) (pattern matched)]
-                                                                              (if  (first exact-match-results) ;if node exactly matches some length of the beginning of the word
-                                                                                (if (second exact-match-results) (update-in root_node (into params [(create-indices-memo tree-text (last exact-match-results)) :cnt]) inc) ;if whole word is exactly matched, update count of node
-                                                     
-                                                                                  ;(let [params (if (nil? params) [:children (last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))]
-                                                                                                ; (into params [:children (subs word  (count (last exact-match-results)) (count word))]))]
-                                                                                    (build_suffix_tree_rest (subs word  (count (last exact-match-results)) (count word)) root_node
-;                                                                                             (assoc-in root_node (into params [(last exact-match-results) :children (subs word  (count (last exact-match-results)) (count word))])
-;                                                                                                       (build_suffix_node)) 
-                                                                                             (into params [(create-indices-memo tree-text (last exact-match-results)) :children]) tree-text)) ;otherwise add a child to node with the end of the word
-                                                                   (update-in (assoc-in (branch_node_indices_memo root_node params      (key (first match-results)) (val (first match-results)) tree-text)
-                                                                                                     (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
-                                                                                                   (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word)))]) 
-                                                                                        (build_suffix_node)) (into params [ (create-indices-memo tree-text (last exact-match-results)) :children 
-                                                                                                   (create-indices-memo tree-text (subs word  (count (last exact-match-results)) (count word))) :cnt]) inc))))))) ;if the beginning of the word matches the beginning of the node, branch the node and add the rest of the word as a child
- 
+(defn loop-find-children [node] (let [child (first (keys (get node :children)))] (if ((comp not nil?) child) (str child (loop-find-children (get-in node [:children child]))))))
+
+(defn loop-through-nodes [node key children] (if (> (count children) 0) (loop-through-nodes (get-in node [:children (first (keys children))]) 
+                                                                                            (get-in node [:children (first (keys children)) :children]))
+                                               key))
+
+(defn find_branch [tree params] (str "{" (first (keys (get-in tree params))) (find_branch tree (into params [(first (keys (get-in tree params))) :children])) "}"))
+
+(defn print-tree ([tree] (print-tree tree [:children]))
+  ([tree params] (print-tree tree params ""))
+  ([tree params output] (let [children (keys (get-in tree params))](if ((comp not empty?) children) (print-tree tree (into params [(first children) :children]) (str output "{" (first children) ) )
+                                                                     
+                                                                     (println (str output "{" (first children) "}"))))))
+
+(defrecord restaurant_node [range children restaurant]); restaurant with values [no. tables, no. customers]
+
+(defn build_restaurant_node "Builds a new restaurant node object
+[] node with empty range, children and restaurant
+[range] node with the given range but empty children and restaurant
+[range letter] node with the given range, empty children and one table with one customer for the given letter in the restaurant
+[range children restaurant] node with the given range, children and restaurant" 
+  ([] (restaurant_node. [] (hash-map) (hash-map)))
+  ([range] (restaurant_node. range (hash-map) (hash-map)))
+  ([range letter] (restaurant_node. range (hash-map) {letter [1 1]}))
+  ([range children restaurant](restaurant_node. range children restaurant)))
+
+(defn loop_find_tables "Cycles through all the children of the node to find the total number of tables for the given letter"
+  [children node letter params] (let [result (get-in node (into params [:children (first children) :restaurant letter]))
+             tables (if (nil? result) [0 0] result)] 
+         (if (>= 1 (count children)) (first tables)
+           (+ (first tables) (loop_find_tables (rest children) node letter params)))))
+
+(defn find_child_table_count "Returns the total count of all tables for the given letter in the node's children"
+  [node letter params] (let [children (keys (get-in node (into params [:children]))) result (loop_find_tables children node letter params)]
+                        (if (nil? result) 0 result)))
+
+(defn check_table_customer_consistency "Checks that number of tables for the given letter in the node's children is equal to the number of customers for the letter in the node's restaurant"
+  [node letter params](let [table_count (find_child_table_count node letter params) 
+                           params (into params [:restaurant letter])
+                           parent_restaurant (if (nil? (get-in node params)) [0 0] (get-in node params))]
+                       (if (and (not (zero? table_count)) (not (= table_count (second parent_restaurant)) ))
+                         (if (<= (first parent_restaurant) table_count) 
+                           (if (zero? (first parent_restaurant))
+                             (assoc-in node params [1 table_count])
+                             (assoc-in node params [(first parent_restaurant) table_count]))
+                           (assoc-in node params [table_count table_count]))
+                         node)))
+
+(defn check_for_children "Checks if there are any children starting with the given letter"
+  [letter children] (if (< 0 (count children)) 
+                     (if (= (first children) letter) true (check_for_children letter (rest children))) false))
+
+(defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
+  ([range suffix root_word] (let [range_letters (dereference-indices root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
+                              (if (nil? match) 
+                                (check_range (create-indices root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word (count range_letters))
+                                [match (= (count range_letters) (count match)) (> (count suffix) (count match))])))
+  ([range suffix root_word length] (let [range_letters (dereference-indices root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
+                                     (if (nil? match) 
+                                       (check_range (create-indices root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length)
+                                       [match (= length (count match)) (> (count suffix) (count match))]))))
+
+(defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
+  [node tables params] (if (<= 1 (count tables)) 
+                        (check_table_customer_consistency node (first tables) params)
+                        (check_consistency_all_tables (check_table_customer_consistency node (first tables) params) (rest tables) params)))
+
+(defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
+  [node letter new_range new_letter params] (let [old_range (get-in node (into params [:children letter :range])) 
+                                                 restaurant (get-in node (into params [:children letter :restaurant])) 
+                                                 children (get-in node (into params [:children letter :children]))]
+                                             (check_consistency_all_tables
+                                               (assoc-in 
+                                                 (assoc-in 
+                                                   (dissoc-in node (into params [:children letter]))
+                                                   (into params [:children letter]) (build_restaurant_node new_range))
+                                                 (into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) (- (last new_range) (first new_range))) (last old_range)] children restaurant))
+                                               (keys restaurant) (into params [:children letter]))))
+
+(defn build_tree "Builds a suffix tree for the given word"
+  ([word] (build_tree word (build_restaurant_node) word []) )
+  ([word root_node root_word params] (let [root_node (if (empty? params) (cond (> 2 (count word)) root_node 
+                                                                               (= 2 (count word)) (build_tree (str (reduce str (rest word))) root_node root_word params)
+                                                                               :else (build_tree (reduce str (rest word)) root_node root_word params))
+                                                       root_node) 
+                                           suffix (cond (< 2 (count word)) (reduce str (rest word))
+                                                        (= 2 (count word)) (str (reduce str (rest word)))
+                                                        :else "")
+                                           suffix_start (str (first suffix))
+                                           letter (str (first word))
+                                           children (get-in root_node (into params [:children]))]
+                                       (if (empty? children) 
+                                         (check_table_customer_consistency 
+                                           (assoc-in root_node (into params [:children suffix_start]) 
+                                                     (build_restaurant_node (create-indices root_word suffix) letter) 
+                                                     )
+                                           letter params)
+                                         (if (check_for_children suffix_start (keys children))
+                                           (let [match_results (check_range (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
+                                             (if (second match_results)
+                                               (if (nth match_results 2)
+                                                 (if (empty? (get-in root_node [:children suffix_start :children]))
+                                                   (check_table_customer_consistency 
+                                                     (check_table_customer_consistency 
+                                                       (assoc-in
+                                                         (build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start]))
+                                                         [:children suffix_start :children ""] (build_restaurant_node [0 0] (get-in root_node [:children suffix_start :children]) (get-in root_node [:children suffix_start :restaurant])))
+                                                       letter (into params [:children suffix_start]))
+                                                     letter params)
+                                                   (check_table_customer_consistency 
+                                                     (check_table_customer_consistency  
+                                                       (build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start]))
+                                                       letter (into params [:children suffix_start]))
+                                                     letter params))
+                                                 (check_table_customer_consistency root_node letter params))
+                                               (let [new-range (create-indices root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range]))
+                                                     new_branch (dereference-indices root_word new-range)]
+                                                 (check_table_customer_consistency 
+                                                   (check_table_customer_consistency
+                                                     (assoc-in 
+                                                       (branch root_node suffix_start new-range 
+                                                               (subs (dereference-indices root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params)
+                                                       (into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) 
+                                                       (build_restaurant_node (create-indices root_word (subs suffix (count (first match_results)) (count suffix))) letter))
+                                                     letter (into params [:children suffix_start]))
+                                                   letter params)))
+                                             )
+                                           (check_table_customer_consistency 
+                                             (assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices root_word suffix) letter))
+                                             letter params))))))
+
 ; (defn 
 ;                                            
 ; (defn draw-tree [tree]                       
