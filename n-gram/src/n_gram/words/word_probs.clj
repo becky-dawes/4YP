@@ -10,9 +10,9 @@
 
 (def alpha3 "alpha for 3-gram" 1)
 
-(defn p1 "1-gram probability" ([word1] (float (/ (+ (get-count-memo counts-1 word1) alpha1)
+(defn p1 "1-gram probability" ([word1] (float (/ (+ (get-count-memo counts-1 [word1]) alpha1)
                                                  (+ N (* M alpha1)))))
- ([word1 word-counts] (float (/ (+ (get-count-memo word-counts word1) alpha1)
+ ([word1 word-counts] (float (/ (+ (get-count-memo word-counts [word1]) alpha1)
                                                 (+ N (* M alpha1))))))
 
 (def p1-memo "Memoized p1" (memoize p1))

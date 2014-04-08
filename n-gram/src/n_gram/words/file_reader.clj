@@ -3,7 +3,7 @@
 
 (use 'clojure.java.io)
 
-(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz-chapter-1.txt")) 
+(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz.txt")) 
 
 (def lines "All lines in file" (with-open [rdr (reader file-name)] 
              (doall (line-seq rdr))))
@@ -43,7 +43,7 @@ removed and converted to lower case"
 
 (def words-vector "Vector of new words" (split-words-memo formatted-new-text))
 
-
+;(def words-vector "Vector of new words" (split-words-memo formattedText))
 
 ;(def words (make-words-memo words-vector))
 
@@ -59,6 +59,9 @@ removed and converted to lower case"
 ; count word frequencies
 
 (def counts-1 "Frequencies of each distinct word in text" (frequencies words))
+
+(def new-counts-1 (into {} (filter #(-> % val (< 50)) counts-1)))
+
 
 ;(def n-gram-count-maps (zipmap [1] ["counts-1"]))
 
@@ -120,6 +123,8 @@ removed and converted to lower case"
 ; Find frequency of each word pair
 
 (def counts-2 "Map of frequencies of all pairs of words in text" (frequencies pairs))
+
+(def new-counts-2 (into {} (filter #(-> % val (< 40)) counts-2)))
 
 ;(def n-gram-count-maps (assoc n-gram-count-maps 2 "counts-2"))
 

@@ -58,3 +58,4 @@
   (apply cartesian-product (take n (repeat items))))
 
 
+(defn vector_to_string [vector] (str (reduce str vector)))

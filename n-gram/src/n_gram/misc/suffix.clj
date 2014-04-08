@@ -188,12 +188,16 @@
          (if (>= 1 (count children)) (first tables)
            (+ (first tables) (loop_find_tables (rest children) node letter params)))))
 
+(def loop_find_tables_memo "Memoized loop_find_tables" (memoize loop_find_tables))
+
 (defn find_child_table_count "Returns the total count of all tables for the given letter in the node's children"
-  [node letter params] (let [children (keys (get-in node (into params [:children]))) result (loop_find_tables children node letter params)]
+  [node letter params] (let [children (keys (get-in node (into params [:children]))) result (loop_find_tables_memo children node letter params)]
                         (if (nil? result) 0 result)))
 
+(def find_child_table_count_memo "Memoized find_child_table_count" (memoize find_child_table_count))
+
 (defn check_table_customer_consistency "Checks that number of tables for the given letter in the node's children is equal to the number of customers for the letter in the node's restaurant"
-  [node letter params](let [table_count (find_child_table_count node letter params) 
+  [node letter params](let [table_count (find_child_table_count_memo node letter params) 
                            params (into params [:restaurant letter])
                            parent_restaurant (if (nil? (get-in node params)) [0 0] (get-in node params))]
                        (if (and (not (zero? table_count)) (not (= table_count (second parent_restaurant)) ))
@@ -204,36 +208,46 @@
                            (assoc-in node params [table_count table_count]))
                          node)))
 
+(def check_table_customer_consistency_memo "Memoized check_table_customer_consistency" (memoize check_table_customer_consistency))
+
 (defn check_for_children "Checks if there are any children starting with the given letter"
   [letter children] (if (< 0 (count children)) 
                      (if (= (first children) letter) true (check_for_children letter (rest children))) false))
 
+(def check_for_children_memo "Memoize check_for_children" (memoize check_for_children))
+
 (defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
-  ([range suffix root_word] (let [range_letters (dereference-indices root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
+  ([range suffix root_word] (let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
                               (if (nil? match) 
-                                (check_range (create-indices root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word (count range_letters))
+                                (check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word (count range_letters))
                                 [match (= (count range_letters) (count match)) (> (count suffix) (count match))])))
-  ([range suffix root_word length] (let [range_letters (dereference-indices root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
+  ([range suffix root_word length] (let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
                                      (if (nil? match) 
-                                       (check_range (create-indices root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length)
+                                       (check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length)
                                        [match (= length (count match)) (> (count suffix) (count match))]))))
+
+(def check_range_memo "Memoized check_range" (memoize check_range))
 
 (defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
   [node tables params] (if (<= 1 (count tables)) 
-                        (check_table_customer_consistency node (first tables) params)
-                        (check_consistency_all_tables (check_table_customer_consistency node (first tables) params) (rest tables) params)))
+                        (check_table_customer_consistency_memo node (first tables) params)
+                        (check_consistency_all_tables (check_table_customer_consistency_memo node (first tables) params) (rest tables) params)))
+
+(def check_consistency_all_tables_memo "Memoized check_consistency_all_tables" (memoize check_consistency_all_tables))
 
 (defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
   [node letter new_range new_letter params] (let [old_range (get-in node (into params [:children letter :range])) 
                                                  restaurant (get-in node (into params [:children letter :restaurant])) 
                                                  children (get-in node (into params [:children letter :children]))]
-                                             (check_consistency_all_tables
+                                             (check_consistency_all_tables_memo
                                                (assoc-in 
                                                  (assoc-in 
                                                    (dissoc-in node (into params [:children letter]))
                                                    (into params [:children letter]) (build_restaurant_node new_range))
                                                  (into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) (- (last new_range) (first new_range))) (last old_range)] children restaurant))
                                                (keys restaurant) (into params [:children letter]))))
+
+(def branch_memo "Memoized branch" (memoize branch))
 
 (defn build_tree "Builds a suffix tree for the given word"
   ([word] (build_tree word (build_restaurant_node) word []) )
@@ -248,44 +262,46 @@
                                            letter (str (first word))
                                            children (get-in root_node (into params [:children]))]
                                        (if (empty? children) 
-                                         (check_table_customer_consistency 
+                                         (check_table_customer_consistency_memo
                                            (assoc-in root_node (into params [:children suffix_start]) 
-                                                     (build_restaurant_node (create-indices root_word suffix) letter) 
+                                                     (build_restaurant_node (create-indices-memo root_word suffix) letter) 
                                                      )
                                            letter params)
-                                         (if (check_for_children suffix_start (keys children))
-                                           (let [match_results (check_range (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
+                                         (if (check_for_children_memo suffix_start (keys children))
+                                           (let [match_results (check_range_memo (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
                                              (if (second match_results)
                                                (if (nth match_results 2)
                                                  (if (empty? (get-in root_node [:children suffix_start :children]))
-                                                   (check_table_customer_consistency 
-                                                     (check_table_customer_consistency 
+                                                   (check_table_customer_consistency_memo 
+                                                     (check_table_customer_consistency_memo
                                                        (assoc-in
                                                          (build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start]))
                                                          [:children suffix_start :children ""] (build_restaurant_node [0 0] (get-in root_node [:children suffix_start :children]) (get-in root_node [:children suffix_start :restaurant])))
                                                        letter (into params [:children suffix_start]))
                                                      letter params)
-                                                   (check_table_customer_consistency 
-                                                     (check_table_customer_consistency  
+                                                   (check_table_customer_consistency_memo
+                                                     (check_table_customer_consistency_memo  
                                                        (build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start]))
                                                        letter (into params [:children suffix_start]))
                                                      letter params))
-                                                 (check_table_customer_consistency root_node letter params))
-                                               (let [new-range (create-indices root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range]))
-                                                     new_branch (dereference-indices root_word new-range)]
-                                                 (check_table_customer_consistency 
-                                                   (check_table_customer_consistency
+                                                 (check_table_customer_consistency_memo root_node letter params))
+                                               (let [new-range (create-indices-memo root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range]))
+                                                     new_branch (dereference-indices-memo root_word new-range)]
+                                                 (check_table_customer_consistency_memo 
+                                                   (check_table_customer_consistency_memo
                                                      (assoc-in 
-                                                       (branch root_node suffix_start new-range 
-                                                               (subs (dereference-indices root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params)
+                                                       (branch_memo root_node suffix_start new-range 
+                                                               (subs (dereference-indices-memo root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params)
                                                        (into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) 
-                                                       (build_restaurant_node (create-indices root_word (subs suffix (count (first match_results)) (count suffix))) letter))
+                                                       (build_restaurant_node (create-indices-memo root_word (subs suffix (count (first match_results)) (count suffix))) letter))
                                                      letter (into params [:children suffix_start]))
                                                    letter params)))
                                              )
-                                           (check_table_customer_consistency 
-                                             (assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices root_word suffix) letter))
+                                           (check_table_customer_consistency_memo
+                                             (assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices-memo root_word suffix) letter))
                                              letter params))))))
+
+(def build_tree_memo "Memoized build_tree" (memoize build_tree))
 
 ; (defn 
 ;                                            

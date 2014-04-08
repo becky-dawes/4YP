@@ -5,7 +5,7 @@
                           ;[n-gram.words.word-predictor :refer :all]
                           [n-gram.letters.letter-predictor :refer :all]
                           ;[n-gram.words.word-probs :refer :all]
-                          ;[n-gram.letters.letter-probs :refer :all]
+                          [n-gram.letters.letter-probs :refer :all]
                           ;[n-gram.words.good-turing :refer :all]
                           [n-gram.misc.misc-functions :refer :all]
                           ;[n-gram.words.interpolation :refer :all]
