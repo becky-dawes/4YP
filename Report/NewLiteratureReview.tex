@@ -1,0 +1,32 @@
+\chapter{Literature Review}
+
+\todo[inline]{Explain n-grams}
+
+... probably explain $n$-grams here
+
+The simplest form of language model is that of an $n$-gram. This uses the counts of unique words in a training corpus to predict the next word following a given context. However, this means that any word not found in the training corpus will have zero count and therefore will be assigned zero probability of following any context. This clearly is incorrect. Smoothing techniques have been established to account for this problem.
+
+\section{Previous Work}
+
+Chen and Goodman \cite{chen1996empirical} compared a range of different smoothing techniques, namely Baseline smoothing, Additive smoothing, Katz smoothing, Church-Gale smoothing and Jelinek-Mercer smoothing. They found that Church-Gale smoothing outperformed the other methods for bigram models. They also implemented two new techniques, \lstinline!average-count! and \lstinline!one-count!. 
+
+Additive smoothing is defined as in Equation \ref{eq:additiveSmoothing}. Good-Turing smoothing has been found to perform slightly better and states that an $n$-gram that occurs $r$ times has an adjusted count of $r^{*}$ according to Equation \ref{eq:goodTuringSmoothing}, where $N_{r}$ is the number of $n$-grams with count $r$ in the training corpus. Katz smoothing extends this method by adding the interpolation of higher-order models with lower-order models. 
+
+\begin{equation}
+\label{eq:additiveSmoothing}
+P_{add}(w_{i}|w_{i-n+1}^{i-1}=\frac{c(w_{i-n+1}^{i})+\delta}{c(w_{i-n+1}^{i-1})+\delta|V|}
+\end{equation}
+
+\begin{equation}
+\label{eq:goodTuringSmoothing}
+r^{*}=(r+1)\frac{N_{r+1}}{N_{r}}
+\end{equation}
+
+Church and Gale's method combines that of Good-Turing with 'bucketing', which Chen and Goodman describe as 'the technique of partitioning a set of $n$-grams into disjoint groups, where each group is characterised independently through a set of parameters'.
+
+\todo[inline]{Complete previous work section}
+
+\section{State of the Art}
+
+\todo[inline]{State of the art}
+

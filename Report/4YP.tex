@@ -7,6 +7,7 @@
 								% TeX will automatically convert eps --> pdf in pdflatex	
 								
 %\usepackage{amssymb}
+\usepackage{todonotes}
 \usepackage{epstopdf}
  \usepackage[space]{grffile}
  \usepackage{textgreek}
@@ -50,7 +51,7 @@
 \usepackage{helvet}
 \renewcommand{\familydefault}{\sfdefault}
 \usepackage{setspace}
-\doublespacing
+\doublespacing 
 \setcounter{secnumdepth}{2}
 \setcounter{tocdepth}{2}
 \usepackage{url}
@@ -60,11 +61,18 @@
 \begin{document}
 
 \maketitle
+\includepdf[pages=-]{Declaration_of_Authorship_4YP}
+\listoftodos
 \tableofcontents
 \input{Introduction}
-\input{LiteratureReview}
-\input{Design}
-\input{Implementation}
+\input{NewLiteratureReview}
+%\input{LiteratureReview}
+\input{CodingTheModels}
+\input{n-gramModel}
+\input{HierarchicalDirichletModel}
+\input{SequenceMemoizer}
+%input{Design}
+%\input{Implementation}
 \input{Results}
 \input{Conclusion}
 \bibliographystyle{unsrt}
