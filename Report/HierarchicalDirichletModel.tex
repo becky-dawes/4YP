@@ -1,4 +1,4 @@
-\chapter{Hierarchical Dirichlet Model}
+\chapter{Hierarchical Dirichlet Model} \label{chap:HierarchicalDirichletModel}
 
 Typical bi-gram language models as described above often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance as there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}. 
 
@@ -121,10 +121,14 @@ P(Q|\mathscr{H}_{D})=\int\prod_{j}\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\al
 
 \subsection{Inferring the Parameters and Hyperparameters}
 
-Level 1 inference involves inferring a distribution for $Q$. For this, we assume that we know $\boldsymbol{m}$ and $\alpha$. Equation \ref{eq:HD-Q|D-alpham-H} then gives the posterior for $Q$. (\textit{explain}) \todo[inline]{Explain posterior for Q}
+Level 1 inference involves inferring a distribution for $Q$. For this, we assume that we know $\boldsymbol{m}$ and $\alpha$. Equation \ref{eq:HD-Q|D-alpham-H} then gives the posterior for $Q$ using Bayes Rule. This is separable into a product over contexts $j$.
 
 \begin{align}
-P(Q|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{P(D|Q,\mathscr{H}){D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})} \nonumber
+P(Q|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{P(D|Q,\mathscr{H}_{D})P(Q,\mathscr{H}_{D})}{P(D,\alpha \boldsymbol{m},\mathscr{H}_{D})}\nonumber
+\\
+&=\frac{P(D|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}\nonumber
+\\
+&=\frac{P(D|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})} \nonumber
 \\
 &=\prod_{j}P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})
 \label{eq:HD-Q|D-alpham-H}

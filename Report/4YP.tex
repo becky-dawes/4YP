@@ -46,6 +46,7 @@
 %\date{}							% Activate to display a given date or no date
 
 \usepackage{fancyhdr}
+\usepackage{qtree}
 %\usepackage{fontspec}
 %\setmainfont{Arial}
 \usepackage{helvet}
@@ -55,6 +56,18 @@
 \setcounter{secnumdepth}{2}
 \setcounter{tocdepth}{2}
 \usepackage{url}
+
+\graphicspath{{../pdf/}{figures/}}
+
+\setlength{\parindent}{0mm}
+
+\usepackage{paralist}
+\usepackage{tabto}
+
+\newenvironment{tabbedenum}[1]
+ {\NumTabs{#1}\inparaenum\let\latexitem\item
+  \def\item{\def\item{\tab\latexitem}\latexitem}}
+ {\endinparaenum}
 
 
 
