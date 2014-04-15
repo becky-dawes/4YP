@@ -217,10 +217,7 @@
 (def check_for_children_memo "Memoize check_for_children" (memoize check_for_children))
 
 (defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
-  ([range suffix root_word] (let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
-                              (if (nil? match) 
-                                (check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word (count range_letters))
-                                [match (= (count range_letters) (count match)) (> (count suffix) (count match))])))
+  ([range suffix root_word] (check_range range suffix root_word (count (dereference-indices-memo root_word range)))) 
   ([range suffix root_word length] (let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
                                      (if (nil? match) 
                                        (check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length)
