@@ -1,6 +1,6 @@
 \chapter{Hierarchical Dirichlet Model} \label{chap:HierarchicalDirichletModel}
 
-Typical bi-gram language models as described above often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance as there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}. 
+Typical bi-gram language models as described in Chapter \ref{chap:n-gram} often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance as there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}. 
 
 Deleted interpolation \cite{jelinek1980interpolated} is used to set $\lambda$. Description...
 
@@ -248,8 +248,7 @@ Equations \ref{eq:HD-u-i-MP}-\ref{eq:HD-Hi} were all implemented in code to find
 	(let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] 
 		(sum (map #(/ (N-f-i-memo % F-vals)(Math/pow (- % 1) 2)) f-vector))))
 (defn u-i-MP "Returns the optimal value for u-i" [alpha i] 
-	(let [F-w2-w1 (vals (F-w2-given-w1-memo i)) V (V-i-memo F-w2-w1) K-alpha (K-memo alpha) G (G-i-memo i) H (H-i-memo i)] 
-		(/ (* 2 V) (+ K-alpha (- G) (java.lang.Math/sqrt (+ (Math/pow (- K-alpha G) 2) (* 4 H V)))))))
+	(let [F-w2-w1 (vals (F-w2-given-w1-memo i)) V (V-i-memo F-w2-w1) K-alpha (K-memo alpha) G 
 (defn find-all-u [alpha] 
 	(zipmap (keys counts-1) (map #(u-i-MP-memo alpha %) (keys counts-1))))
 (defn alpha-MP "Returns alpha based on the u-i values inputted" [u] 

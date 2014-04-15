@@ -32,7 +32,13 @@
 \usepackage{listings}
 \usepackage{color}
 \input{NewLanguage}
-\lstset{language=clojure}
+\lstset{language=clojure,
+tabsize=2,
+breaklines=true,
+moredelim=**[is][\color{red}]{^}{^},
+moredelim=**[is][\color{blue}]{!}{!},
+moredelim=**[is][\color{green}]{£}{£},
+moredelim=**[is][\color{yellow}]{|}{|}}
 \graphicspath{{../pdf/}{figures/}}
 %\lfoot{}\cfoot{\thepage}\rfoot{}
 \captionsetup[subfigure]{format=hang, width=0.9\textwidth}
@@ -59,15 +65,15 @@
 
 \graphicspath{{../pdf/}{figures/}}
 
-\setlength{\parindent}{0mm}
+%\setlength{\parindent}{0mm}
 
 \usepackage{paralist}
 \usepackage{tabto}
 
-\newenvironment{tabbedenum}[1]
- {\NumTabs{#1}\inparaenum\let\latexitem\item
-  \def\item{\def\item{\tab\latexitem}\latexitem}}
- {\endinparaenum}
+%	\newenvironment{tabbedenum}[1]
+%	 {\NumTabs{#1}\inparaenum\let\latexitem\item
+%	  \def\item{\def\item{\tab\latexitem}\latexitem}}
+%	 {\endinparaenum}
 
 
 

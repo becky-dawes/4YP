@@ -1,6 +1,5 @@
 \chapter{The Sequence Memoizer} \label{chap:seqMem}
 
-\todo[inline]{Sequence Memoizer section}
 
 \section{The Theory}
 
@@ -25,7 +24,7 @@ The Pitman-Yor process (PYP), $G=\{G(s)\}_{s\in\Sigma}$, has three parameters. T
 
 \subsection{Inference}
 
-As before, we want to know that probability that a symbol $s\in\Sigma$ occurs next. This is given by Equation \ref{eq:SM2}, where $\mathbb{E}$ is expectation with respect to the posterior $P(G|\boldsymbol{x})$. This expectation can be computed as in Equation \ref{eq:SM3}, where $N(s)$ is the count of symbol $s$ and $M(s)$ is another set of random counts satisfying $1\leq M(s")\leq N(s')$ if $N(s')>0$ and $M(s')=0$ otherwise. This implements a form of smoothing, as each count $N(s)$ is reduced by $\alpha M(s)$, with the total amount subtracted distributed across all symbols in $\Sigma$ proportionally to their probability under $G_{0}$.
+As before, we want to know the probability that a symbol $s\in\Sigma$ occurs next. This is given by Equation \ref{eq:SM2}, where $\mathbb{E}$ is expectation with respect to the posterior $P(G|\boldsymbol{x})$. This expectation can be computed as in Equation \ref{eq:SM3}, where $N(s)$ is the count of symbol $s$ and $M(s)$ is another set of random counts satisfying $1\leq M(s')\leq N(s')$ if $N(s')>0$ and $M(s')=0$ otherwise. This implements a form of smoothing, as each count $N(s)$ is reduced by $\alpha M(s)$, with the total amount subtracted distributed across all symbols in $\Sigma$ proportionally according to their probability under $G_{0}$.
 
 \begin{equation}
 P(\boldsymbol{x}_{T+1}=s|\boldsymbol{x})=\int P(\boldsymbol{x}_{T+1}=s|G)P(G|\boldsymbol{x})dG=\mathbb{E}[G(s)]
@@ -38,7 +37,7 @@ P(\boldsymbol{x}_{T+1}=s|\boldsymbol{x})=\int P(\boldsymbol{x}_{T+1}=s|G)P(G|\bo
 \end{equation}
 
 \subsection{Hierarchical Pitman-Yor Processes}
-Similarly to Chapter \ref{chap:HierarchicalDirichletModel}, we employ the use of hierarchical processes. In these case, these are hierarchical PYPs (HPYP). We denote the empty context as $\epsilon$ and the parent of a context $\boldsymbol{u}$ (i.e. $\boldsymbol{u}$ with the first symbol from the left removed) as $\sigma(\boldsymbol{u})$. These give Equations \ref{eq:SM4a}-\ref{eq:SM4c}.
+Similarly to Chapter \ref{chap:HierarchicalDirichletModel}, we employ the use of hierarchical processes. In this case, these are hierarchical PYPs (HPYP). We denote the empty context as $\epsilon$ and the parent of a context $\boldsymbol{u}$ (i.e. $\boldsymbol{u}$ with the first symbol from the left removed) as $\sigma(\boldsymbol{u})$. These give Equations \ref{eq:SM4a}-\ref{eq:SM4c}.
 
 \begin{subequations}
 \label{eq:SM4}
@@ -55,6 +54,190 @@ The empty context has prior $G_{0}$ and discount $\alpha_{0}$ (Equation \ref{eq:
 
 \todo[inline]{Re-word}
 
+\subsection{Prediction}
+
+\todo[inline]{SM prediction}
+
+\subsubsection{Stick Breaking Process}
+
+\todo[inline]{Explain stick breaking process}
+
+\begin{subequations}
+\begin{align}
+\beta_{k}&\sim\text{Beta}(1,\alpha)
+\\
+\theta_{k}^{*}&\sim H
+\\
+\pi_{k}&=\beta_{k}\prod_{l=1}^{k-1}(1-\beta_{k})
+\\
+G&=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}
+\end{align}
+\end{subequations}
+
+$G\sim\text{DP}(\alpha,H)$. Starting with a stick of length 1, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ etc. The stick breaking distribution over $\pi$ is sometimes written $\pi\sim\text{GEM}(\alpha)$, where the letters stand for Griffiths, Engen and McCloskey.
+
+\subsubsection{Coagulation}
+
+\todo[inline]{Re-word coagulation section}
+
+Consider a tree constructed so that all nodes have a context consisting of just one symbol. An infinite tree built in this way for all possible combinations of symbols is the most accurate way of expressing language. However, it is not the most compact. \textit{Coagulation} is the process of combining symbols to create a longer context if a node has only one child. This is essentially marginalisation.
+
+Consider a  graphical model $G_{1}\rightarrow G_{2}\rightarrow G_{3}$, with $G_{2}$ having no children other than $G_{3}$. $G_{2}$ can be marginalised out, leaving $G_{1}\rightarrow G_{3}$. If $G_{2}|G_{1}\sim\mathcal{PY}(d_{1},0,G_{1})$ and $G_{3}|G_{2}\sim\mathcal{PY}(d_{2},0,G_{2})$ then $G_{3}|G_{1}\sim\mathcal{PY}(d_{1}d_{2},0,G_{1})$ with $G_{2}$ marginalised out \cite{wood2009stochastic}.
+
+The stick breaking construction of $G_{2}|G_{1}$ and $G_{3}|G_{2}$: weights distributed according to GEM distributions with concentration parameters=0 (Equation \ref{eq:SMSD-marginalisation}), where $\delta_{\theta}$ is a point mass located at $\theta$. We can coagulate the sticks associated with each subset of the point masses of $G_{3}$ that correspond to a point mass of $G_{2}$ such that $G_{3}=\sum_{i=1}^{\infty}\tau_{i}\delta_{\phi_{i}}$ where $\tau_{i}=\sum_{j=1}^{\infty}\kappa_{j}I(z_{j}=i)$.
+
+\begin{subequations}
+\begin{align}
+G_{2}&=\sum_{i=1}^{\infty}\pi_{i}\delta_{\phi_{i}}
+\\
+\phi_{i}&\sim^{iid}G_{1}
+\\
+\boldsymbol{\pi}&\sim\text{GEM}(d_{1},0)
+\\
+G_{3}&=\sum_{j=1}^{\infty}\kappa_{j}\delta_{\psi_{j}}
+\\
+\psi_{j}&\sim^{iid}G_{2}
+\\
+\boldsymbol{\kappa}&\sim\text{GEM}(d_{2},0)
+\end{align}
+\label{eq:SMSD-marginalisation}
+\end{subequations}
+
+\subsubsection{Fragmentation}
+
+\todo[inline]{Explain and re-word fragmentation}
+
+\textit{Fragmentation} is the opposite of coagulation. Each stick $\tau_{i}$ is broken into a infinite number of sticks and the resulting sticks are re-ordered by \textit{size-biased permutation}. The size-biased permutation of a set of positive numbers is obtained by iteratively picking (without replacement) entries with probabilities proportional to their sizes.
+
+Define a fragmentation $\boldsymbol{\tau}$ by $\text{GEM}(d,c)$: for each stick $\tau_{i}$, draw $\boldsymbol{\rho}_{i}\sim\text{GEM}(d,c)$, define $\tilde{\kappa}_{ik}=\tau_{i}\rho_{ik}$ for all $k$ and let $\boldsymbol{\kappa}=(\kappa_{j})_{j=1}^{\infty}$ be the size-biased permutation of $(\tilde{k}_{ik})_{ik=1}^{\infty}$. Require fragmentation operation to return $\boldsymbol{\pi}=(\pi_{i})_{i=1}^{\infty}$. Sticks are directly extracted from the reversal of the size-biased permutation, which maps each $\kappa_{j}$ to some $\tau_{i}$. Set $z_{j}=i$ and define $\pi_{i}$ as the asymptotic proportion of $z_{j}$s that take the value $i$ (Equation \ref{eq:SMSD6}). $(\boldsymbol{\kappa},\boldsymbol{\pi},\boldsymbol{z})\sim\text{FRAG}_{\text{GEM}(d,c)}(\boldsymbol{\tau})$ if $\boldsymbol{\kappa}$, $\boldsymbol{\pi}$ and $\boldsymbol{z}$ constructed as above.
+
+\begin{equation}
+\pi_{i}=\lim_{j \to \infty}\frac{1}{j}\sum_{l=1}^{j}I(z_{l}=i)
+\label{eq:SMSD6}
+\end{equation}
+
+\subsubsection{Sec 5}
+
+\todo[inline]{Rename section}
+
+\todo[inline]{Difference between trie and tree}
+
+Want to compute predictive probability of a symbol $v$ given a context $\boldsymbol{s}$ that is not in training set. Predictive probability is $\mathbb{E}[G_{[\boldsymbol{s}]}(v)]=\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$, where $\boldsymbol{s}'$ is the longest suffix of $\boldsymbol{s}$ that occurs in the prefix trie and the expectations are taken over the posterior. $\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$ can be estimated by averaging over the seating arrangements of the restaurant corresponding to $\boldsymbol{s}'$. If $\boldsymbol{s}'$ does not appear in prefix tree, need to reinstantiate the corresponding restaurant.
+
+Consider $\boldsymbol{s}=[\text{oca}]$. Longest suffix in prefix trie is $\boldsymbol{s}'=[\text{ca}]$. This does not appear in prefix tree as $G_{[\text{ca}]}$ has been marginalised out. Reinstantiate by fragmenting $G_{[\text{oaca}]}|G_{[\text{a}]}$ into $G_{[\text{ca}]}|G_{[\text{a}]}$ and $G_{[\text{oaca}]}|G_{[\text{ca}]}$. Suppose there are $K$ tables in the $G_{[\text{oaca}]}|G_{[\text{a}]}$ restaurant, table $k$ having $n_{k}$ customers. Independently for each table $k$, sample a partition of $n_{k}$ customers in a restaurant corresponding to a PYP with discount parameter $d_{3}d_{4}$ and concentration parameter $-d_{2}d_{3}d_{4}$. This results in $J_{k}$ tables with number of customers $n_{kj}$, $\sum_{j=1}^{J_{k}}n_{kj}=n_{k}$. The $n_{k}$ customers at the original table are now seated at $J_{k}$ tables in the $G_{[\text{oaca}]}|G_{[\text{ca}]}$ restaurant with table $j$ having $n_{kj}$ customers. Each of these tables sends a customer to the $G_{[\text{ca}]}|G_{[\text{a}]}$ restaurant. These customers are all seated at the same table. There was one customer in the $G_{[\text{a}]}|G_{[]}$ restaurant corresponding to the original table in $G_{[\text{oaca}]}|G_{[\text{a}]}$ with $n_{k}$ customers. There is still one customer in the $G_{[\text{a}]}|G_{[]}$ corresponding to the new table in $G_{[\text{ca}]}|G_{[\text{a}]}$, therefore this restaurant's seating arrangement need not be altered.
+
+\todo[inline]{Re-explain using mississippi}
+
+\subsubsection{Teh - HBLMBPYP}
+
+\begin{equation}
+G_{\boldsymbol{u}}\sim\mathcal{PY}(d_{|\boldsymbol{u}|},\theta_{|\boldsymbol{u}|},G_{\pi(\boldsymbol{u})})
+\label{eq:HBLMBPYP3}
+\end{equation}
+
+Equation \ref{eq:HBLMBPYP3}: $\pi(\boldsymbol{u})$ is the suffix of $\boldsymbol{u}$ consisting of all but the earliest word. Don't know $G_{\pi(\boldsymbol{u})}$ so recursively place a prior over it using Equation \ref{eq:HBLMBPYP3} but with parameters $\theta_{|\pi(\boldsymbol{u})|}, d_{|\pi(\boldsymbol{u})|}$ and mean vector $G_{\pi(\pi(\boldsymbol{u}))}$. Repeat until get to $G_{\emptyset}$. the vector of probabilities over the current word given the empty context. Place a prior on $G_{\emptyset}$: $G_{\emptyset}\sim\mathcal{PY}(d_{0},\theta_{0},G_{0})$, where $G_{0}$ is the global mean vector, given a uniform value of $G_{0}(w)=1/V$ for all $w\in W$. Place a uniform prior on discount parameter and a $\text{Gamma}(1,1)$ prior on strength parameters. Total number of parameters in model is $2n$.
+
+Structure of prior: a suffix tree of depth $n$, where each node corresponds to a context consisting of up to $n-1$ words and each child corresponds to adding a different word to the beginning of the context. - expresses belief that words appearing earlier in a context have (a priori) the least importance in modelling the probability of the current word.
+
+\begin{itemize}
+\item For each context $\boldsymbol{u}$ we have a sequence of words $x_{\boldsymbol{u}1}$, $x_{\boldsymbol{u}2}$,... drawn iid from $G_{\boldsymbol{u}}$ and another sequence of words $y_{\boldsymbol{u}1}$, $y_{\boldsymbol{u}2}$,... drawn iid from the parent distribution $G_{\pi(\boldsymbol{u})}$. 
+\item Use $l$ to index draws from $G_{\boldsymbol{u}}$ and $k$ to index draws from $G_{\pi(\boldsymbol{u})}$. 
+\item $t_{\boldsymbol{u}wk}=1$ if $y_{\boldsymbol{u}k}$ takes on value $w$, and $t_{\boldsymbol{u}wk}=0$ otherwise
+\item Each word $x_{\boldsymbol{u}l}$ is assigned to one of the draws $y_{\boldsymbol{u}k}$ from $G_{\pi(\boldsymbol{u})}$
+\item If $y_{\boldsymbol{u}k}$ takes on value $w$ define $c_{\boldsymbol{u}wk}$ as the number of words $x_{\boldsymbol{u}l}$ drawn from $G_{\boldsymbol{u}}$ assigned to $y_{\boldsymbol{u}k}$, otherwise, let $c_{\boldsymbol{u}wk}=0$
+\item Denote marginal counts by dots: 
+\begin{itemize}
+\item $c_{\boldsymbol{u}.k}$ is number of $x_{\boldsymbol{u}l}$s assigned value of $y_{\boldsymbol{u}k}$
+\item $c_{\boldsymbol{u}w.}$ is the number of $x_{\boldsymbol{u}l}$s with value $w$
+\item $t_{\boldsymbol{u}..}$ is the current number of draws $y_{\boldsymbol{u}k}$ from $G_{\pi(\boldsymbol{u})}$
+\end{itemize}
+\item $t_{\boldsymbol{u}w.}=0$ if $c_{\boldsymbol{u}w.}=0$
+\item $1\leq t_{\boldsymbol{u}w.}\leq c_{\boldsymbol{u}w.}$ if $c_{\boldsymbol{u}w.}>0$
+\item $c_{\boldsymbol{u}w.}=\sum_{\boldsymbol{u}':\pi(\boldsymbol{u}')=\boldsymbol{u}}t_{\boldsymbol{u}'w.}$
+\end{itemize}
+
+\framebox{\vbox{ Function DrawWord($\boldsymbol{u}$):
+
+\textit{Returns a new word drawn from $G_{\boldsymbol{u}}$}
+\\
+If $\boldsymbol{u}=0$, return $w\in W$ with probability $G_{0}(w)$
+\\
+Else, with probabilities proportional to:
+\\
+\indent	$c_{\boldsymbol{u}wk}-d_{|\boldsymbol{u}|}t_{\boldsymbol{u}wk}$:
+	\\
+	\indent\indent	assign the new word to $y_{\boldsymbol{u}k}$
+		\\
+\indent\indent		Increment $c_{\boldsymbol{u}wk}$ 
+		\\
+		\indent\indent return $w$
+		\\
+\indent	$\theta_{|\boldsymbol{u}|}+d_{|\boldsymbol{u}|}t_{\boldsymbol{u}}$:
+	\\
+	\indent\indent	assign new word to a new draw $y_{\boldsymbol{u}k^{\text{new}}}$ from $G_{\pi(\boldsymbol{u})}$
+		\\
+		\indent\indent let $w\leftarrow \text{DrawWord(}\pi(\boldsymbol{u})$
+		\\
+		\indent\indent set $t_{\boldsymbol{u}wk^{\text{new}}}=c_{\boldsymbol{u}wk^{\text{new}}}=1$
+		\\
+		\indent\indent return $w$}}
+		
+\framebox{\vbox{Function WordProb($\boldsymbol{u},w$):
+\\
+\textit{Returns the probability that the next word after context $\boldsymbol{u}$ will be $w$}
+\\
+If $\boldsymbol{u}=0$, return $G_{0}(w)$
+\\
+else, return $\frac{c_{\boldsymbol{u}w.}-d_{|\boldsymbol{u}|}t_{\boldsymbol{u}w.}}{\theta_{|\boldsymbol{u}|}+c_{\boldsymbol{u}..}}+\frac{\theta_{|\boldsymbol{u}|}+d_{|\boldsymbol{u}|}t_{\boldsymbol{u}..}}{\theta_{|\boldsymbol{u}|}+c_{\boldsymbol{u}..}}\text{WordProb}(\pi(\boldsymbol{u}),w)$}}
+
+The more a word $w$ has been drawn in context $\boldsymbol{u}$, the more likely we will draw $w$ again in context $\boldsymbol{u}$. Word $w$ will be reinforced for other contexts that share a common suffix with $\boldsymbol{u}$, with the probability of drawing $w$ increasing as the length of the common suffix increases - $w$ will be more likely under the context of the common suffix as well. 
+
+Our training data $\mathcal{D}$ consists of the number of occurrences $c_{\boldsymbol{u}w.}$ of each word $w$ after each context $\boldsymbol{u}$ of length exactly $n-1$. This corresponds to observing word $w$ drawn $c_{\boldsymbol{u}w.}$ times from $G_{\boldsymbol{u}}$. Given the training data $\mathcal{D}$, we are interested in the posterior distribution over the latent vectors $\mathcal{G}=\{G_{\boldsymbol{v}}:\text{ all contexts }\boldsymbol{v}\}$ and parameters $\boldsymbol{\Theta}=\{\theta_{m},d_{m}:0\leq m\leq n-1\}$ such that $p(\mathcal{G},\boldsymbol{\Theta}|\mathcal{D})=p(\mathcal{G},\boldsymbol{\Theta},\mathcal{D})/p(\mathcal{D})$. HCRP marginalises out each $G_{\boldsymbol{u}}$, replacing with the seating arrangement in the corresponding restaurant, $S_{\boldsymbol{u}}$: $\mathcal{S}=\{S_{\boldsymbol{v}}:\text{ all contexts }\boldsymbol{v}\}$. Therefore interested in equivalent posterior over seating arrangements instead: $p(\mathcal{S},\boldsymbol{\Theta}|\mathcal{D})=p(\mathcal{S},\boldsymbol{\Theta},\mathcal{D})/p(\mathcal{D})$. 
+
+Probability of a test word $w$ after a context $\boldsymbol{u}$ is given by Equation \ref{eq:HBLMBPYP9}, where the first probability (right) is the predictive probability under a particular setting of seating arrangements $\mathcal{S}$ and parameters $\boldsymbol{\Theta}$, and the overall predictive probability is obtained by averaging this wrt posterior over $\mathcal{S}$ and $\boldsymbol{\Theta}$. Approximate integral with samples $\{\mathcal{S}^{(i)},\boldsymbol{\Theta}^{(i)}\}_{i=1}^{I}$ drawn from $p(\mathcal{S},\boldsymbol{\Theta}|\mathcal{D})$ (Equation \ref{eq:HBLMBPYP10}). $p(w|\boldsymbol{u},\mathcal{S},\boldsymbol{\Theta})$ is given by the function WordProb($\boldsymbol{u},w$) (Equation \ref{eq:HBLMBPYP11}), where the counts are obtained from the seating arrangement $\mathcal{S}_{\boldsymbol{u}}$ in the CRP corresponding to $G_{\boldsymbol{u}}$.
+
+\begin{equation}
+p(w|\boldsymbol{u},\mathcal{D})=\int p(w|\boldsymbol{u},\mathcal{S},\boldsymbol{\Theta})p(\mathcal{S},\boldsymbol{\Theta}|\mathcal{D})d(\mathcal{S},\boldsymbol{\Theta})
+\label{eq:HBLMBPYP9}
+\end{equation}
+
+\begin{equation}
+p(w|\boldsymbol{u},\mathcal{D})\simeq\sum_{i=1}^{I}p(w|\boldsymbol{u},\mathcal{S}^{(i)},\boldsymbol{\Theta}^{(i)})
+\label{eq:HBLMBPYP10}
+\end{equation}
+
+\begin{subequations}
+\begin{align}
+p(w|0,\mathcal{S},\boldsymbol{\Theta})&=1/V
+\\
+p(w|\boldsymbol{u},\mathcal{S},\boldsymbol{\Theta})&=\frac{c_{\boldsymbol{u}w.}-d_{|\boldsymbol{u}|}t_{\boldsymbol{u}w.}}{\theta_{|\boldsymbol{u}|}+c_{\boldsymbol{u}..}}+\frac{\theta_{|\boldsymbol{u}|}+d_{|\boldsymbol{u}|}t_{\boldsymbol{u}..}}{\theta_{|\boldsymbol{u}|}+c_{\boldsymbol{u}..}}p(w|\pi(\boldsymbol{u}),\mathcal{S},\boldsymbol{\Theta})
+\end{align}
+\label{eq:HBLMBPYP11}
+\end{subequations}
+
+Use Gibbs sampling to obtain posterior samples $\{\mathcal{S},\boldsymbol{\Theta}\}$ - keeps track of current state of each variable of interest in the model and iteratively resamples the state of each variable given the current states of all other variables. States of variables will converge to required samples from posterior distribution after a sufficient number of iterations. For HPYP variables are, for each $\boldsymbol{u}$ and each word $x_{\boldsymbol{u}l}$ drawn from $G_{\boldsymbol{u}}$, the index $k_{\boldsymbol{u}l}$ of the draw from $G_{\pi(\boldsymbol{u})}$ assigned $x_{\boldsymbol{u}l}$. In CRP, this is the index of the table which the $l$\textsuperscript{th} customer sat at in the restaurant corresponding to $G_{\boldsymbol{u}}$. If $x_{\boldsymbol{u}l}$ has value $w$, it can only be assigned to draws from $G_{\pi(\boldsymbol{u})}$ that have value $w$ as well. This can either be a pre-existing draw with value $w$ or can be a new draw taking on value $w$. Relevant probabilities are given in functions DrawWord($\boldsymbol{u}$) and WordProb($\boldsymbol{u},w$), where we treat $x_{\boldsymbol{u}l}$ as the last word drawn from $G_{\boldsymbol{u}}$. This gives Equations \ref{eq:HBLMBPYP13} and \ref{eq:HBLMBPYP14}, where the superscript $-\boldsymbol{u}l$ means the corresponding set of variables or counts with $\boldsymbol{u}l$ excluded. 
+
+\begin{equation}
+p(k_{\boldsymbol{u}l}=k|\mathcal{S}^{-\boldsymbol{u}l},\boldsymbol{\Theta})\propto\frac{\max(0,c_{\boldsymbol{u}x_{\boldsymbol{u}l}k}^{-\boldsymbol{u}l}-d)}{\theta+c_{\boldsymbol{u}..}^{-\boldsymbol{u}l}}
+\label{eq:HBLMBPYP13}
+\end{equation}
+
+\begin{equation}
+p(k_{\boldsymbol{u}l}=k^{\text{new}}\text{ with }y_{\boldsymbol{u}k^{\text{new}}}=x_{\boldsymbol{u}l}|\mathcal{S}^{-\boldsymbol{u}l},\boldsymbol{\Theta})\propto\frac{\theta+dt_{\boldsymbol{u}..}^{-\boldsymbol{u}l}}{\theta+c_{\boldsymbol{u}..}^{-\boldsymbol{u}l}}p(x_{\boldsymbol{u}l}|\pi(\boldsymbol{u}),\mathcal{S}^{-\boldsymbol{u}l},\boldsymbol{\Theta})
+\label{eq:HBLMBPYP14}
+\end{equation}
+
+Straightforward correspondence to interpolated Kneser-Ney. If we restrict $t_{\boldsymbol{u}w.}$ to be at most $1$, we will get same discount value so long as $c_{\boldsymbol{u}w.}>0$ (i.e. absolute discounting) - see Equations \ref{eq:HBLMBPYP15} and \ref{eq:HBLMBPYP16}. If strength parameters are all $\theta_{|\boldsymbol{u}|}=0$, the predictive probabilities are now directly reduced to the probabilities given by interpolated Kneser-Ney. Therefore can interpret interpolated Kneser-Ney as the approximate inference scheme in the HPYP language model.
+
+\begin{equation}
+t_{\boldsymbol{u}w.}=\min(1,c_{\boldsymbol{u}w.})
+\label{eq:HBLMBPYP15}
+\end{equation}
+
+\begin{equation}
+c_{\boldsymbol{u}w.}=\sum_{\boldsymbol{u}':\pi(\boldsymbol{u}')=\boldsymbol{u}}t_{\boldsymbol{u}'w.}
+\label{eq:HBLMBPYP16}
+\end{equation}
 
 \section{Suffix Trees} \label{sec:suffixTrees}
 
@@ -87,6 +270,8 @@ The strings occurring in the training corpus can be stored most efficiently in a
 
 The Chinese Restaurant Process (CRP) is commonly used in language modelling. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be generated from the base distribution (equivalent to seating a customer at a new table)... 
 
+\todo[inline]{Explain CRP language equivalence}
+
 If $n$ customers are already seated giving $K_{v}$ tables being occupied, the probabilities of the next customer sitting at an occupied tables or choosing a new table are given by Equations \ref{eq:CRPExisting} and \ref{eq:CRPNew} respectively, where $z_{v}^{n+1}$ is the table at which the customer will sit, $c_{v}^{k}$ is the number of customers sitting at the $k$\textsuperscript{th} table, $d_{v}$ is the discount parameter, $\alpha_{v}$ is the concentration parameter and the subscript $v\in V$ denotes a vertex in the graphical model.
 
 \begin{equation}
@@ -99,35 +284,22 @@ P(z_{v}^{n+1}=K_{v}+1|\{z_{v}^{1}...z_{v}^{n}\})\propto \alpha_{v}+d_{v}K_{v}
 \label{eq:CRPNew}
 \end{equation}
 
+\todo[inline]{Derive CRP equations}
+
 The CRP is implemented in our suffix tree representation of the training corpus as a Multi-Floor CRP (MFCRP). This says that customers in any given restaurant (indexed by vertex $v$) either must be associated with direct observations of draws from the underlying $G_{\boldsymbol{u}}$, or must have come from a table in a child restaurant. \todo[inline]{Re-word}
 
 \subsection{Updating Our Representation of a Suffix Tree}
 
-The suffix tree drawn in Section \ref{sec:suffixTrees} can be extended to include the CRP representation discussed above. The updated tree is constructed similarly by starting with the shortest suffix and working through suffixes with increasing length until the whole string has been drawn. The method for the word "mississippi" is as follows:
+The suffix tree drawn in Section \ref{sec:suffixTrees} can be extended to include the CRP representation discussed above. The updated tree is constructed similarly by starting with the shortest suffix and working through suffixes with increasing length. For each suffix considered, the branch is labelled with all but the first letter of the suffix, which is instead represented as a table with a customer in the child node's restaurant. Figure \ref{fig:theSuffixTree} shows the new representation for the word "the".
 
-\begin{enumerate}
-\item Begin with the suffix "i"
-\begin{enumerate}
-\item Create a branch for the empty context with a restaurant containing a table for the letter "i" with one customer
-\item Add a table in the top level restaurant for the letter "i" with one customer
-\end{enumerate}
-\item For suffix "pi":
-\begin{enumerate}
-\item Create a branch for the context "i" with a restaurant containing a table for the letter "p" with one customer
-\item Add a table in the top level restaurant for the letter "p" with one customer
-\end{enumerate}
-\item Continue with suffixes of increasing length...
-\item For suffix "sippi":
-\begin{enumerate}
-\item There is already a branch for context "i"
-\item Create a branch for the context "ppi" as a child of branch "i" with a restaurant containing a table for the letter "s" with one customer
-\item Create a branch for the empty context as a child of branch "i" with a restaurant containing a table for the letter "p" with one customer
-\item For the restaurant of branch "i" check that there is a table for the letter "s" with one customer and a table for the letter "p" with one customer
-\end{enumerate}
-\item Continue for the remaining suffixes
-\end{enumerate}
+\begin{figure}[h!]
+\centering
+\includegraphics[width=0.5\linewidth]{the_suffix_tree.png}
+\caption{Suffix Tree with CRP Representation for "the"}
+\label{fig:theSuffixTree}
+\end{figure}
 
-The key difference in construction between this new representation and the original, simpler representation is that the first letter of the suffix being considered has a table with a customer in the deepest restaurant. Otherwise, the branch labels are very similar. The total number of customers for any letter in a given restaurant must be equal to the total number of tables in all of that restaurant's child restaurants. For simplicity, all customers have been seated at existing tables (where possible) for their letter in Figure \ref{fig:mississippiSuffixTree}, but a more comprehensive tree would have branches for all possible arrangements of customers and tables.
+This becomes more complex for words which require branching of nodes (such as "mississippi"). The total number of customers for any letter in a given restaurant must be equal to the total number of tables in all of that restaurant's child restaurants. For simplicity, all customers have been seated at existing tables (where possible) for their letter in Figure \ref{fig:mississippiSuffixTree}, but a more comprehensive tree would have branches for all possible arrangements of customers and tables.
 
 \begin{figure}[h!]
   \centering
@@ -139,4 +311,258 @@ The key difference in construction between this new representation and the origi
 
 
 
-\section{Prediction}
+\section{Building the Suffix Tree}
+
+A new class of object was created to store the information required for each node object: \lstinline!(defrecord restaurant_node [range children restaurant])!, where the fields are defined as follows:
+
+\begin{itemize}
+\item \lstinline!range!: a vector containing the indices (with respect to the original string) of the first and last letters of the branch's substring
+\item \lstinline!children!: a hash map of the node's children (with keys as the first letter of each child branch's substring and values as new \lstinline!restaurant_node! objects)
+\item \lstinline!restaurant!: a hash map of restaurant tables (with keys as the unique symbols and values as a vector of the form \lstinline![number_of_tables number_of_customers]!)
+\end{itemize}
+
+The final tree for "the" takes the following form:
+
+\begin{lstlisting}
+{:range [],
+ :children
+ {"h" {:range [1 3], :children {}, :restaurant {"t" [1 1]}},
+  "e" {:range [2 3], :children {}, :restaurant {"h" [1 1]}},
+  "" {:range [0 0], :children {}, :restaurant {"e" [1 1]}}},
+ :restaurant {"t" [1 1], "h" [1 1], "e" [1 1]}}
+\end{lstlisting}
+
+\noindent The root node has an empty range vector as there is no context. It has three children starting with the letters "h", "e" and the empty context. The node corresponding to "h" has a range [1 3], which represents the whole word. Its restaurant contains one table for "t" with one customer. The node corresponding to "e" has a range [2 3], which represents the substring "he". Its restaurant contains one table for "h" with one customer. The node corresponding to the empty context has a range [0 0], which represents an empty string. Its restaurant has one table for "e" with one customer. None of these child nodes have children of their own. The root node has a restaurant with one table each for "t", "h"  and "e", each with one customer. It is easy to see how this text-based representation relates to the diagram in Figure \ref{fig:theSuffixTree}.
+
+The \lstinline!range! vectors are created using the method \lstinline!create-indices! and dereferenced using the method \lstinline!dereference-indices! (below).
+
+\begin{lstlisting}
+(defn create-indices "Returns a vector containing the indices of the first and last characters of the sub-word in the word" [word sub-word] 
+	(let [first-char-index (.indexOf word sub-word)] 
+		[first-char-index (+ first-char-index (count sub-word))]))
+(defn dereference-indices "Returns the sub-word from word given the first and last character indicies" [word indices] 
+	(str (subs word (first indices) (second indices))))
+  \end{lstlisting}
+ 
+ \subsection{Tree Building Procedure}\label{sec:treeBuildingProcedure}
+ 
+ The method for building a tree is as follows:
+ \begin{enumerate}
+ \item Start with shortest suffix
+ \item Create child node with key "", range [0 0], no children and restaurant containing a table with one customer for the suffix symbol
+ \item Now consider the next shortest suffix
+ \item Create a child node with key as the first symbol of the \textit{context} (all symbols in the suffix except the first), range as the indices of the context, no children and restaurant containing a table with one customer for the first symbol of the suffix
+ \item Now consider the third shortest suffix
+ \item Check if any of the children of the root node match the first symbol of the context \label{step:repeatStep}
+ \begin{enumerate}
+ \item If there is a match, check whether its range matches the context
+ \begin{enumerate}
+ \item If the range exactly matches the context, check if there is already a table for the first symbol of the suffix in the node's restaurant \label{step:exactMatch}
+ \begin{enumerate}
+ \item If there is a table, increment the customer count
+ \item If there is not a table, create one with one customer
+ \end{enumerate}
+ \item If the range matches part of the context (i.e. the context is longer than the matching range),repeat from step \ref{step:repeatStep} with the matching node as the root node \label{step:contextLongerThanRange}
+ \item If part of the range matches the context (i.e. the context is shorter than the matching range), branch the node into two sections and instantiate a table for the first symbol of the suffix \label{step:branchNode}
+ \end{enumerate}
+ \item If there is no match, create a child node for the context with a table with one customer for the first symbol of the suffix in its restaurant
+ \end{enumerate}
+ \item Check that the number of customers for each symbol in the root node's restaurant is equal to the total number of tables for that symbol in its children's restaurants
+ \item Repeat from step \ref{step:repeatStep} for suffixes of increasing length until the whole string has been considered
+ \end{enumerate}
+ 
+ \subsection{Auxiliary Functions}
+ 
+ \subsubsection{Checking the Consistency Between Child Table Count and Parent Customer Count}\label{sec:customerTableConsistency}
+ 
+ The function \lstinline!check_table_customer_consistency! checks that the total number of tables for a given symbol in a node's children equal the number of customers for that symbol in the root node's restaurant.
+ 
+ \begin{lstlisting}
+(defn check_table_customer_consistency "Checks that number of tables for the given letter in the node's children is equal to the number of customers for the letter in the node's restaurant" [node letter params]
+	^(^let [table_count (find_child_table_count_memo node letter params)
+	params (into params [:restaurant letter])
+	parent_restaurant £(£if (nil? (get-in node params)) 
+		[0 0] 
+		(get-in node params)£)£]
+			!(!if (and (not (zero? table_count)) (not (= table_count (second parent_restaurant)) ))
+				|(|if (<= (first parent_restaurant) table_count)
+					^(^if (zero? (first parent_restaurant))
+						£(£assoc-in node params [1 table_count]£)£
+						£(£assoc-in node params [(first parent_restaurant) table_count]£)£^)^
+					^(^assoc-in node params [table_count table_count]^)^|)|
+				node!)!^)^)
+\end{lstlisting}
+
+\noindent If the number of customers in the root node's restaurant is not equal to the number of tables in its children's restaurants, the number number of customer's in the root node's restaurant is updated to match.
+
+The function \lstinline!check_consistency_all_tables! (below) calls \lstinline!check_table_customer_consistency! for all table letters passed to it.
+
+\begin{lstlisting}
+(defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
+	[node tables params]
+		^(^if (<= 1 (count tables))
+			£(£check_table_customer_consistency_memo node (first tables) params£)£
+			£(£check_consistency_all_tables (check_table_customer_consistency_memo node (first tables) params) (rest tables) params£)£^)^)
+\end{lstlisting}
+
+\subsubsection{Checking Whether a Node's Range Matches the Context}
+
+The function \lstinline!check_range! returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_context_length is_context_length_greater_than_match_length]!. It uses regular expressions to determine whether the context string matches that of the dereferenced range indices. If the two strings do not match, the function is called again with the final symbol removed from the dereferenced range letters. 
+
+\begin{lstlisting}
+(defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
+	^(^[range suffix root_word]
+		£(£check_range range suffix root_word (count (dereference-indices-memo root_word range)))£)£^)^
+	^(^[range suffix root_word length]
+		£(£let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)]
+			!(!if (nil? match)
+				|(|check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length|)|
+				[match (= length (count match)) (> (count suffix) (count match))]!)!£)£^)^)
+\end{lstlisting}
+
+\subsubsection{Branching a Node}
+
+The function \lstinline!branch! is used to branch a node when a context matches part of the branch substring. It dissociates the current node from the tree (line 9) and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range. Finally, the customer-table consistency is checked with \lstinline!check_consistency_all_tables!.
+
+\begin{lstlisting}
+(defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
+	[node letter new_range new_letter params]
+		^(^let [old_range (get-in node (into params [:children letter :range]))
+		restaurant (get-in node (into params [:children letter :restaurant]))
+		children (get-in node (into params [:children letter :children]))]
+			£(£check_consistency_all_tables_memo
+				!(!assoc-in
+					|(|assoc-in
+						^(^dissoc-in node (into params [:children letter])^)^
+					(into params [:children letter]) (build_restaurant_node new_range)|)|
+				(into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) (- (last new_range) (first new_range))) (last old_range)] children restaurant)!)!
+			(keys restaurant)
+		(into params [:children letter])£)£^)^)
+\end{lstlisting}
+ 
+ \subsection{The \lstinline!build_tree! Method}
+ 
+ The method \lstinline!build_tree! (below) follows the procedure detailed in Section \ref{sec:treeBuildingProcedure}:
+ \begin{lstlisting}
+ (defn build_tree "Builds a suffix tree for the given word"
+ 	^(^[word] (build_tree word (build_restaurant_node) word []) ^)
+	(^[word root_node root_word params] 
+		!(!let [root_node 
+			£(£if (empty? params) 
+				|(|cond 
+					(> 2 (count word)) root_node
+					(= 2 (count word)) (build_tree (str (reduce str (rest word))) root_node root_word params)
+					:else (build_tree (reduce str (rest word)) root_node root_word params)|)|
+			root_node£)£
+		suffix 
+			£(£cond 
+				(< 2 (count word)) (reduce str (rest word))
+				(= 2 (count word)) (str (reduce str (rest word)))
+				:else ""£)£
+		suffix_start (str (first suffix))
+		letter (str (first word))
+		children (get-in root_node (into params [:children]))]
+			£(£if (empty? children)
+				|(|check_table_customer_consistency_memo
+					^(^assoc-in root_node (into params [:children suffix_start])
+						!(!build_restaurant_node (create-indices-memo root_word suffix) letter!)!^)^
+					letter params|)|
+				|(|if (check_for_children_memo suffix_start (keys children))
+					^(^let [match_results (check_range_memo (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
+						!(!if (second match_results)
+							£(£if (nth match_results 2)
+								|(|if (empty? (get-in root_node [:children suffix_start :children]))
+									^(^check_table_customer_consistency_memo 
+										!(!check_table_customer_consistency_memo
+											£(£assoc-in
+												|(|build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])|)|
+											[:children suffix_start :children ""] (build_restaurant_node [0 0] (get-in root_node [:children suffix_start :children]) (get-in root_node [:children suffix_start :restaurant]))£)£
+										letter (into params [:children suffix_start])!)!
+									letter params^)^
+									^(^check_table_customer_consistency_memo
+										!(!check_table_customer_consistency_memo
+											£(£build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])£)£
+										letter (into params [:children suffix_start])!)!
+									letter params^)^|)|
+								|(|check_table_customer_consistency_memo root_node letter params|)|£)£
+							£(£let [new-range (create-indices-memo root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range])) new_branch (dereference-indices-memo root_word new-range)]
+								|(|check_table_customer_consistency_memo
+									^(^check_table_customer_consistency_memo
+										!(!assoc-in
+											£(£branch_memo root_node suffix_start new-range (subs (dereference-indices-memo root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params£)£
+										(into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) (build_restaurant_node (create-indices-memo root_word (subs suffix (count (first match_results)) (count suffix))) letter)!)!
+									letter (into params [:children suffix_start])^)^
+								letter params|)|£)£!)!^)^
+					^(^check_table_customer_consistency_memo
+						!(!assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices-memo root_word suffix) letter)!)!
+					letter params^)^|)|£)£!)!^)^)
+\end{lstlisting}
+
+
+
+\lstinline!build_tree! can be called with one argument or four arguments. When called with one argument, it calls itself with four arguments, generating values for the other arguments. The four arguments are:
+
+\begin{itemize}
+\item \lstinline!word!: the current suffix being considered
+\item \lstinline!root_node!: the root node of the tree
+\item \lstinline!root_word!: the original string (from which indices are created and dereferenced)
+\item \lstinline!params!: the parameters describing the node being built on (for example, the object described by \lstinline![:children "a"]! is the child of the root node whose range begins with the letter "a"; the object described by \lstinline![:children "a" :range]! is the range of that node) 
+\end{itemize}
+
+\noindent Lines 4-10 re-define the root node: if the suffix is longer than one symbol, the function calls itself recursively, removing the first symbol from the beginning of \lstinline!word!; otherwise the root node is unchanged (the different methods in lines 8 and 9 are due to Clojure's treatment of strings vs. characters, but produce the same results). This ensures that the tree is built up from the shortest suffix first. The data structure created by the shortest suffix is then passed back to its calling function so that the node(s) for the next shortest suffix can be built onto it. 
+
+Line 19 checks if the root node has any children. If it does not, lines 20-23 are executed. These associate a new node into the root node's children with the relevant range and table and then check table-customer consistency. 
+
+If the root node does have children, the function \lstinline!check_for_children! returns true if any of their keys are the same as the first symbol of the context. If there are no matches, a new node is associated into the root node's children (lines 50-51) in the same way as mentioned in the previous paragraph. If a match is found, the function \lstinline!check_range! is called to return the variable \lstinline!match_results!. If \lstinline!match_results! is of the form \lstinline![match true true]!, the first part of the context being considered exactly matches the substring of the branch (as in step \ref{step:contextLongerThanRange} in Section \ref{sec:treeBuildingProcedure}). In this case, \lstinline!build_tree! is called again with the matching node as the root node and with the matching part of the context removed (lines 28-40). If instead, \lstinline!match_results! has the form \lstinline![match true false]!, the context exactly matches the substring of the branch (as in step \ref{step:exactMatch} in Section \ref{sec:treeBuildingProcedure}). In this case, \todo{?} Finally, if \lstinline!match_results! has the form \lstinline![match false true]!, the first part of the context matches the first part of the branch substring (as in step \ref{step:branchNode} in Section \ref{sec:treeBuildingProcedure}). In this case, the node must be branched (lines 42-49).
+
+This function gives a full tree for the word "mississippi" as shown below:
+
+\begin{lstlisting}
+{:range [],
+ :children
+ {"s"
+  {:range [2 3],
+   :children
+   {"s"
+    {:range [3 5],
+     :children
+     {"s" {:range [5 11], :children {}, :restaurant {"i" [1 1]}},
+      "p" {:range [8 11], :children {}, :restaurant {"i" [1 1]}}},
+     :restaurant {"i" [1 2]}},
+    "i"
+    {:range [1 2],
+     :children
+     {"s" {:range [5 11], :children {}, :restaurant {"s" [1 1]}},
+      "p" {:range [8 11], :children {}, :restaurant {"s" [1 1]}}},
+     :restaurant {"s" [1 2]}}},
+   :restaurant {"i" [1 1], "s" [1 1]}},
+  "p"
+  {:range [8 9],
+   :children
+   {"p" {:range [9 11], :children {}, :restaurant {"i" [1 1]}},
+    "i" {:range [10 11], :children {}, :restaurant {"p" [1 1]}}},
+   :restaurant {"i" [1 1], "p" [1 1]}},
+  "i"
+  {:range [1 2],
+   :children
+   {"s"
+    {:range [2 5],
+     :children
+     {"s" {:range [5 11], :children {}, :restaurant {"m" [1 1]}},
+      "p" {:range [8 11], :children {}, :restaurant {"s" [1 1]}}},
+     :restaurant {"m" [1 1], "s" [1 1]}},
+    "" {:range [0 0], :children {}, :restaurant {"p" 
+[1 1]}},
+    "p" {:range [8 11], :children {}, :restaurant {"s" [1 1]}}},
+   :restaurant {"m" [1 1], "s" [1 2], "p" [1 1]}},
+  "" {:range [0 0], :children {}, :restaurant {"i" [1 1]}}},
+ :restaurant {"m" [1 1], "s" [1 2], "p" [1 2], "i" [1 3]}}
+ \end{lstlisting}
+
+
+
+ The \lstinline!range! field reduces the memory required to store the tree as all branches are now defined by a two-element vector instead of string (which could have unlimited length). Storing the node children as a hash map allows us to identify each branch by the first letter of its substring, thereby reducing search times, as the indices vector does not need to be dereferenced in order to check if a particular branch is relevant.
+
+\section{Predicting Text}
+
+\todo[inline]{SM predicting text code}
