@@ -69,6 +69,9 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 
 \usepackage{paralist}
 \usepackage{tabto}
+\usepackage{enumitem}
+\setlist{itemsep=0pt}
+\usepackage[titletoc]{appendix}
 
 %	\newenvironment{tabbedenum}[1]
 %	 {\NumTabs{#1}\inparaenum\let\latexitem\item
@@ -96,4 +99,9 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 \input{Conclusion}
 \bibliographystyle{unsrt}
 \bibliography{Bibliography}
+%\def\sectionname{Appendix}
+%\addappheadtotoc
+\begin{appendices}
+\includepdf[pagecommand={\chapter{}}]{Rebecca Dawes DSE Risk Assessment}
+\end{appendices}
 \end{document}
