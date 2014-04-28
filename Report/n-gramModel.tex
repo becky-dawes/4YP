@@ -50,63 +50,60 @@ p(w_{2}|w_{1})&=\frac{p(w_{1}, w_{2})}{p(w_{1})}
 
 \section{Formatting the Text} \label{sec:formattingText}
 
-Training corpus text is supplied in the form of a plain text \textit{.txt} file. This then needs to be read into memory and formatted. In this case, formatting involves converting all text to lower case and removing all punctuation (except apostrophes). The text is then split up into individual words whose counts are found:
+Training corpus text is supplied in the form of a plain text \textit{.txt} file. This then needs to be read into memory and formatted. In this case, formatting involves converting all text to lower case and removing all punctuation (except apostrophes). This is done using regular expressions. The text is then stored as a \textit{lazy sequence}, a sequence which is not actually computed until it is used, but does remember already computed elements. This allows us to work with large streams.
 
+Regular expressions are again used to split the text on every space, thereby creating a sequence of individual words. Longer $n$-grams are formed by recursively taking two words from the sequence and adding these to a new sequence, as in the code below. The standard Clojure function \lstinline!frequencies! is then used to create a map of the counts of each each $n$-gram in the text.
+
+
+%(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" 
+%	(clojure.string/lower-case (clojure.string/replace text #"[\p{P}&&[^'][\n]]" "")))
+%(def formattedText "Formatted text" 
+%	(format-text-memo lines))
+%(defn split-words [text] "Vector of all words in text" 
+%	(clojure.string/split text #"\s+"))
+%(def words-vector "Vector of all words in text" 
+%	(split-words-memo formattedText))
+%\end{lstlisting}
+%
+%The functions \lstinline!format-text! and \lstinline!split-words! use regular expressions to find and replace all punctuation (except apostrophes) and then to split the text on all spaces. 
+%
+%\begin{lstlisting}
+%; 1-gram
+%(defn make-words "Creates a sequence of all the words from the input" [theWords] 
+%	(if (> (count theWords) 1) 
+%		(cons(take 1 theWords)(lazy-seq(make-words (rest theWords)))) 
+%		(cons (take 1 theWords) "")))
+%(def words 
+%	(make-words-memo words-vector)) ; all words in text
+%; 2-gram
+\singlespacing
 \begin{lstlisting}
-(def lines "All lines in file" 
-	(with-open [rdr (reader file-name)] 
-		(doall (line-seq rdr))))
-\end{lstlisting}
-
-The code above reads the file line by line. The \lstinline!with-open! macro ensures that the \lstinline!reader! is closed after the file has been read. The \lstinline!reader! function puts the string into a \lstinline!BufferedReader!. \lstinline!line-seq! then delivers a l\textit{azy sequence}, a sequence which is not actually computed until it is used, but does remember already computed elements. This allows us to work with large streams.
-
-\begin{lstlisting}
-(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" 
-	(clojure.string/lower-case (clojure.string/replace text #"[\p{P}&&[^'][\n]]" "")))
-(def formattedText "Formatted text" 
-	(format-text-memo lines))
-(defn split-words [text] "Vector of all words in text" 
-	(clojure.string/split text #"\s+"))
-(def words-vector "Vector of all words in text" 
-	(split-words-memo formattedText))
-\end{lstlisting}
-
-The functions \lstinline!format-text! and \lstinline!split-words! use regular expressions to find and replace all punctuation (except apostrophes) and then to split the text on all spaces. 
-
-\begin{lstlisting}
-; 1-gram
-(defn make-words "Creates a sequence of all the words from the input" [theWords] 
-	(if (> (count theWords) 1) 
-		(cons(take 1 theWords)(lazy-seq(make-words (rest theWords)))) 
-		(cons (take 1 theWords) "")))
-(def words 
-	(make-words-memo words-vector)) ; all words in text
-; 2-gram
 (defn make-pairs "Creates a sequence of all the word pairs from the input" [theWords] 
 	(if (> (count theWords) 2) 
 		(cons(take 2 theWords)(lazy-seq(make-pairs (rest theWords)))) 
 		(cons (take 2 theWords) "")))
-(def pairs "Sequence of all pairs of words in text" 
-	(make-pairs-memo words-vector))
 \end{lstlisting}
+\doublespacing
+%(def pairs "Sequence of all pairs of words in text" 
+%	(make-pairs-memo words-vector))
 
-The functions \lstinline!make-words! is recursive. If the number of words in the input argument is greater than one, it will return a sequence consisting of the first word and the result of calling itself again using all but the first word as the input argument. This therefore returns a sequence of all the words in the text. The function \lstinline!make-pairs! performs similarly, but returns a sequence consisting of the first two words and the result of calling itself again on all but the first word, therefore returning a sequence of all word pairs in the text.
+%The functions \lstinline!make-words! is recursive. If the number of words in the input argument is greater than one, it will return a sequence consisting of the first word and the result of calling itself again using all but the first word as the input argument. This therefore returns a sequence of all the words in the text. The function \lstinline!make-pairs! performs similarly, but returns a sequence consisting of the first two words and the result of calling itself again on all but the first word, therefore returning a sequence of all word pairs in the text.
 
-\begin{lstlisting}
-(def counts-1 "Frequencies of each distinct word in text" 
-	(frequencies words))
-(def counts-2 "Map of frequencies of all pairs of words in text" 
-	(frequencies pairs))
-\end{lstlisting}
 
-The hash maps \lstinline!counts-1! and \lstinline!counts-2! are generated by calling the standard Clojure function \lstinline!frequencies! on the sequences of all words and all word pairs respectively to return the counts of each distinct word or word pair in the text. 
+
+%\begin{lstlisting}
+%(def counts-1 "Frequencies of each distinct word in text" 
+%	(frequencies words))
+%(def counts-2 "Map of frequencies of all pairs of words in text" 
+%	(frequencies pairs))
+%\end{lstlisting}
+%
+%The hash maps \lstinline!counts-1! and \lstinline!counts-2! are generated by calling the standard Clojure function \lstinline!frequencies! on the sequences of all words and all word pairs respectively to return the counts of each distinct word or word pair in the text. 
 
 
 \section{Smoothing} \label{sec:smoothing}
 
-Smoothing accounts for new words which do not exist in the training corpus...
-
-\todo[inline]{Explain smoothing}
+Smoothing accounts for new words which do not exist in the training corpus. From Equation \ref{eq:n-gramMLE} it is clear to see that any $n$-grams not appearing in the training corpus will be assigned a count of zero and therefore the the model overfits to the data. Smoothing is a way of assigning non-zero probabilities to unseen $n$-grams. There are many possible methods to achieve this, as detailed below.
 
 \subsection{Additive Smoothing}
 
@@ -122,19 +119,19 @@ p(w_{3}| w_{1}, w_{2}) &= \frac{count(w_{1}, w_{2}, w_{3})+\alpha_{3}}{((N-2)+M^
 \end{align}
 \end{subequations}
 
-Implementation of this smoothing method was straightforward:
-
-\begin{lstlisting}
-(def N "Count of all words in text" 
-	(count words))
-(def M "Size of vocabulary" 
-	(count counts-1))
-(def alpha1 "alpha for 1-gram" 1)
-(defn p1 "1-gram probability" [word1] 
-	(float (/ (+ (get-count-memo counts-1 word1) alpha1) (+ N (* M alpha1))))) ; get-count-memo returns the count if the word is found, or 0 otherwise
-\end{lstlisting}
-
-\noindent Similar code was written for bi- and tri-gram probabilities.
+%Implementation of this smoothing method was straightforward:
+%
+%\begin{lstlisting}
+%(def N "Count of all words in text" 
+%	(count words))
+%(def M "Size of vocabulary" 
+%	(count counts-1))
+%(def alpha1 "alpha for 1-gram" 1)
+%(defn p1 "1-gram probability" [word1] 
+%	(float (/ (+ (get-count-memo counts-1 word1) alpha1) (+ N (* M alpha1))))) ; get-count-memo returns the count if the word is found, or 0 otherwise
+%\end{lstlisting}
+%
+%\noindent Similar code was written for bi- and tri-gram probabilities.
 
 \subsection{Good-Turing Smoothing}
 
@@ -147,34 +144,38 @@ r^{*}=(r+1)\frac{N_{r+1}}{N_{r}}
 
 %This smoothing method was a little more difficult to implement. 
 
-I wrote a function, \lstinline!generate-counts-of-counts! (below), to generate a map of all values of $r$ and their counts, $N_{r}$. This is memoized and the relevant maps are generated. The probabilities of the $n$-grams are then found in the same way as in Equation \ref{eq:n-gramMLE}, but substituting the actual counts for the Good-Turing counts.
+This smoothing method was slightly more complex to implement that that of additive smoothing. A map of all values of $r$ and $N_{r}$ was generated by again using the standard Clojure function \lstinline!frequencies!. It was then possible to find the value of $N_{r}$ for a given count and therefore the value of $N_{r+1}$. 
 
-\begin{lstlisting}
-(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts] 
-	(frequencies (map val input-counts))) 
+In this case, the code was designed to used for any length of $n$-gram, provided that the maps follow a strict naming pattern. \todo[inline]{Really?}
 
-; Generate the maps
-; 1-gram:
-(def counts-of-counts-1 "1-gram counts-of-counts map" 
-	(generate-counts-of-counts-memo counts-1))
-
-; Functions to find the relevant values in the equation:
-(defn r "Returns count of given n-gram" [n-gram n] 
-	(get-count-memo (resolve (symbol (str "counts-" n))) n-gram)) 
-(defn n-r "Returns count of given count" [freq n] 
-	(if (> freq 0) 
-		((resolve (symbol (str "counts-of-counts-" n))) freq)
-		(count (var-get (resolve (symbol (str "counts-" n)))))))
-(defn n-r-plus-one "Returns count of frequency plus one" [freq n] 
-	(if (=  (val (apply max-key val (var-get (resolve (symbol (str "counts-" n)))))) freq)
-		((resolve (symbol (str "counts-of-counts-" n))) freq) 
-		(get-count-memo (resolve (symbol (str "counts-of-counts-" n))) (inc freq))))
-(defn g-t "Returns Good-Turing count of given word" [n-gram n] 
-	(let [freq 
-		(if (= (type n-gram) (type "")) 
-			(r-memo [n-gram] n) (r-memo n-gram n))]
-				(* (+ freq 1) (/ (n-r-plus-one-memo freq n) (n-r-memo freq n))))) ; inputs all values found into equation
-\end{lstlisting}
+%I wrote a function, \lstinline!generate-counts-of-counts! (below), to generate a map of all values of $r$ and their counts, $N_{r}$. This is memoized and the relevant maps are generated. The probabilities of the $n$-grams are then found in the same way as in Equation \ref{eq:n-gramMLE}, but substituting the actual counts for the Good-Turing counts.
+%
+%\begin{lstlisting}
+%(defn generate-counts-of-counts "Generates a map of counts of counts" [input-counts] 
+%	(frequencies (map val input-counts))) 
+%
+%; Generate the maps
+%; 1-gram:
+%(def counts-of-counts-1 "1-gram counts-of-counts map" 
+%	(generate-counts-of-counts-memo counts-1))
+%
+%; Functions to find the relevant values in the equation:
+%(defn r "Returns count of given n-gram" [n-gram n] 
+%	(get-count-memo (resolve (symbol (str "counts-" n))) n-gram)) 
+%(defn n-r "Returns count of given count" [freq n] 
+%	(if (> freq 0) 
+%		((resolve (symbol (str "counts-of-counts-" n))) freq)
+%		(count (var-get (resolve (symbol (str "counts-" n)))))))
+%(defn n-r-plus-one "Returns count of frequency plus one" [freq n] 
+%	(if (=  (val (apply max-key val (var-get (resolve (symbol (str "counts-" n)))))) freq)
+%		((resolve (symbol (str "counts-of-counts-" n))) freq) 
+%		(get-count-memo (resolve (symbol (str "counts-of-counts-" n))) (inc freq))))
+%(defn g-t "Returns Good-Turing count of given word" [n-gram n] 
+%	(let [freq 
+%		(if (= (type n-gram) (type "")) 
+%			(r-memo [n-gram] n) (r-memo n-gram n))]
+%				(* (+ freq 1) (/ (n-r-plus-one-memo freq n) (n-r-memo freq n))))) ; inputs all values found into equation
+%\end{lstlisting}
 
 %(defn generate-cumulative-sum "Generates sequence of cumulative sum of items in map" [input-map] (cumsum (repeat (count input-map) 1))) 
 %(defn generate-sorted-r-sequence "Generates sorted sequence of keys in map" [input-counts] (map key (sort-by key input-counts)))
@@ -197,78 +198,80 @@ I wrote a function, \lstinline!generate-counts-of-counts! (below), to generate a
 
 %\begin{lstlisting}
 
-The above code is designed to be used with any size $n$-gram, provided that the variables follow a strict naming pattern. \lstinline!(resolve (symbol (str "counts-" n)))! returns the object referred to by the symbol named \lstinline!counts-n!, where \lstinline!n! is an input argument to the function call. This means that the function will use the relevant map based on value of \lstinline!n! inputted (\lstinline!counts-1!, \lstinline!counts-2!, \lstinline!counts-3!, etc.). The function \lstinline!r! simply returns the count for the $n$-gram inputted. The function \lstinline!n-r! returns the number of distinct words with a given count ($N_{r}$). If the count is zero, then the total number of $n$-grams is returned ($N_{0}$). \lstinline!n-r-plus-one! returns the number of $n$-grams with the count $r+1$, $N_{r+1}$. The function \lstinline!g-t! uses the values found above to compute the Good-Turing count using Equation \ref{eq:goodTuring}. The $n$-gram probability with the Good-Turing counts is then given by the function \lstinline!g-t-prob! (below).
-
-\begin{lstlisting}
-(defn g-t-prob "Returns probability of a given n-gram using Good-Turing smoothing" [n-gram] 
-	(let [n (if (= (type n-gram) (type "")) (count [n-gram]) (count n-gram))] 
-		(if (> n 1)
-			(let [g-t-n-minus-1 (g-t-memo (butlast n-gram) (dec n))]
-				(if (zero? g-t-n-minus-1)
-					"Inf"
-					(float (/ (g-t-memo n-gram n) g-t-n-minus-1)) ))
-			(float (/ (g-t-memo n-gram n) (count (var-get (resolve (symbol (str "counts-" n))))))))))
-\end{lstlisting}
+%The above code is designed to be used with any size $n$-gram, provided that the variables follow a strict naming pattern. \lstinline!(resolve (symbol (str "counts-" n)))! returns the object referred to by the symbol named \lstinline!counts-n!, where \lstinline!n! is an input argument to the function call. This means that the function will use the relevant map based on value of \lstinline!n! inputted (\lstinline!counts-1!, \lstinline!counts-2!, \lstinline!counts-3!, etc.). The function \lstinline!r! simply returns the count for the $n$-gram inputted. The function \lstinline!n-r! returns the number of distinct words with a given count ($N_{r}$). If the count is zero, then the total number of $n$-grams is returned ($N_{0}$). \lstinline!n-r-plus-one! returns the number of $n$-grams with the count $r+1$, $N_{r+1}$. The function \lstinline!g-t! uses the values found above to compute the Good-Turing count using Equation \ref{eq:goodTuring}. The $n$-gram probability with the Good-Turing counts is then given by the function \lstinline!g-t-prob! (below).
+%
+%\begin{lstlisting}
+%(defn g-t-prob "Returns probability of a given n-gram using Good-Turing smoothing" [n-gram] 
+%	(let [n (if (= (type n-gram) (type "")) (count [n-gram]) (count n-gram))] 
+%		(if (> n 1)
+%			(let [g-t-n-minus-1 (g-t-memo (butlast n-gram) (dec n))]
+%				(if (zero? g-t-n-minus-1)
+%					"Inf"
+%					(float (/ (g-t-memo n-gram n) g-t-n-minus-1)) ))
+%			(float (/ (g-t-memo n-gram n) (count (var-get (resolve (symbol (str "counts-" n))))))))))
+%\end{lstlisting}
 
 This method of smoothing runs into problems when $N_{r+1}$ is zero, as $n$-grams are then assigned a zero adjusted count. This means that a bi-gram probability, for example, will be undefined if the adjusted uni-gram count for the first word becomes zero (referring back to Equation \ref{eq:n-gramMLE}). This has been dealt with in the code by assigning a probability \lstinline!"Inf"! to any $n$-gram with this problem. However, this is clearly unacceptable.
 
 %\lstinline!n-r-plus-one! finds the index (\lstinline!n-r-index!) of a given $r$ by searching for it in the map \lstinline!n-r-counts-keys-n!. If this value is equal to the total number of $N_{r}$ values, the value of $N_{r}$ corresponding to the $r$ inputted is returned. Otherwise, we search for the $r$ value ($r+1$) corresponding to the index \lstinline!n-r-index!$+1$ in \lstinline!n-r-index-keys!. We then search for this new $r$ value using the function \lstinline!n-r! to find $N_{r+1}$.
 
+\subsection{Other Smoothing Possibilities}
 
+Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but I did not pursue this).
 
 
 \section{Prediction}
 
-Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but I did not pursue this).
 
-Prediction began at a very basic level of just predicting the next word in a bi-gram. This involves finding all word pairs starting with word $w_{1}$ and then selecting the pair with the highest count:
 
-\begin{lstlisting}
-(defn find-pair "Finds all word pairs starting with given word" [w] 
-	(zipmap (map key counts-2)(map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
-(defn next-word "Predicts next word in sequence" [word1] 
-	(let [word1 
-		(if (= 0 (get-count-memo counts-1 [(lower-case word1)]))
-			"<unk>" 
-			(lower-case word1))] 
-		(last (key (apply max-key val (find-pair-memo word1))))))
-\end{lstlisting}
+Prediction began at a very basic level of just predicting the next word in a bi-gram. This involves finding all word pairs starting with word $w_{1}$ and then selecting the pair with the highest count. This required the use of \textit{anonymous functions} to return a map of all word pairs and either their corresponding count (if the first word is $w_{1}$) or a value of zero. Selecting the pair with the highest count was then trivial. This is easily extended for tri-grams by searching for the most probable tri-gram starting with the given two words.
 
-\lstinline!find-pair! returns a map of all bi-grams with a matching first word and their counts. The \lstinline!#! symbol represents an anonymous function and the \lstinline!%! symbol represents the input argument to this function. This means that \lstinline!#(if (= (first (key %)) w) (val %) 0.0) counts-2)! will return the value (count) of the entry in \lstinline!counts-2! if the first word of the key is the same as the input word, \lstinline!w!. Otherwise it will return zero. Therefore the whole function returns a map of all bigrams in the text, with their counts as values if their first word matches, or with a value of zero otherwise.
+%\begin{lstlisting}
+%(defn find-pair "Finds all word pairs starting with given word" [w] 
+%	(zipmap (map key counts-2)(map #(if (= (first (key %)) w) (val %) 0.0) counts-2)))
+%(defn next-word "Predicts next word in sequence" [word1] 
+%	(let [word1 
+%		(if (= 0 (get-count-memo counts-1 [(lower-case word1)]))
+%			"<unk>" 
+%			(lower-case word1))] 
+%		(last (key (apply max-key val (find-pair-memo word1))))))
+%\end{lstlisting}
+%
+%\lstinline!find-pair! returns a map of all bi-grams with a matching first word and their counts. The \lstinline!#! symbol represents an anonymous function and the \lstinline!%! symbol represents the input argument to this function. This means that \lstinline!#(if (= (first (key %)) w) (val %) 0.0) counts-2)! will return the value (count) of the entry in \lstinline!counts-2! if the first word of the key is the same as the input word, \lstinline!w!. Otherwise it will return zero. Therefore the whole function returns a map of all bigrams in the text, with their counts as values if their first word matches, or with a value of zero otherwise.
 
-The function \lstinline!next-word! takes an argument \lstinline!word1!. If this word does not exist in the text (i.e. if its count as a uni-gram is zero), then it sets \lstinline!word1! to be \lstinline!<unk>!. It then calls \lstinline!find-pair! with \lstinline!word1! and finds the entry in the map with the highest count (i.e. the most probable bi-gram beginning with that word) and returns the second word of it.
+%The function \lstinline!next-word! takes an argument \lstinline!word1!. If this word does not exist in the text (i.e. if its count as a uni-gram is zero), then it sets \lstinline!word1! to be \lstinline!<unk>!. It then calls \lstinline!find-pair! with \lstinline!word1! and finds the entry in the map with the highest count (i.e. the most probable bi-gram beginning with that word) and returns the second word of it.
 
-This is easily extended for tri-grams by searching for the most probable tri-gram starting with the given two words.
 
-I wrote a function that would take this a step further by predicting the next $n$ words from any given context input. This required the use of a recursive function which cycles through $n$ times to create the desired length of text:
 
+It is possible to take this a step further by predicting the next $m$ words from any given context input. This requires the use of a recursive function which cycles through $m$ times to create the desired length of text:
+
+\singlespacing
 \begin{lstlisting}
 (defn loop-next-words "Predicts certain length of text" [word1 word2 n] 
 	(let [the-next-word (next-word-memo word1 word2) ]
 		(if (< 0 n)  
 			(cons word2 (loop-next-words word2 the-next-word (- n 1))) 
 			(cons word2 [the-next-word])))) 
-\end{lstlisting}
-
-\lstinline!loop-next-words! defines a variable \lstinline!the-next-word!, which is the predicted result from calling \lstinline!next-word! for the two words inputted. \lstinline!n! affects the number of words to be predicted. If \lstinline!n! is greater than zero, the function recursively calls itself to return a sequence of the second word inputted \lstinline!word2! and \lstinline!loop-next-words! called with \lstinline!word2!, \lstinline!the-next-word! and \lstinline!n-1! as input arguments. If \lstinline!n! is zero, then the function returns a sequence of \lstinline!word2! and \lstinline!the-next-word!. Therefore it returns an overall sequence of length \lstinline!n!$+2$ starting with the original \lstinline!word2! predicting the following \lstinline!n!$+1$ words.
-
-\begin{lstlisting}
-(defn join-words "Joins input words together into one string" [theWords] 
-	(if (< 0 (count theWords)) 
-		(let [word (str (first theWords) " ")] 
-			(str word (join-words (rest theWords)))) 
-		(str (first theWords))))
-\end{lstlisting}
-
-\lstinline!join-words! takes the words which as individual elements in a sequence and joined them together to form a continuous string with spaces between them. This is purely to make the results more readable.
-
-\begin{lstlisting}
 (defn predict-text "Predicts a certain length of text based on context" [context n] 
 	(if (< 0 n) 
 		(str (join-words-memo context) (join-words-memo (loop-next-words (last context) (next-word-memo (last (butlast context)) (last context)) (- n 2)))))) 
 \end{lstlisting}
+\doublespacing
 
-\lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. It joins the original input context to the results from \lstinline!loop-next-words! called with the final word of the context, the next predicted word of the context and \lstinline!n!$-2$ as arguments.
+%\lstinline!loop-next-words! defines a variable \lstinline!the-next-word!, which is the predicted result from calling \lstinline!next-word! for the two words inputted. \lstinline!n! affects the number of words to be predicted. If \lstinline!n! is greater than zero, the function recursively calls itself to return a sequence of the second word inputted \lstinline!word2! and \lstinline!loop-next-words! called with \lstinline!word2!, \lstinline!the-next-word! and \lstinline!n-1! as input arguments. If \lstinline!n! is zero, then the function returns a sequence of \lstinline!word2! and \lstinline!the-next-word!. Therefore it returns an overall sequence of length \lstinline!n!$+2$ starting with the original \lstinline!word2! predicting the following \lstinline!n!$+1$ words.
+%
+%\begin{lstlisting}
+%(defn join-words "Joins input words together into one string" [theWords] 
+%	(if (< 0 (count theWords)) 
+%		(let [word (str (first theWords) " ")] 
+%			(str word (join-words (rest theWords)))) 
+%		(str (first theWords))))
+%\end{lstlisting}
+%
+%\lstinline!join-words! takes the words which as individual elements in a sequence and joined them together to form a continuous string with spaces between them. This is purely to make the results more readable.
+
+
+\lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. %It joins the original input context to the results from \lstinline!loop-next-words! called with the final word of the context, the next predicted word of the context and \lstinline!n!$-2$ as arguments.
 
 \section{Prediction By Letter}
 

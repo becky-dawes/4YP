@@ -26,7 +26,7 @@ This model is based on the idea that there is a $W\times W$ transition matrix, $
 Denoting the model $\mathscr{H}$, we can then begin finding values of interest. Using Bayes theorem, we can infer the parameters, as in Equation \ref{eq:HD-Q|DH}, where $D$ is the data and $k$ is dimensionality of $Q$. Here $P(D|Q,\mathscr{H})$ is the likelihood and $P(Q|\mathscr{H})$ is the prior distribution. We can then use this to find the probability of the next word in a given context, as in Equation \ref{eq:HD-wt|wt-1DH}.
 
 \begin{align}
-P(Q|D,\mathscr{H})&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})}{P(D|\mathscr{H})} \nonumber
+P(Q|D,\mathscr{H})&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})P(\mathscr{H})}{P(D|\mathscr{H})P(\mathscr{H})} \nonumber
 \\
 &=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})}{\int P(D|Q,\mathscr{H})P(Q|\mathscr{H})d^{k}Q}
 \label{eq:HD-Q|DH}
@@ -53,7 +53,7 @@ P(D|Q,\mathscr{H})&=\prod_{t}q_{w_{t}|w_{t-1}} \nonumber
 The Dirichlet distribution is a good choice of prior for this situation, as it is a distribution over distributions, i.e. we acknowledge that we don't know the distribution of the words in the text and so we must infer this. The Dirichlet distribution (Equation \ref{eq:HD-Dir-p|alpha-m}) is parameterised by a measure $\boldsymbol{u}=\alpha\boldsymbol{m}$, where $\boldsymbol{m}$ is a normalised measure of the $I$ components ($\sum_{i}m_{i}=1$), and $\alpha$ is a positive scalar. The normalising constant $Z(\alpha\boldsymbol{m})$ is given by Equation \ref{eq:HD-Z}, where $\Gamma(x)$ is the Gamma function (Equation \ref{eq:HD-Gamma}). $\delta(x)$ is the Dirac delta function. This normalises the distribution such that $\sum_{i}p_{i}=1$. $\alpha$ measures the sharpness of the distribution. Large $\alpha$ gives a distribution over $\boldsymbol{p}$ (a probability vector) which is sharply peaked around $\boldsymbol{m}$, the mean of the probability distribution (Equation \ref{eq:HD-DirMean}).
 
 \begin{equation}
-P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m})}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta(\sum_{i}p_{i}-1)\equiv \text{Dirichlet}^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
+P(\boldsymbol{p}|\alpha\boldsymbol{m})=\frac{1}{Z(\alpha\boldsymbol{m})}\prod_{i=1}^{I}p^{\alpha m_{i}-1}\delta\left(\sum_{i}p_{i}-1\right)\equiv \text{Dirichlet}^{(I)}(\boldsymbol{p}|\alpha\boldsymbol{m})
 \label{eq:HD-Dir-p|alpha-m}
 \end{equation}
 
@@ -107,7 +107,7 @@ P(\boldsymbol{F}|\alpha\boldsymbol{m})&=\frac{\prod_{i}p_{i}^{F_{i}+\alpha m_{i}
 
 \subsection{The Hierarchical Model $\mathscr{H}_{D}$}
 
-We denote a hierarchical Dirichlet model $\mathscr{H}_{D}$. Hyperparameters define a probability distribution over the parameters $Q$ (hence the name "hierarchical"). Our prior on the vectors $\boldsymbol{q}_{|j}$ (which make up $Q$) uses an unknown measure $\boldsymbol{u}=\alpha\boldsymbol{m}$, as seen in the previous section. We define this prior as in Equation \ref{eq:HD-Q|alpham-H}. We can then marginalise out $\alpha\boldsymbol{m}$, as in Equation \ref{eq:HD-Q|H}.
+We denote a hierarchical Dirichlet model $\mathscr{H}_{D}$. Hyperparameters define a probability distribution over the parameters $Q$ (hence the name ``hierarchical"). Our prior on the vectors $\boldsymbol{q}_{|j}$ (which make up $Q$) uses an unknown measure $\boldsymbol{u}=\alpha\boldsymbol{m}$, as seen in the previous section. We define this prior as in Equation \ref{eq:HD-Q|alpham-H}. We can then marginalise out $\alpha\boldsymbol{m}$, as in Equation \ref{eq:HD-Q|H}.
 
 \begin{equation}
 P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})=\prod_{j}\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\alpha\boldsymbol{m})
@@ -225,48 +225,51 @@ H_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{(f-1)^{2}}
 
 \section{Implementation}
 
-Equations \ref{eq:HD-u-i-MP}-\ref{eq:HD-Hi} were all implemented in code to find the optimal values for the hyperparameters. $K(\alpha)$ (Equation \ref{eq:HD-K}) is shown in line 1 of the code below. This uses a function \lstinline!sum!, which sums all elements in an input vector. Line 4 defines the function \lstinline!F-w2-given-w1!, which corresponds to $\boldsymbol{F}_{i|}$ and returns all bigrams with $i$ (or \lstinline!w2!) as the second word, i.e. returns row $i$ of $F_{i|j}$. $V_{i}$ is then found by simply summing the number of non-zero entries in this matrix, as in line 6 of the code. $N_{Fi}$ (line 8) is found by summing the number of elements in $\boldsymbol{F}_{i|}$ that have a value greater than \lstinline!f! (the input argument). We use this function to find $F_{i}^{\text{max}}$ by calling it repeatedly and incrementing \lstinline!f! each time until $N_{Fi}$ is zero (\lstinline!find-F-max!, line 10). \lstinline!G-i! and \lstinline!H-i! (lines 14 and 17) simply create a vector of values by iterating the count \lstinline!f! and then use the function \lstinline!sum! to sum all elements. \lstinline!u-i-MP! (line 20) merely takes the results from all the above equations to find the optimum value of $u_{i}$ for any  given $i$. We can find all elements in $\boldsymbol{u}$ by calling \lstinline!u-i-MP! for all unique words in the text (\lstinline!find-all-u!, line 23). $\alpha^{MP}$ is then found by summing all elements in $\boldsymbol{u}$ (line 25). This process is then repeated iteratively until the values for $\alpha$ converge. We begin by giving $\alpha$ some initial value and then call the function \lstinline!find-all-u! until the previous and new values for $\alpha$ agree to (in this case) two decimal places.
+Equations \ref{eq:HD-u-i-MP}-\ref{eq:HD-Hi} were all implemented in code to find the optimal values for the hyperparameters. We can find all elements in $\boldsymbol{u}$ by finding $u_{i}^{MP}$ for all unique words in the text. $\alpha^{MP}$ is then found by summing all elements in $\boldsymbol{u}$. This process is repeated iteratively until the values for $\alpha$ converge. We begin by giving $\alpha$ some initial value and then find $\boldsymbol{u}$ until the previous and new values for $\alpha$ agree to (in this case) two decimal places.
 
-\begin{lstlisting}
-(defn K "Returns K (MacKay and Peto Equation 34)" [alpha] 
-	(let [count-vals (vals counts-1)] 
-		(+ (sum (map #(/ (+ % alpha) alpha) count-vals)) (* 0.5 (sum (map #(/ % (* alpha (+ % alpha))) count-vals))))))
-(defn F-w2-given-w1  "Returns all counts of bigrams with word w2 as the second word" [w2] 
-	(zipmap (map key counts-2) (map #(if (= (second (key %)) w2) (val %) 0.0) counts-2)))
-(defn V-i "Returns the number of entries in row 'i' of F-w2-given-w1 that are non-zero" [F-w2-w1] 
-	(sum (map #(if (= 0 %) 0 1) F-w2-w1)))
-(defn N-f-i "Returns the number of contexts w1 such that F-w2-given-w1 is greater than or equal to f" [f F-w2-w1] 
-	(sum (map #(if (>= f %) 0 1) F-w2-w1)))
-(defn find-F-max "Returns the largest F such that N-f-i is greater than zero" [F-w2-w1 f] 
-	(if (> (N-f-i-memo f F-w2-w1) 0) 
-		(find-F-max F-w2-w1 (inc f)) 
-		f))
-(defn G-i "Returns G-i (MacKay and Peto Equation 32)" [i] 
-	(let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] 
-		(sum (map #(/ (N-f-i-memo % F-vals) (- % 1)) f-vector))))
-(defn H-i "Returns H-i (MacKay and Peto Equation 33)" [i] 
-	(let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] 
-		(sum (map #(/ (N-f-i-memo % F-vals)(Math/pow (- % 1) 2)) f-vector))))
-(defn u-i-MP "Returns the optimal value for u-i" [alpha i] 
-	(let [F-w2-w1 (vals (F-w2-given-w1-memo i)) V (V-i-memo F-w2-w1) K-alpha (K-memo alpha) G 
-(defn find-all-u [alpha] 
-	(zipmap (keys counts-1) (map #(u-i-MP-memo alpha %) (keys counts-1))))
-(defn alpha-MP "Returns alpha based on the u-i values inputted" [u] 
-	(sum (vals u)))
-(defn find-optimum-u 
-	([] 
-		(let [u (find-all-u-memo initial-alpha) alpha (alpha-MP-memo u)] 
-			(if (equal initial-alpha alpha 2) 
-				u 
-				(find-optimum-u alpha)))) 
-	([old-alpha] 
-		(let [u (find-all-u-memo old-alpha) alpha (alpha-MP-memo u)] 
-			(if (equal old-alpha alpha 2) 
-				u 
-				(find-optimum-u alpha)))))
-\end{lstlisting}
 
-Having found optimum values for $\alpha$ and $\boldsymbol{u}$ (and therefore also for $\boldsymbol{m}$), we can then very simply find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ as in Equation \ref{eq:HD-i|j-D-alpham-H}: we search the map \lstinline!counts-2!, which contains the counts of all bigrams, for the bigram $i|j$ to find $F_{i|j}$; $F_{j}$ is found by searching \lstinline!counts-1!, which contains the counts of all uni-grams, for the word $j$; $m_{i}$ is simply the corresponding element of $\boldsymbol{m}$ for word $i$.
+%$K(\alpha)$ (Equation \ref{eq:HD-K}) is shown in line 1 of the code below. This uses a function \lstinline!sum!, which sums all elements in an input vector. Line 4 defines the function \lstinline!F-w2-given-w1!, which corresponds to $\boldsymbol{F}_{i|}$ and returns all bigrams with $i$ (or \lstinline!w2!) as the second word, i.e. returns row $i$ of $F_{i|j}$. $V_{i}$ is then found by simply summing the number of non-zero entries in this matrix, as in line 6 of the code. $N_{Fi}$ (line 8) is found by summing the number of elements in $\boldsymbol{F}_{i|}$ that have a value greater than \lstinline!f! (the input argument). We use this function to find $F_{i}^{\text{max}}$ by calling it repeatedly and incrementing \lstinline!f! each time until $N_{Fi}$ is zero (\lstinline!find-F-max!, line 10). \lstinline!G-i! and \lstinline!H-i! (lines 14 and 17) simply create a vector of values by iterating the count \lstinline!f! and then use the function \lstinline!sum! to sum all elements. \lstinline!u-i-MP! (line 20) merely takes the results from all the above equations to find the optimum value of $u_{i}$ for any  given $i$. We can find all elements in $\boldsymbol{u}$ by calling \lstinline!u-i-MP! for all unique words in the text (\lstinline!find-all-u!, line 23). $\alpha^{MP}$ is then found by summing all elements in $\boldsymbol{u}$ (line 25). This process is then repeated iteratively until the values for $\alpha$ converge. We begin by giving $\alpha$ some initial value and then call the function \lstinline!find-all-u! until the previous and new values for $\alpha$ agree to (in this case) two decimal places.
+%
+%\begin{lstlisting}
+%(defn K "Returns K (MacKay and Peto Equation 34)" [alpha] 
+%	(let [count-vals (vals counts-1)] 
+%		(+ (sum (map #(/ (+ % alpha) alpha) count-vals)) (* 0.5 (sum (map #(/ % (* alpha (+ % alpha))) count-vals))))))
+%(defn F-w2-given-w1  "Returns all counts of bigrams with word w2 as the second word" [w2] 
+%	(zipmap (map key counts-2) (map #(if (= (second (key %)) w2) (val %) 0.0) counts-2)))
+%(defn V-i "Returns the number of entries in row 'i' of F-w2-given-w1 that are non-zero" [F-w2-w1] 
+%	(sum (map #(if (= 0 %) 0 1) F-w2-w1)))
+%(defn N-f-i "Returns the number of contexts w1 such that F-w2-given-w1 is greater than or equal to f" [f F-w2-w1] 
+%	(sum (map #(if (>= f %) 0 1) F-w2-w1)))
+%(defn find-F-max "Returns the largest F such that N-f-i is greater than zero" [F-w2-w1 f] 
+%	(if (> (N-f-i-memo f F-w2-w1) 0) 
+%		(find-F-max F-w2-w1 (inc f)) 
+%		f))
+%(defn G-i "Returns G-i (MacKay and Peto Equation 32)" [i] 
+%	(let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] 
+%		(sum (map #(/ (N-f-i-memo % F-vals) (- % 1)) f-vector))))
+%(defn H-i "Returns H-i (MacKay and Peto Equation 33)" [i] 
+%	(let [F-w2-w1 (F-w2-given-w1-memo i) F-vals (vals F-w2-w1) F-min 2 F-max (find-F-max-memo F-vals F-min) f-vector (take (- F-max (dec F-min)) (iterate inc F-min))] 
+%		(sum (map #(/ (N-f-i-memo % F-vals)(Math/pow (- % 1) 2)) f-vector))))
+%(defn u-i-MP "Returns the optimal value for u-i" [alpha i] 
+%	(let [F-w2-w1 (vals (F-w2-given-w1-memo i)) V (V-i-memo F-w2-w1) K-alpha (K-memo alpha) G 
+%(defn find-all-u [alpha] 
+%	(zipmap (keys counts-1) (map #(u-i-MP-memo alpha %) (keys counts-1))))
+%(defn alpha-MP "Returns alpha based on the u-i values inputted" [u] 
+%	(sum (vals u)))
+%(defn find-optimum-u 
+%	([] 
+%		(let [u (find-all-u-memo initial-alpha) alpha (alpha-MP-memo u)] 
+%			(if (equal initial-alpha alpha 2) 
+%				u 
+%				(find-optimum-u alpha)))) 
+%	([old-alpha] 
+%		(let [u (find-all-u-memo old-alpha) alpha (alpha-MP-memo u)] 
+%			(if (equal old-alpha alpha 2) 
+%				u 
+%				(find-optimum-u alpha)))))
+%\end{lstlisting}
+%
+Having found optimum values for $\alpha$ and $\boldsymbol{u}$ (and therefore also for $\boldsymbol{m}$), we can then very simply find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ as in Equation \ref{eq:HD-i|j-D-alpham-H}: we search the map of bi-gram counts for the bi-gram $i|j$ to find $F_{i|j}$; $F_{j}$ is found by searching the map of uni-gram counts for the word $j$; $m_{i}$ is simply the corresponding element of $\boldsymbol{m}$ for word $i$.
 
 \todo[inline]{Explain MacKay and Peto implementation}
 

@@ -72,6 +72,16 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 \usepackage{enumitem}
 \setlist{itemsep=0pt}
 \usepackage[titletoc]{appendix}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows}
+\usepackage{varwidth}
+
+\tikzstyle{decision} = [diamond, draw, 
+   text  centered,  inner sep=0pt, execute at begin node={\begin{varwidth}{8em} \setlength{\baselineskip}{8pt}},
+   execute at end node={\end{varwidth}}]
+\tikzstyle{block} = [rectangle, draw,    text centered, rounded corners, execute at begin node={\begin{varwidth}{10em} \setlength{\baselineskip}{8pt}},
+   execute at end node={\end{varwidth}}]
+\tikzstyle{line} = [draw, -latex',line width=1mm]
 
 %	\newenvironment{tabbedenum}[1]
 %	 {\NumTabs{#1}\inparaenum\let\latexitem\item
@@ -104,4 +114,5 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 \begin{appendices}
 \includepdf[pagecommand={\chapter{}}]{Rebecca Dawes DSE Risk Assessment}
 \end{appendices}
+\todo[inline]{Attach code}
 \end{document}

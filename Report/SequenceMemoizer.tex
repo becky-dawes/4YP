@@ -16,7 +16,7 @@ G_{\boldsymbol{u}}(s)=\frac{N(\boldsymbol{u}s)}{\sum_{s' \in \Sigma}N(\boldsymbo
 
 Natural language follows a power law scaling. This means that there are a large number of words that appear very infrequently and a small number of words that occur very often. The maximum likelihood estimation given in Equation \ref{eq:SM1} will perform well for the frequently occurring symbols, but not for the rare ones. This was initially discussed in Section \ref{sec:smoothing}, which implemented smoothing to counteract the problem. However, a Pitman-Yor prior follows the power law properties of natural language much more accurately.
 
-The Pitman-Yor process (PYP), $G=\{G(s)\}_{s\in\Sigma}$, has three parameters. These are the base distribution, $G_{0}=\{G_{0}(s)\}_{s\in\Sigma}$, (mean of PYP and prior on frequency of each symbol), the discount parameter, $\alpha$, which is between 0 and 1 (affect exponent of power law), and the concentration parameter, $c$, (affects variability around $G_{0}$). When $\alpha=0$, the PYP becomes the Dirichlet process. A PYP with discount parameter $\alpha$ and prior $G_{0}$ is written $G\sim\mathcal{PY}(\alpha,G_{0})$ (we assume in this project that $c=0$).
+The Pitman-Yor process (PYP), $G=\{G(s)\}_{s\in\Sigma}$, has three parameters. These are the base distribution, $G_{0}=\{G_{0}(s)\}_{s\in\Sigma}$ (mean of PYP and prior on frequency of each symbol), the discount parameter, $\alpha$, which is between 0 and 1 (affect exponent of power law), and the concentration parameter, $c$, (affects variability around $G_{0}$). When $\alpha=0$, the PYP becomes the Dirichlet process. A PYP with discount parameter $\alpha$ and prior $G_{0}$ is written $G\sim\mathcal{PY}(\alpha,G_{0})$ (we assume in this project that $c=0$).
 
 
 
@@ -58,7 +58,7 @@ The empty context has prior $G_{0}$ and discount $\alpha_{0}$ (Equation \ref{eq:
 
 \todo[inline]{SM prediction}
 
-\subsubsection{Stick Breaking Process}
+\subsubsection{Stick Breaking Process} \cite{teh2010dirichlet}
 
 \todo[inline]{Explain stick breaking process}
 
@@ -74,7 +74,7 @@ G&=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}
 \end{align}
 \end{subequations}
 
-$G\sim\text{DP}(\alpha,H)$. Starting with a stick of length 1, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ etc. The stick breaking distribution over $\pi$ is sometimes written $\pi\sim\text{GEM}(\alpha)$, where the letters stand for Griffiths, Engen and McCloskey.
+$G\sim\text{Dir}(\alpha,H)$. Starting with a stick of length 1, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ etc. The stick breaking distribution over $\pi$ is sometimes written $\pi\sim\text{GEM}(\alpha)$, where the letters stand for Griffiths, Engen and McCloskey.
 
 \subsubsection{Coagulation}
 
@@ -135,7 +135,7 @@ G_{\boldsymbol{u}}\sim\mathcal{PY}(d_{|\boldsymbol{u}|},\theta_{|\boldsymbol{u}|
 \label{eq:HBLMBPYP3}
 \end{equation}
 
-Equation \ref{eq:HBLMBPYP3}: $\pi(\boldsymbol{u})$ is the suffix of $\boldsymbol{u}$ consisting of all but the earliest word. Don't know $G_{\pi(\boldsymbol{u})}$ so recursively place a prior over it using Equation \ref{eq:HBLMBPYP3} but with parameters $\theta_{|\pi(\boldsymbol{u})|}, d_{|\pi(\boldsymbol{u})|}$ and mean vector $G_{\pi(\pi(\boldsymbol{u}))}$. Repeat until get to $G_{\emptyset}$. the vector of probabilities over the current word given the empty context. Place a prior on $G_{\emptyset}$: $G_{\emptyset}\sim\mathcal{PY}(d_{0},\theta_{0},G_{0})$, where $G_{0}$ is the global mean vector, given a uniform value of $G_{0}(w)=1/V$ for all $w\in W$. Place a uniform prior on discount parameter and a $\text{Gamma}(1,1)$ prior on strength parameters. Total number of parameters in model is $2n$.
+Equation \ref{eq:HBLMBPYP3}: $\pi(\boldsymbol{u})$ is the suffix of $\boldsymbol{u}$ consisting of all but the earliest word. Don't know $G_{\pi(\boldsymbol{u})}$ so recursively place a prior over it using Equation \ref{eq:HBLMBPYP3} but with parameters $\theta_{|\pi(\boldsymbol{u})|}, d_{|\pi(\boldsymbol{u})|}$ and mean vector $G_{\pi(\pi(\boldsymbol{u}))}$. Repeat until get to $G_{\emptyset}$, the vector of probabilities over the current word given the empty context. Place a prior on $G_{\emptyset}$: $G_{\emptyset}\sim\mathcal{PY}(d_{0},\theta_{0},G_{0})$, where $G_{0}$ is the global mean vector, given a uniform value of $G_{0}(w)=1/V$ for all $w\in W$. Place a uniform prior on discount parameter and a $\text{Gamma}(1,1)$ prior on strength parameters. Total number of parameters in model is $2n$.
 
 Structure of prior: a suffix tree of depth $n$, where each node corresponds to a context consisting of up to $n-1$ words and each child corresponds to adding a different word to the beginning of the context. - expresses belief that words appearing earlier in a context have (a priori) the least importance in modelling the probability of the current word.
 
@@ -241,7 +241,7 @@ c_{\boldsymbol{u}w.}=\sum_{\boldsymbol{u}':\pi(\boldsymbol{u}')=\boldsymbol{u}}t
 
 \section{Suffix Trees} \label{sec:suffixTrees}
 
-The strings occurring in the training corpus can be stored most efficiently in a suffix tree. These are best explained by means of an example. A simple suffix tree is built up by considering each suffix of a string individually (a suffix being any substring where the last symbol is the end of the original string - i.e. for the word "the", the possible suffixes are "e", "he" and "the"). A tree is then built up starting with the shortest suffix, then the next shortest etc. Any common substrings encountered cause the tree to branch. Construction of the suffix tree for "mississippi" is detailed below. Note that the symbol "\$" denotes the end of the word.
+The strings occurring in the training corpus can be stored most efficiently in a suffix tree. These are best explained by means of an example. A simple suffix tree is built up by considering each suffix of a string individually (a suffix being any substring where the last symbol is the end of the original string - i.e. for the word ``the", the possible suffixes are ``e", ``he" and ``the"). A tree is then built up starting with the shortest suffix, then the next shortest etc. Any common substrings encountered cause the tree to branch. Construction of the suffix tree for ``mississippi" is detailed below. Note that the symbol ``\$" denotes the end of the word.
 
 \qtreecenterfalse
 
@@ -268,11 +268,10 @@ The strings occurring in the training corpus can be stored most efficiently in a
 
 \subsection{The Chinese Restaurant Process}
 
-The Chinese Restaurant Process (CRP) is commonly used in language modelling. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be generated from the base distribution (equivalent to seating a customer at a new table)... 
+The Chinese Restaurant Process (CRP) is commonly used in language modelling. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be assigned to a corresponding draw from the base distribution (equivalent to seating a customer at an existing table) or to a new draw from the base distribution (equivalent to seating a customer at a new table).
 
-\todo[inline]{Explain CRP language equivalence}
 
-If $n$ customers are already seated giving $K_{v}$ tables being occupied, the probabilities of the next customer sitting at an occupied tables or choosing a new table are given by Equations \ref{eq:CRPExisting} and \ref{eq:CRPNew} respectively, where $z_{v}^{n+1}$ is the table at which the customer will sit, $c_{v}^{k}$ is the number of customers sitting at the $k$\textsuperscript{th} table, $d_{v}$ is the discount parameter, $\alpha_{v}$ is the concentration parameter and the subscript $v\in V$ denotes a vertex in the graphical model.
+If $n$ customers are already seated giving $K_{v}$ tables being occupied, the probabilities of the next customer sitting at an occupied table or choosing a new table are given by Equations \ref{eq:CRPExisting} and \ref{eq:CRPNew} respectively \cite{wood2009hierarchical}, where $z_{v}^{n+1}$ is the table at which the customer will sit, $c_{v}^{k}$ is the number of customers sitting at the $k$\textsuperscript{th} table, $d_{v}$ is the discount parameter, $\alpha_{v}$ is the concentration parameter and the subscript $v\in V$ denotes a vertex in the graphical model. 
 
 \begin{equation}
 P(z_{v}^{n+1}=k|\{z_{v}^{1}...z_{v}^{n}\})\propto c_{v}^{k}-d_{v}
@@ -286,25 +285,27 @@ P(z_{v}^{n+1}=K_{v}+1|\{z_{v}^{1}...z_{v}^{n}\})\propto \alpha_{v}+d_{v}K_{v}
 
 \todo[inline]{Derive CRP equations}
 
-The CRP is implemented in our suffix tree representation of the training corpus as a Multi-Floor CRP (MFCRP). This says that customers in any given restaurant (indexed by vertex $v$) either must be associated with direct observations of draws from the underlying $G_{\boldsymbol{u}}$, or must have come from a table in a child restaurant. \todo[inline]{Re-word}
+The CRP is implemented in our suffix tree representation of the training corpus as a Multi-Floor CRP (MFCRP). This says that customers in any given restaurant (indexed by vertex $v$) either must be associated with direct observations of draws from the underlying $G_{\boldsymbol{u}}$, or must have come from a table in a child restaurant. Each table $k$ in the MFCRP is given a label $\psi_{v}^{k}$ which is an i.i.d. draw from the base distribution. We can achieve this by picking component $w$ with probability $\lambda_{w\rightarrow v}$ and drawing from the chosen parent distribution $G_{w}$. Let $s_{v}^{k}$ be the chosen component. This corresponds to table $k$ being located on floor $s_{v}^{k}$ of a multi-floor- restaurant.
+
+\todo[inline]{Re-word} 
 
 \subsection{Updating Our Representation of a Suffix Tree}
 
-The suffix tree drawn in Section \ref{sec:suffixTrees} can be extended to include the CRP representation discussed above. The updated tree is constructed similarly by starting with the shortest suffix and working through suffixes with increasing length. For each suffix considered, the branch is labelled with all but the first letter of the suffix, which is instead represented as a table with a customer in the child node's restaurant. Figure \ref{fig:theSuffixTree} shows the new representation for the word "the".
+The suffix tree drawn in Section \ref{sec:suffixTrees} can be extended to include the CRP representation discussed above. The updated tree is constructed similarly by starting with the shortest suffix and working through suffixes with increasing length. For each suffix considered, the branch is labelled with all but the first letter of the suffix, which is instead represented as a table with a customer in the child node's restaurant. Figure \ref{fig:theSuffixTree} shows the new representation for the word ``the".
 
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.5\linewidth]{the_suffix_tree.png}
-\caption{Suffix Tree with CRP Representation for "the"}
+\caption{Suffix Tree with CRP Representation for ``the"}
 \label{fig:theSuffixTree}
 \end{figure}
 
-This becomes more complex for words which require branching of nodes (such as "mississippi"). The total number of customers for any letter in a given restaurant must be equal to the total number of tables in all of that restaurant's child restaurants. For simplicity, all customers have been seated at existing tables (where possible) for their letter in Figure \ref{fig:mississippiSuffixTree}, but a more comprehensive tree would have branches for all possible arrangements of customers and tables.
+This becomes more complex for words which require branching of nodes (such as ``mississippi"). The total number of customers for any letter in a given restaurant must be equal to the total number of tables in all of that restaurant's child restaurants. For simplicity, all customers have been seated at existing tables (where possible) for their letter in Figure \ref{fig:mississippiSuffixTree}, but a more comprehensive tree would have branches for all possible arrangements of customers and tables.
 
 \begin{figure}[h!]
   \centering
   \includegraphics[width = 1\linewidth]{mississippi_suffix_tree.png}
-  \caption{Suffix Tree with CRP Representation for "mississippi"}
+  \caption{Suffix Tree with CRP Representation for ``mississippi"}
   \label{fig:mississippiSuffixTree}
 \end{figure}
 
@@ -321,8 +322,9 @@ A new class of object was created to store the information required for each nod
 \item \lstinline!restaurant!: a hash map of restaurant tables (with keys as the unique symbols and values as a vector of the form \lstinline![number_of_tables number_of_customers]!)
 \end{itemize}
 
-The final tree for "the" takes the following form:
+The final tree for ``the" takes the following form:
 
+\singlespacing
 \begin{lstlisting}
 {:range [],
  :children
@@ -331,192 +333,247 @@ The final tree for "the" takes the following form:
   "" {:range [0 0], :children {}, :restaurant {"e" [1 1]}}},
  :restaurant {"t" [1 1], "h" [1 1], "e" [1 1]}}
 \end{lstlisting}
+\doublespacing
 
-\noindent The root node has an empty range vector as there is no context. It has three children starting with the letters "h", "e" and the empty context. The node corresponding to "h" has a range [1 3], which represents the whole word. Its restaurant contains one table for "t" with one customer. The node corresponding to "e" has a range [2 3], which represents the substring "he". Its restaurant contains one table for "h" with one customer. The node corresponding to the empty context has a range [0 0], which represents an empty string. Its restaurant has one table for "e" with one customer. None of these child nodes have children of their own. The root node has a restaurant with one table each for "t", "h"  and "e", each with one customer. It is easy to see how this text-based representation relates to the diagram in Figure \ref{fig:theSuffixTree}.
-
-The \lstinline!range! vectors are created using the method \lstinline!create-indices! and dereferenced using the method \lstinline!dereference-indices! (below).
-
-\begin{lstlisting}
-(defn create-indices "Returns a vector containing the indices of the first and last characters of the sub-word in the word" [word sub-word] 
-	(let [first-char-index (.indexOf word sub-word)] 
-		[first-char-index (+ first-char-index (count sub-word))]))
-(defn dereference-indices "Returns the sub-word from word given the first and last character indicies" [word indices] 
-	(str (subs word (first indices) (second indices))))
-  \end{lstlisting}
+%\noindent The root node has an empty range vector as there is no context. It has three children starting with the letters "h", "e" and the empty context. The node corresponding to "h" has a range [1 3], which represents the whole word. Its restaurant contains one table for "t" with one customer. The node corresponding to "e" has a range [2 3], which represents the substring "he". Its restaurant contains one table for "h" with one customer. The node corresponding to the empty context has a range [0 0], which represents an empty string. Its restaurant has one table for "e" with one customer. None of these child nodes have children of their own. The root node has a restaurant with one table each for "t", "h"  and "e", each with one customer. It is easy to see how this text-based representation relates to the diagram in Figure \ref{fig:theSuffixTree}.
+%
+%The \lstinline!range! vectors are created using the method \lstinline!create-indices! and dereferenced using the method \lstinline!dereference-indices! (below).
+%
+%\begin{lstlisting}
+%(defn create-indices "Returns a vector containing the indices of the first and last characters of the sub-word in the word" [word sub-word] 
+%	(let [first-char-index (.indexOf word sub-word)] 
+%		[first-char-index (+ first-char-index (count sub-word))]))
+%(defn dereference-indices "Returns the sub-word from word given the first and last character indicies" [word indices] 
+%	(str (subs word (first indices) (second indices))))
+%  \end{lstlisting}
  
  \subsection{Tree Building Procedure}\label{sec:treeBuildingProcedure}
+
  
- The method for building a tree is as follows:
- \begin{enumerate}
- \item Start with shortest suffix
- \item Create child node with key "", range [0 0], no children and restaurant containing a table with one customer for the suffix symbol
- \item Now consider the next shortest suffix
- \item Create a child node with key as the first symbol of the \textit{context} (all symbols in the suffix except the first), range as the indices of the context, no children and restaurant containing a table with one customer for the first symbol of the suffix
- \item Now consider the third shortest suffix
- \item Check if any of the children of the root node match the first symbol of the context \label{step:repeatStep}
- \begin{enumerate}
- \item If there is a match, check whether its range matches the context
- \begin{enumerate}
- \item If the range exactly matches the context, check if there is already a table for the first symbol of the suffix in the node's restaurant \label{step:exactMatch}
- \begin{enumerate}
- \item If there is a table, increment the customer count
- \item If there is not a table, create one with one customer
- \end{enumerate}
- \item If the range matches part of the context (i.e. the context is longer than the matching range),repeat from step \ref{step:repeatStep} with the matching node as the root node \label{step:contextLongerThanRange}
- \item If part of the range matches the context (i.e. the context is shorter than the matching range), branch the node into two sections and instantiate a table for the first symbol of the suffix \label{step:branchNode}
- \end{enumerate}
- \item If there is no match, create a child node for the context with a table with one customer for the first symbol of the suffix in its restaurant
- \end{enumerate}
- \item Check that the number of customers for each symbol in the root node's restaurant is equal to the total number of tables for that symbol in its children's restaurants
- \item Repeat from step \ref{step:repeatStep} for suffixes of increasing length until the whole string has been considered
- \end{enumerate}
+
+    \begin{figure}
+    \centering
+\begin{tikzpicture}[node distance = 4cm, auto,>=triangle 45]
+
+    \tikzstyle{every node}=[font=\scriptsize]
+    % Place nodes
+    \node [block] (start) {Start with shortest suffix};
+    \node [decision, below of=start] (child_check) {Do any of root node's children match first symbol of context?};
+ \node [decision, below of=child_check] (match_range_check) {Does child's range match context?};
+ \node [decision, below of=match_range_check] (table_check) {Is there already a table for the first symbol of the suffix in the node's restaurant?};
+ \node [block, left of=table_check, node distance=7.25cm] (inc_count) {Incremement customer count};
+ \node [block, below of=table_check] (new_table) {Create table with one customer};
+ \node [block, right of=match_range_check, node distance=5.25cm] (new_root_node) {Set matching node as new root node};
+ \node [block, left of=match_range_check,node distance=5.4cm] (branch) {Branch node into two sections and instantiate table for first symbol of suffix};
+ \node [block, left of=new_table, node distance=9cm] (create_node) {Create child node for context with a table with one customer for first symbol of suffix};
+ \node [block, below of=new_table] (consistency_check) {Check that number of customers in root node's restaurant is equal to total number of tables for that symbol in its children's restaurants};
+ \node [block, right of=consistency_check, node distance =7cm] (repeat) {Consider next longest suffix};
+
+    % Draw edges
+    \path [line] (start) -- (child_check);
+    \path [line] (child_check) -- node {yes} (match_range_check);
+    \path [line] (match_range_check) -- node {exact match} (table_check);
+    \path [line] (table_check) -- node {yes} (inc_count);
+    \path [line] (table_check) -- node {no} (new_table);
+    \path [line] (match_range_check) -- node[above]{part of context} node[below]{matches all of range} (new_root_node);
+    \path [line] (new_root_node) |- (child_check);
+    \path [line] (match_range_check) -- node[above]{part of range} node[below]{matches all of context} (branch);
+    \path [line] (child_check) -| node [near start] {no} (create_node);
+    \path [line] (inc_count) |- (consistency_check);
+    \path [line] (new_table) -- (consistency_check);
+    \path [line] (branch) |- (consistency_check);
+    \path [line] (create_node) |- (consistency_check);
+    \path [line] (consistency_check) -- (repeat);
+    \path [line] (repeat) |- (child_check);
+
+\end{tikzpicture}
+
+\caption{Tree Construction Flowchart}
+\label{fig:treeFlowchart}
+\end{figure}
+
+Figure \ref{fig:treeFlowchart} details the tree building procedure. The cycle continues until the longest suffix has been constructed. A main \lstinline!build_tree! function was written with several auxiliary functions supporting it. 
+
+Checking whether a node's range matches a given context was done using regular expressions. It is necessary to discern between full and partial matches with both the range and the context, so a function  \lstinline!check_range! was written which returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_context_length is_context_length_greater_than_match_length]!.
+
+The function \lstinline!branch! is used to branch a node when a context matches part of the branch substring. It dissociates the current node from the tree (line 9) and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range.
  
- \subsection{Auxiliary Functions}
+% The method for building a tree is as follows:
+% \begin{enumerate}
+% \item Start with shortest suffix
+% \item Create child node with key "", range [0 0], no children and restaurant containing a table with one customer for the suffix symbol
+% \item Now consider the next shortest suffix
+% \item Create a child node with key as the first symbol of the \textit{context} (all symbols in the suffix except the first), range as the indices of the context, no children and restaurant containing a table with one customer for the first symbol of the suffix
+% \item Now consider the third shortest suffix
+% \item Check if any of the children of the root node match the first symbol of the context \label{step:repeatStep}
+% \begin{enumerate}
+% \item If there is a match, check whether its range matches the context
+% \begin{enumerate}
+% \item If the range exactly matches the context, check if there is already a table for the first symbol of the suffix in the node's restaurant \label{step:exactMatch}
+% \begin{enumerate}
+% \item If there is a table, increment the customer count
+% \item If there is not a table, create one with one customer
+% \end{enumerate}
+% \item If the range matches part of the context (i.e. the context is longer than the matching range),repeat from step \ref{step:repeatStep} with the matching node as the root node \label{step:contextLongerThanRange}
+% \item If part of the range matches the context (i.e. the context is shorter than the matching range), branch the node into two sections and instantiate a table for the first symbol of the suffix \label{step:branchNode}
+% \end{enumerate}
+% \item If there is no match, create a child node for the context with a table with one customer for the first symbol of the suffix in its restaurant
+% \end{enumerate}
+% \item Check that the number of customers for each symbol in the root node's restaurant is equal to the total number of tables for that symbol in its children's restaurants
+% \item Repeat from step \ref{step:repeatStep} for suffixes of increasing length until the whole string has been considered
+% \end{enumerate}
  
- \subsubsection{Checking the Consistency Between Child Table Count and Parent Customer Count}\label{sec:customerTableConsistency}
+% \subsection{Auxiliary Functions}
+% 
+% \subsubsection{Checking the Consistency Between Child Table Count and Parent Customer Count}\label{sec:customerTableConsistency}
+% 
+% The function \lstinline!check_table_customer_consistency! checks that the total number of tables for a given symbol in a node's children equal the number of customers for that symbol in the root node's restaurant.
+% 
+% \begin{lstlisting}
+%(defn check_table_customer_consistency "Checks that number of tables for the given letter in the node's children is equal to the number of customers for the letter in the node's restaurant" [node letter params]
+%	^(^let [table_count (find_child_table_count_memo node letter params)
+%	params (into params [:restaurant letter])
+%	parent_restaurant £(£if (nil? (get-in node params)) 
+%		[0 0] 
+%		(get-in node params)£)£]
+%			!(!if (and (not (zero? table_count)) (not (= table_count (second parent_restaurant)) ))
+%				|(|if (<= (first parent_restaurant) table_count)
+%					^(^if (zero? (first parent_restaurant))
+%						£(£assoc-in node params [1 table_count]£)£
+%						£(£assoc-in node params [(first parent_restaurant) table_count]£)£^)^
+%					^(^assoc-in node params [table_count table_count]^)^|)|
+%				node!)!^)^)
+%\end{lstlisting}
+%
+%\noindent If the number of customers in the root node's restaurant is not equal to the number of tables in its children's restaurants, the number number of customer's in the root node's restaurant is updated to match.
+%
+%The function \lstinline!check_consistency_all_tables! (below) calls \lstinline!check_table_customer_consistency! for all table letters passed to it.
+%
+%\begin{lstlisting}
+%(defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
+%	[node tables params]
+%		^(^if (<= 1 (count tables))
+%			£(£check_table_customer_consistency_memo node (first tables) params£)£
+%			£(£check_consistency_all_tables (check_table_customer_consistency_memo node (first tables) params) (rest tables) params£)£^)^)
+%\end{lstlisting}
+%
+%\subsubsection{Checking Whether a Node's Range Matches the Context}
+%
+%The function \lstinline!check_range! returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_context_length is_context_length_greater_than_match_length]!. It uses regular expressions to determine whether the context string matches that of the dereferenced range indices. If the two strings do not match, the function is called again with the final symbol removed from the dereferenced range letters. 
+%
+%\begin{lstlisting}
+%(defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
+%	^(^[range suffix root_word]
+%		£(£check_range range suffix root_word (count (dereference-indices-memo root_word range)))£)£^)^
+%	^(^[range suffix root_word length]
+%		£(£let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)]
+%			!(!if (nil? match)
+%				|(|check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length|)|
+%				[match (= length (count match)) (> (count suffix) (count match))]!)!£)£^)^)
+%\end{lstlisting}
+%
+%\subsubsection{Branching a Node}
+%
+%The function \lstinline!branch! is used to branch a node when a context matches part of the branch substring. It dissociates the current node from the tree (line 9) and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range. Finally, the customer-table consistency is checked with \lstinline!check_consistency_all_tables!.
+%
+%\begin{lstlisting}
+%(defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
+%	[node letter new_range new_letter params]
+%		^(^let [old_range (get-in node (into params [:children letter :range]))
+%		restaurant (get-in node (into params [:children letter :restaurant]))
+%		children (get-in node (into params [:children letter :children]))]
+%			£(£check_consistency_all_tables_memo
+%				!(!assoc-in
+%					|(|assoc-in
+%						^(^dissoc-in node (into params [:children letter])^)^
+%					(into params [:children letter]) (build_restaurant_node new_range)|)|
+%				(into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) (- (last new_range) (first new_range))) (last old_range)] children restaurant)!)!
+%			(keys restaurant)
+%		(into params [:children letter])£)£^)^)
+%\end{lstlisting}
  
- The function \lstinline!check_table_customer_consistency! checks that the total number of tables for a given symbol in a node's children equal the number of customers for that symbol in the root node's restaurant.
- 
- \begin{lstlisting}
-(defn check_table_customer_consistency "Checks that number of tables for the given letter in the node's children is equal to the number of customers for the letter in the node's restaurant" [node letter params]
-	^(^let [table_count (find_child_table_count_memo node letter params)
-	params (into params [:restaurant letter])
-	parent_restaurant £(£if (nil? (get-in node params)) 
-		[0 0] 
-		(get-in node params)£)£]
-			!(!if (and (not (zero? table_count)) (not (= table_count (second parent_restaurant)) ))
-				|(|if (<= (first parent_restaurant) table_count)
-					^(^if (zero? (first parent_restaurant))
-						£(£assoc-in node params [1 table_count]£)£
-						£(£assoc-in node params [(first parent_restaurant) table_count]£)£^)^
-					^(^assoc-in node params [table_count table_count]^)^|)|
-				node!)!^)^)
-\end{lstlisting}
+% \subsection{The \lstinline!build_tree! Method}
+% 
+% The method \lstinline!build_tree! (below) follows the procedure detailed in Section \ref{sec:treeBuildingProcedure}:
+% \begin{lstlisting}
+% (defn build_tree "Builds a suffix tree for the given word"
+% 	^(^[word] (build_tree word (build_restaurant_node) word []) ^)
+%	(^[word root_node root_word params] 
+%		!(!let [root_node 
+%			£(£if (empty? params) 
+%				|(|cond 
+%					(> 2 (count word)) root_node
+%					(= 2 (count word)) (build_tree (str (reduce str (rest word))) root_node root_word params)
+%					:else (build_tree (reduce str (rest word)) root_node root_word params)|)|
+%			root_node£)£
+%		suffix 
+%			£(£cond 
+%				(< 2 (count word)) (reduce str (rest word))
+%				(= 2 (count word)) (str (reduce str (rest word)))
+%				:else ""£)£
+%		suffix_start (str (first suffix))
+%		letter (str (first word))
+%		children (get-in root_node (into params [:children]))]
+%			£(£if (empty? children)
+%				|(|check_table_customer_consistency_memo
+%					^(^assoc-in root_node (into params [:children suffix_start])
+%						!(!build_restaurant_node (create-indices-memo root_word suffix) letter!)!^)^
+%					letter params|)|
+%				|(|if (check_for_children_memo suffix_start (keys children))
+%					^(^let [match_results (check_range_memo (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
+%						!(!if (second match_results)
+%							£(£if (nth match_results 2)
+%								|(|if (empty? (get-in root_node [:children suffix_start :children]))
+%									^(^check_table_customer_consistency_memo 
+%										!(!check_table_customer_consistency_memo
+%											£(£assoc-in
+%												|(|build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])|)|
+%											[:children suffix_start :children ""] (build_restaurant_node [0 0] (get-in root_node [:children suffix_start :children]) (get-in root_node [:children suffix_start :restaurant]))£)£
+%										letter (into params [:children suffix_start])!)!
+%									letter params^)^
+%									^(^check_table_customer_consistency_memo
+%										!(!check_table_customer_consistency_memo
+%											£(£build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])£)£
+%										letter (into params [:children suffix_start])!)!
+%									letter params^)^|)|
+%								|(|check_table_customer_consistency_memo root_node letter params|)|£)£
+%							£(£let [new-range (create-indices-memo root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range])) new_branch (dereference-indices-memo root_word new-range)]
+%								|(|check_table_customer_consistency_memo
+%									^(^check_table_customer_consistency_memo
+%										!(!assoc-in
+%											£(£branch_memo root_node suffix_start new-range (subs (dereference-indices-memo root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params£)£
+%										(into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) (build_restaurant_node (create-indices-memo root_word (subs suffix (count (first match_results)) (count suffix))) letter)!)!
+%									letter (into params [:children suffix_start])^)^
+%								letter params|)|£)£!)!^)^
+%					^(^check_table_customer_consistency_memo
+%						!(!assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices-memo root_word suffix) letter)!)!
+%					letter params^)^|)|£)£!)!^)^)
+%\end{lstlisting}
+%
+%
 
-\noindent If the number of customers in the root node's restaurant is not equal to the number of tables in its children's restaurants, the number number of customer's in the root node's restaurant is updated to match.
+%\lstinline!build_tree! can be called with one argument or four arguments. When called with one argument, it calls itself with four arguments, generating values for the other arguments. The four arguments are:
 
-The function \lstinline!check_consistency_all_tables! (below) calls \lstinline!check_table_customer_consistency! for all table letters passed to it.
-
-\begin{lstlisting}
-(defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
-	[node tables params]
-		^(^if (<= 1 (count tables))
-			£(£check_table_customer_consistency_memo node (first tables) params£)£
-			£(£check_consistency_all_tables (check_table_customer_consistency_memo node (first tables) params) (rest tables) params£)£^)^)
-\end{lstlisting}
-
-\subsubsection{Checking Whether a Node's Range Matches the Context}
-
-The function \lstinline!check_range! returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_context_length is_context_length_greater_than_match_length]!. It uses regular expressions to determine whether the context string matches that of the dereferenced range indices. If the two strings do not match, the function is called again with the final symbol removed from the dereferenced range letters. 
-
-\begin{lstlisting}
-(defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
-	^(^[range suffix root_word]
-		£(£check_range range suffix root_word (count (dereference-indices-memo root_word range)))£)£^)^
-	^(^[range suffix root_word length]
-		£(£let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)]
-			!(!if (nil? match)
-				|(|check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length|)|
-				[match (= length (count match)) (> (count suffix) (count match))]!)!£)£^)^)
-\end{lstlisting}
-
-\subsubsection{Branching a Node}
-
-The function \lstinline!branch! is used to branch a node when a context matches part of the branch substring. It dissociates the current node from the tree (line 9) and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range. Finally, the customer-table consistency is checked with \lstinline!check_consistency_all_tables!.
-
-\begin{lstlisting}
-(defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
-	[node letter new_range new_letter params]
-		^(^let [old_range (get-in node (into params [:children letter :range]))
-		restaurant (get-in node (into params [:children letter :restaurant]))
-		children (get-in node (into params [:children letter :children]))]
-			£(£check_consistency_all_tables_memo
-				!(!assoc-in
-					|(|assoc-in
-						^(^dissoc-in node (into params [:children letter])^)^
-					(into params [:children letter]) (build_restaurant_node new_range)|)|
-				(into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) (- (last new_range) (first new_range))) (last old_range)] children restaurant)!)!
-			(keys restaurant)
-		(into params [:children letter])£)£^)^)
-\end{lstlisting}
- 
- \subsection{The \lstinline!build_tree! Method}
- 
- The method \lstinline!build_tree! (below) follows the procedure detailed in Section \ref{sec:treeBuildingProcedure}:
- \begin{lstlisting}
- (defn build_tree "Builds a suffix tree for the given word"
- 	^(^[word] (build_tree word (build_restaurant_node) word []) ^)
-	(^[word root_node root_word params] 
-		!(!let [root_node 
-			£(£if (empty? params) 
-				|(|cond 
-					(> 2 (count word)) root_node
-					(= 2 (count word)) (build_tree (str (reduce str (rest word))) root_node root_word params)
-					:else (build_tree (reduce str (rest word)) root_node root_word params)|)|
-			root_node£)£
-		suffix 
-			£(£cond 
-				(< 2 (count word)) (reduce str (rest word))
-				(= 2 (count word)) (str (reduce str (rest word)))
-				:else ""£)£
-		suffix_start (str (first suffix))
-		letter (str (first word))
-		children (get-in root_node (into params [:children]))]
-			£(£if (empty? children)
-				|(|check_table_customer_consistency_memo
-					^(^assoc-in root_node (into params [:children suffix_start])
-						!(!build_restaurant_node (create-indices-memo root_word suffix) letter!)!^)^
-					letter params|)|
-				|(|if (check_for_children_memo suffix_start (keys children))
-					^(^let [match_results (check_range_memo (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
-						!(!if (second match_results)
-							£(£if (nth match_results 2)
-								|(|if (empty? (get-in root_node [:children suffix_start :children]))
-									^(^check_table_customer_consistency_memo 
-										!(!check_table_customer_consistency_memo
-											£(£assoc-in
-												|(|build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])|)|
-											[:children suffix_start :children ""] (build_restaurant_node [0 0] (get-in root_node [:children suffix_start :children]) (get-in root_node [:children suffix_start :restaurant]))£)£
-										letter (into params [:children suffix_start])!)!
-									letter params^)^
-									^(^check_table_customer_consistency_memo
-										!(!check_table_customer_consistency_memo
-											£(£build_tree (str letter (subs suffix (count (first match_results)) (count suffix))) root_node root_word (into params [:children suffix_start])£)£
-										letter (into params [:children suffix_start])!)!
-									letter params^)^|)|
-								|(|check_table_customer_consistency_memo root_node letter params|)|£)£
-							£(£let [new-range (create-indices-memo root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range])) new_branch (dereference-indices-memo root_word new-range)]
-								|(|check_table_customer_consistency_memo
-									^(^check_table_customer_consistency_memo
-										!(!assoc-in
-											£(£branch_memo root_node suffix_start new-range (subs (dereference-indices-memo root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params£)£
-										(into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) (build_restaurant_node (create-indices-memo root_word (subs suffix (count (first match_results)) (count suffix))) letter)!)!
-									letter (into params [:children suffix_start])^)^
-								letter params|)|£)£!)!^)^
-					^(^check_table_customer_consistency_memo
-						!(!assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices-memo root_word suffix) letter)!)!
-					letter params^)^|)|£)£!)!^)^)
-\end{lstlisting}
-
-
-
-\lstinline!build_tree! can be called with one argument or four arguments. When called with one argument, it calls itself with four arguments, generating values for the other arguments. The four arguments are:
+The \lstinline!build_tree! function has four input arguments:
 
 \begin{itemize}
 \item \lstinline!word!: the current suffix being considered
 \item \lstinline!root_node!: the root node of the tree
 \item \lstinline!root_word!: the original string (from which indices are created and dereferenced)
-\item \lstinline!params!: the parameters describing the node being built on (for example, the object described by \lstinline![:children "a"]! is the child of the root node whose range begins with the letter "a"; the object described by \lstinline![:children "a" :range]! is the range of that node) 
+\item \lstinline!params!: the parameters describing the node being built on (for example, the object described by \lstinline![:children "a"]! is the child of the root node whose range begins with the letter ``a"; the object described by \lstinline![:children "a" :range]! is the range of that node) 
 \end{itemize}
 
-\noindent Lines 4-10 re-define the root node: if the suffix is longer than one symbol, the function calls itself recursively, removing the first symbol from the beginning of \lstinline!word!; otherwise the root node is unchanged (the different methods in lines 8 and 9 are due to Clojure's treatment of strings vs. characters, but produce the same results). This ensures that the tree is built up from the shortest suffix first. The data structure created by the shortest suffix is then passed back to its calling function so that the node(s) for the next shortest suffix can be built onto it. 
+\noindent It then recursively calls itself, removing one character from the beginning of \lstinline!word! until the tree for the final character is constructed. This then becomes the new \lstinline!root_node!. This  continues for each suffix, ensuring that the tree is built up from the shortest suffix first.
 
-Line 19 checks if the root node has any children. If it does not, lines 20-23 are executed. These associate a new node into the root node's children with the relevant range and table and then check table-customer consistency. 
+%\noindent Lines 4-10 re-define the root node: if the suffix is longer than one symbol, the function calls itself recursively, removing the first symbol from the beginning of \lstinline!word!; otherwise the root node is unchanged (the different methods in lines 8 and 9 are due to Clojure's treatment of strings vs. characters, but produce the same results). This ensures that the tree is built up from the shortest suffix first. The data structure created by the shortest suffix is then passed back to its calling function so that the node(s) for the next shortest suffix can be built onto it. 
+%
+%Line 19 checks if the root node has any children. If it does not, lines 20-23 are executed. These associate a new node into the root node's children with the relevant range and table and then check table-customer consistency. 
+%
+%If the root node does have children, the function \lstinline!check_for_children! returns true if any of their keys are the same as the first symbol of the context. If there are no matches, a new node is associated into the root node's children (lines 50-51) in the same way as mentioned in the previous paragraph. If a match is found, the function \lstinline!check_range! is called to return the variable \lstinline!match_results!. If \lstinline!match_results! is of the form \lstinline![match true true]!, the first part of the context being considered exactly matches the substring of the branch (as in step \ref{step:contextLongerThanRange} in Section \ref{sec:treeBuildingProcedure}). In this case, \lstinline!build_tree! is called again with the matching node as the root node and with the matching part of the context removed (lines 28-40). If instead, \lstinline!match_results! has the form \lstinline![match true false]!, the context exactly matches the substring of the branch (as in step \ref{step:exactMatch} in Section \ref{sec:treeBuildingProcedure}). In this case, \todo{?} Finally, if \lstinline!match_results! has the form \lstinline![match false true]!, the first part of the context matches the first part of the branch substring (as in step \ref{step:branchNode} in Section \ref{sec:treeBuildingProcedure}). In this case, the node must be branched (lines 42-49).
+%
+This function gives a full tree for the word ``mississippi" as shown below:
 
-If the root node does have children, the function \lstinline!check_for_children! returns true if any of their keys are the same as the first symbol of the context. If there are no matches, a new node is associated into the root node's children (lines 50-51) in the same way as mentioned in the previous paragraph. If a match is found, the function \lstinline!check_range! is called to return the variable \lstinline!match_results!. If \lstinline!match_results! is of the form \lstinline![match true true]!, the first part of the context being considered exactly matches the substring of the branch (as in step \ref{step:contextLongerThanRange} in Section \ref{sec:treeBuildingProcedure}). In this case, \lstinline!build_tree! is called again with the matching node as the root node and with the matching part of the context removed (lines 28-40). If instead, \lstinline!match_results! has the form \lstinline![match true false]!, the context exactly matches the substring of the branch (as in step \ref{step:exactMatch} in Section \ref{sec:treeBuildingProcedure}). In this case, \todo{?} Finally, if \lstinline!match_results! has the form \lstinline![match false true]!, the first part of the context matches the first part of the branch substring (as in step \ref{step:branchNode} in Section \ref{sec:treeBuildingProcedure}). In this case, the node must be branched (lines 42-49).
-
-This function gives a full tree for the word "mississippi" as shown below:
-
+\singlespacing
 \begin{lstlisting}
 {:range [],
  :children
@@ -558,7 +615,7 @@ This function gives a full tree for the word "mississippi" as shown below:
   "" {:range [0 0], :children {}, :restaurant {"i" [1 1]}}},
  :restaurant {"m" [1 1], "s" [1 2], "p" [1 2], "i" [1 3]}}
  \end{lstlisting}
-
+\doublespacing
 
 
  The \lstinline!range! field reduces the memory required to store the tree as all branches are now defined by a two-element vector instead of string (which could have unlimited length). Storing the node children as a hash map allows us to identify each branch by the first letter of its substring, thereby reducing search times, as the indices vector does not need to be dereferenced in order to check if a particular branch is relevant.
