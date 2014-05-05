@@ -1,25 +1,40 @@
 \chapter{Literature Review}\label{chap:literatureReview}
 
-
-The simplest form of language model is that of an $n$-gram, a sequence of $n$ contiguous characters or words. The counts of unique $n$-grams in a training corpus are used to predict the next word/character following a given context (Equation \ref{eq:n-gramProb}, where $c()$ denotes the count of a given $n$-gram - this can be extended for larger $n$). However, this means that any $n$-gram not found in the training corpus will have zero count and therefore will be assigned zero probability of following any context. This clearly is incorrect. Smoothing techniques have been established to account for this problem. $n$-grams are discussed in more detail in Chapter \ref{chap:n-gram}. 
-
-\begin{equation}
-P_{ML}(w_{i}|w_{i-1})=\frac{c(w_{i-1}w_{i})}{c(w_{i-1})}
-\label{eq:n-gramProb}
-\end{equation}
+\begin{enumerate}
+\item \textit{Interpolated estimation of Markov source parameters from sparse data} - Jelinek and Mercer (1980)
+\item \textit{A comparison of the enhanced Good-Turing and deleted estimation    methods for estimating probabilities of English bigrams} - Church and Gale (1991)
+\item \textit{A hierarchical Dirichlet language model} - Mackay and Peto (1995)
+\item \textit{An empirical study of smoothing techniques for language modelling} - Chen and Goodman (1996)
+\item \textit{An empirical study of smoothing techniques for language modelling} - Chen and Goodman (1999)
+\item \textit{A hierarchical Bayesian language model based on Pitman-Yor processes} - Teh (2006)
+\item \textit{A hierarchical, hierarchical Pitman Yor process language model} - Wood, Teh (2008)
+\item \textit{A nonparametric Bayesian alternative to spike sorting} - Wood, Black (2008)
+\item \textit{A hierarchical nonparametric    Bayesian approach to statistical language model domain adaptation} - Wood, Teh (2009)
+\item \textit{A stochastic memoizer for sequence data} - Wood, Archambeau, Gasthaus, James, Teh (2009)
+\item \textit{Dirichlet Process} - Teh (2010)
+\item \textit{The sequence memoizer} - Wood, Gasthaus, Archambeau, James, Teh (2011)
+\item \textit{Deplump for streaming data} - Bartlett, Wood (2011)
+\end{enumerate}
 
 \section{Previous Work}
 
-Chen and Goodman \cite{chen1996empirical} compared a range of different smoothing techniques, namely Baseline smoothing, Additive smoothing, Katz smoothing, Church-Gale smoothing and Jelinek-Mercer smoothing. They found that Church-Gale smoothing outperformed the other methods for bigram models. They also implemented two new techniques, \lstinline!average-count! and \lstinline!one-count!.
+\subsection{$n$-gram Models}
+
+The simplest form of language model is that of an $n$-gram, a sequence of $n$ contiguous characters or words. The counts of unique $n$-grams in a training corpus are used to predict the next word/character following a given context (Equation \ref{eq:n-gramProb}, where $c()$ denotes the count of a given $n$-gram - this can be extended for larger $n$). However, this means that any $n$-gram not found in the training corpus will have zero count and therefore will be assigned zero probability of following any context. This leads to overfitting to the the training data. Smoothing techniques have been established to account for this problem. These all in some way follow the method of ``taking from the rich and giving to the poor", i.e. they take some probability mass from those words seen in the training corpus and associate it with words that were not seen. $n$-grams are discussed in more detail in Chapter \ref{chap:n-gram}. 
+
+\begin{equation}
+P_{ML}(w_{i}|w_{i-1})\simeq\frac{c(w_{i-1}w_{i})}{c(w_{i-1})}
+\label{eq:n-gramProb}
+\end{equation}
 
 
-Additive smoothing is defined as in Equation \ref{eq:additiveSmoothing}. Good-Turing smoothing has been found to perform slightly better and states that an $n$-gram that occurs $r$ times has an adjusted count of $r^{*}$ according to Equation \ref{eq:goodTuringSmoothing}, where $N_{r}$ is the number of $n$-grams with count $r$ in the training corpus. Katz smoothing extends this method by adding the interpolation of higher-order models with lower-order models. 
+Chen and Goodman \cite{chen1996empirical} \cite{chen1999empirical} compared a range of different smoothing techniques, namely Additive smoothing (discussed in Section \ref{sec:additiveSmoothing}), Church-Gale smoothing, Jelinek-Mercer smoothing, Baseline smoothing and Katz smoothing.  
 
-
+Additive smoothing is defined as in Equation \ref{eq:additiveSmoothing}. Good-Turing smoothing (discussed in Section \ref{sec:goodTuringSmoothing}) has been found to perform slightly better and states that an $n$-gram that occurs $r$ times has an adjusted count of $r^{*}$ according to Equation \ref{eq:goodTuringSmoothing}, where $N_{r}$ is the number of $n$-grams with count $r$ in the training corpus. Katz smoothing extends this method by adding the interpolation of higher-order models with lower-order models. 
 
 \begin{equation}
 \label{eq:additiveSmoothing}
-P_{add}(w_{i}|w_{i-n+1}^{i-1}=\frac{c(w_{i-n+1}^{i})+\delta}{c(w_{i-n+1}^{i-1})+\delta|V|}
+P_{add}(w_{i}|w_{i-n+1}^{i-1})=\frac{c(w_{i-n+1}^{i})+\delta}{c(w_{i-n+1}^{i-1})+\delta|V|}
 \end{equation}
 
 \begin{equation}
@@ -27,13 +42,15 @@ P_{add}(w_{i}|w_{i-n+1}^{i-1}=\frac{c(w_{i-n+1}^{i})+\delta}{c(w_{i-n+1}^{i-1})+
 r^{*}=(r+1)\frac{N_{r+1}}{N_{r}}
 \end{equation}
 
-Church-Gale smoothing combines that of Good-Turing with 'bucketing', which Chen and Goodman describe as 'the technique of partitioning a set of $n$-grams into disjoint groups, where each group is characterised independently through a set of parameters'. Church and Gale describe their method as the 'Enhanced Good-Turing estimate' \cite{church1991comparison}, giving Equation \ref{eq:churchGaleEGT}, where $S$ is the smoothing function over $r$ for a fixed $j$, the bucket.
+Church-Gale smoothing combines that of Good-Turing with \textit{bucketing}, which Chen and Goodman describe as ``the technique of partitioning a set of $n$-grams into disjoint groups, where each group is characterised independently through a set of parameters". Church and Gale describe their method as the ``Enhanced Good-Turing estimate" \cite{church1991comparison}, giving Equation \ref{eq:churchGaleEGT}, where $S$ is the smoothing function over $r$ for a fixed $j$, the bucket.
 
 \begin{equation}
 r^{*}=\frac{(r+1)S(N_{jr+1})}{S(N_{jr})}
 \label{eq:churchGaleEGT}
 \end{equation}
 
+%Chen and Goodman found that Church-Gale smoothing outperformed the other methods for bigram models. 
+%
 Jelinek-Mercer smoothing involves partitioning the $\lambda_{w_{i-n+1}^{i-1}}$ into buckets according to $c(w_{i-n+1}^{i-1})$, where all $\lambda_{w_{i-n+1}^{i-1}}$ in the same bucket have the same value. Chen and Goodman then take the conditional probability of a word to be as in Equation \ref{eq:chenGoodman3}.
 
 \begin{equation}
@@ -48,25 +65,38 @@ P_{base}(w_{i}|w_{i-n+1}^{i-1})=\lambda_{n}P_{ML}(w_{i}|w_{i-n+1}^{i-1})+(1-\lam
 \label{eq:chenGoodmanBaseline}
 \end{equation}
 
-Chen and Goodman's \lstinline!average-count! method is an instance of Jelinek-Mercer smoothing. They partition the $\lambda_{w_{i-n+1}^{i-1}}$ according to the average number of counts per non-zero element $\frac{c(w_{i-n+1}^{i-1})}{|w_{i}:c(w_{i-n+1}^{i-1})>0|}$.
+%Katz smoothing again extends Good-Turing smoothing by adding the combination of higher-order models with lower-order models \todo{re-word}. A bi-gram with count $r$ has an adjusted count as in Equation \ref{eq:chenGoodman5}.
+%
+%\begin{equation}
+%r_{Katz}(w_{i-1}w_{i})=
+%\begin{cases}
+%   d_{r}r &\text{if }r>0\\
+%    \alpha(w_{i-1})p_{ML}(w_{i}) &\text{if }r=0
+%\end{cases}
+%\label{eq:chenGoodman5}
+%\end{equation}
+%
+%Chen and Goodman's \lstinline!average-count! method is an instance of Jelinek-Mercer smoothing. They partition the $\lambda_{w_{i-n+1}^{i-1}}$ according to the average number of counts per non-zero element $\frac{c(w_{i-n+1}^{i-1})}{|w_{i}:c(w_{i-n+1}^{i-1})>0|}$.
+%
+%Chen and Goodman's \lstinline!one-count! method combines MacKay and Peto's \cite{mackay1995hierarchical} work (Equation \ref{eq:chenGoodmanMacKayPeto}) with the Good-Turing estimate to give Equation \ref{eq:chenGoodman4} where $n_{1}(w_{i-n+1}^{i-1})=|w_{i}:c(w_{i-n+1}^{i})=1|$ is the number of words with one count and $\beta$ and $\gamma$ are constants. In MacKay and Peto's equation, $\alpha$ can be thought of as the number of counts being added to the given distribution, where the new counts are distributed as in the lower-order distribution. The Good-Turing estimate can be interpreted as stating that the number of these extra counts should be proportional to the number of words with exactly one count in the given distribution. 
+%
+%\todo[inline]{Re-word}
+%
+%\begin{equation}
+%P_{one}(w_{i}|w_{i-n+1}^{i-1})=\frac{c(w_{i-n+1}^{i})+\alpha P_{one}(w_{i}|w_{i-n+2}^{i-1})}{c(w_{i-n+1}^{i-1}+\alpha}
+%\label{eq:chenGoodmanMacKayPeto}
+%\end{equation}
+%
+%\begin{equation}
+%\alpha=\gamma[n_{1}(w_{i-n+1}^{i-1})+\beta]
+%\label{eq:chenGoodman4}
+%\end{equation}
 
-Chen and Goodman's \lstinline!one-count! method combines MacKay and Peto's \cite{mackay1995hierarchical} work (Equation \ref{eq:chenGoodmanMacKayPeto}) with the Good-Turing estimate to give Equation \ref{eq:chenGoodman4} where $n_{1}(w_{i-n+1}^{i-1})=|w_{i}:c(w_{i-n+1}^{i})=1|$ is the number of words with one count and $\beta$ and $\gamma$ are constants. In MacKay and Peto's equation, $\alpha$ can be thought of as the number of counts being added to the given distribution, where the new counts are distributed as in the lower-order distribution. The Good-Turing estimate can be interpreted as stating that the number of these extra counts should be proportional to the number of words with exactly one count in the given distribution. 
+Chen and Goodman found that Katz smoothing and Jelinek-Mercer smoothing performed consistently well across training set sizes for bi-gram and tri-gram models. Katz smoothing performed better on tri-gram models produced from large training sets and on bi-gram models in general. They also found that Church-Gale smoothing outperformed all existing methods on bi-gram models produced from large training sets. %Chen and Goodman's \lstinline!one-count! and \lstinline!average-count! methods were superior to existing methods for tri-gram models and performed well on bi-gram models.
 
 \todo[inline]{Re-word}
 
-\begin{equation}
-P_{one}(w_{i}|w_{i-n+1}^{i-1})=\frac{c(w_{i-n+1}^{i})+\alpha P_{one}(w_{i}|w_{i-n+2}^{i-1})}{c(w_{i-n+1}^{i-1}+\alpha}
-\label{eq:chenGoodmanMacKayPeto}
-\end{equation}
-
-\begin{equation}
-\alpha=\gamma[n_{1}(w_{i-n+1}^{i-1})+\beta]
-\label{eq:chenGoodman4}
-\end{equation}
-
-Chen and Goodman found that Katz smoothing and Jelinek-Mercer smoothing performed consistently well across training set sizes for bi-gram and tri-gram models. Katz smoothing performed better on tri-gram models produced from large training sets and on bi-gram models in general. They also found that Church-Gale smoothing outperformed all existing methods on bi-gram models produced from large training sets. Chen and Goodman's \lstinline!one-count! and \lstinline!average-count! methods were superior to existing methods for tri-gram models and performed well on bi-gram models.
-
-\todo[inline]{Re-word}
+\subsection{Hierarchical Models}
 
 MacKay and Peto \cite{mackay1995hierarchical} built on the $n$-gram model, but attempted to find a better alternative to the classical smoothing techniques. They instead devised a hierarchical Dirichlet language model, $\mathscr{H}_{D}$. The premise of their work was explaining how the so-called 'kludge' in Equation \ref{eq:MacKayPeto1} works. Their work is discussed in detail in Chapter \ref{chap:HierarchicalDirichletModel}.
 
@@ -76,6 +106,9 @@ MacKay and Peto \cite{mackay1995hierarchical} built on the $n$-gram model, but a
 \hat{P}(w_{t}|w_{t-1})-\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}
 \label{eq:MacKayPeto1}
 \end{equation}
+
+
+
 
 Wood and Teh \cite{wood2008hierarchical} \cite{wood2009hierarchical} also used the idea of a hierarchical model, but this time using a Pitman-Yor Process (PYP). They define the distribution of $n$-grams as in Equation \ref{eq:HNBASLMDA1}, where $\mathcal{PY}(d,\alpha,\mathcal{H})$ is a PYP with discount $d$, concentration $\alpha$ and base distribution $\mathcal{H}$ ($\mathbb{E}[G(s)]=\mathcal{H}(x)$), $x$s are \textit{types} (unique words or symbols), $w$s are \textit{tokens} (observed instances of types) and $\mathcal{U}$ is the uniform distribution over types. The posterior predictive distribution for the next word/symbol to appear in a particular context given the entire training corpus $\mathcal{C}$ is given by Equation \ref{eq:HBNASLMDA2.1posterior}, where $h$ is the context vector consisting of $n-1$ words/symbols, $K,\alpha,d,[c_{k}]_{k=1}^{K}$ and $[\phi_{k}]_{k=1}^{K}$ are parameters and variables used in the Chinese restaurant franchise sampler for the HPYP\todo{CRP}, $N$ is the number of times the context $h$ occurs in the training data, $h'$ is $h$ with one word removed and $\delta(0)=1,\delta(x)=0\ \forall\ x\neq0$ is a standard indicator function. The first term in the sum in this equation is related to the count of the number of times $w$ occurs after $h$ in the training corpus. The second term correspond to the \textit{back-off} probability of $w$ following a shorter-by-one-word context $h'$.
 
@@ -113,6 +146,8 @@ G_{\{w_{t-2},w_{t-1}\}}^{\mathcal{D}_{i}}\sim\mathcal{PY}(d_{j},\theta_{j},\pi G
 \todo[inline]{Complete previous work section}
 
 \section{State of the Art}
+
+\todo[inline]{Discuss Sequence Memoizer}
 
 \todo[inline]{State of the art}
 

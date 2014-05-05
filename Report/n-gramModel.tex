@@ -46,13 +46,13 @@ p(w_{2}|w_{1})&=\frac{p(w_{1}, w_{2})}{p(w_{1})}
 \end{align}
 \end{subequations}
 
-\noindent This can be used to find the probabilities of $n$-grams which appear in the corpus. However, it cannot cater for words which do not appear in the training corpus as these will have 0 counts and therefore will be estimated to have 0 probability of appearing in the future. Smoothing can be used to combat this problem (see Section \ref{sec:smoothing}).
+\noindent This can be used to find the probabilities of $n$-grams which appear in the corpus. However, it cannot cater for words which do not appear in the training corpus as these will have zero counts and therefore will be estimated to have zero probability of appearing in the future. Smoothing can be used to combat this problem (see Section \ref{sec:smoothing}).
 
 \section{Formatting the Text} \label{sec:formattingText}
 
 Training corpus text is supplied in the form of a plain text \textit{.txt} file. This then needs to be read into memory and formatted. In this case, formatting involves converting all text to lower case and removing all punctuation (except apostrophes). This is done using regular expressions. The text is then stored as a \textit{lazy sequence}, a sequence which is not actually computed until it is used, but does remember already computed elements. This allows us to work with large streams.
 
-Regular expressions are again used to split the text on every space, thereby creating a sequence of individual words. Longer $n$-grams are formed by recursively taking two words from the sequence and adding these to a new sequence, as in the code below. The standard Clojure function \lstinline!frequencies! is then used to create a map of the counts of each each $n$-gram in the text.
+Regular expressions are again used to split the text on every space, thereby creating a sequence of individual words. Longer $n$-grams are formed by recursively taking two words from the sequence and adding these to a new sequence, as in Figure \ref{fig:makePairsCode}. The standard Clojure function \lstinline!frequencies! is then used to create a map of the counts of each each $n$-gram in the text.
 
 
 %(defn format-text [text] "Text with all punctuation (except apostrophes) removed and converted to lower case" 
@@ -76,6 +76,8 @@ Regular expressions are again used to split the text on every space, thereby cre
 %(def words 
 %	(make-words-memo words-vector)) ; all words in text
 %; 2-gram
+\begin{figure}[h]
+\centering
 \singlespacing
 \begin{lstlisting}
 (defn make-pairs "Creates a sequence of all the word pairs from the input" [theWords] 
@@ -84,6 +86,9 @@ Regular expressions are again used to split the text on every space, thereby cre
 		(cons (take 2 theWords) "")))
 \end{lstlisting}
 \doublespacing
+\caption{Code for Function to Make Pairs of Words}
+\label{fig:makePairsCode}
+\end{figure}
 %(def pairs "Sequence of all pairs of words in text" 
 %	(make-pairs-memo words-vector))
 
@@ -105,7 +110,7 @@ Regular expressions are again used to split the text on every space, thereby cre
 
 Smoothing accounts for new words which do not exist in the training corpus. From Equation \ref{eq:n-gramMLE} it is clear to see that any $n$-grams not appearing in the training corpus will be assigned a count of zero and therefore the the model overfits to the data. Smoothing is a way of assigning non-zero probabilities to unseen $n$-grams. There are many possible methods to achieve this, as detailed below.
 
-\subsection{Additive Smoothing}
+\subsection{Additive Smoothing} \label{sec:additiveSmoothing}
 
 Additive or Laplace smoothing consists of adding to the counts of all $n$-grams equally to allow for any $n$-grams which do not appear in the training corpus. These must then be normalised so that the total probability of all $n$-grams is still 1. Equations \ref{eq:1-gramAdditiveSmoothing}-\ref{eq:3-gramAdditiveSmoothing} shows the adjusted probabilities for unigrams, bigrams and trigrams, where $N$ is the total number of words in the corpus, $M$ is the total number of words in the vocabulary and $\alpha_{1}, \alpha_{2}, \alpha_{3}$ are the values added to the counts (for simplicity these are often set to 1).
 
@@ -133,7 +138,7 @@ p(w_{3}| w_{1}, w_{2}) &= \frac{count(w_{1}, w_{2}, w_{3})+\alpha_{3}}{((N-2)+M^
 %
 %\noindent Similar code was written for bi- and tri-gram probabilities.
 
-\subsection{Good-Turing Smoothing}
+\subsection{Good-Turing Smoothing} \label{sec:goodTuringSmoothing}
 
 Good-Turing smoothing is a slightly more complex way of adjusting the counts. It relies on the formula given in Equation \ref{eq:goodTuring} where $r^{*}$ is the adjusted count, $r$ the actual count and $N_{r}$ the number of $n$-grams that appear with count $r$ in the corpus (i.e. $N_{r+1}$ is the number of $n$-grams that appear with the count $r+1$ and $N_{0}$ is the total number of $n$-grams).
 
@@ -146,7 +151,7 @@ r^{*}=(r+1)\frac{N_{r+1}}{N_{r}}
 
 This smoothing method was slightly more complex to implement that that of additive smoothing. A map of all values of $r$ and $N_{r}$ was generated by again using the standard Clojure function \lstinline!frequencies!. It was then possible to find the value of $N_{r}$ for a given count and therefore the value of $N_{r+1}$. 
 
-In this case, the code was designed to used for any length of $n$-gram, provided that the maps follow a strict naming pattern. \todo[inline]{Really?}
+In this case, the code was designed to be used for any length of $n$-gram, provided that the maps follow a strict naming pattern. \todo[inline]{Really?}
 
 %I wrote a function, \lstinline!generate-counts-of-counts! (below), to generate a map of all values of $r$ and their counts, $N_{r}$. This is memoized and the relevant maps are generated. The probabilities of the $n$-grams are then found in the same way as in Equation \ref{eq:n-gramMLE}, but substituting the actual counts for the Good-Turing counts.
 %
@@ -243,8 +248,10 @@ Prediction began at a very basic level of just predicting the next word in a bi-
 
 
 
-It is possible to take this a step further by predicting the next $m$ words from any given context input. This requires the use of a recursive function which cycles through $m$ times to create the desired length of text:
+It is possible to take this a step further by predicting the next $m$ words from any given context input. This requires the use of a recursive function which cycles through $m$ times to create the desired length of text (see Figure \ref{fig:predictTextCode}). \lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. 
 
+\begin{figure}[h]
+\centering
 \singlespacing
 \begin{lstlisting}
 (defn loop-next-words "Predicts certain length of text" [word1 word2 n] 
@@ -257,6 +264,9 @@ It is possible to take this a step further by predicting the next $m$ words from
 		(str (join-words-memo context) (join-words-memo (loop-next-words (last context) (next-word-memo (last (butlast context)) (last context)) (- n 2)))))) 
 \end{lstlisting}
 \doublespacing
+\caption{Code for Function to Predict Text}
+\label{fig:predictTextCode}
+\end{figure}
 
 %\lstinline!loop-next-words! defines a variable \lstinline!the-next-word!, which is the predicted result from calling \lstinline!next-word! for the two words inputted. \lstinline!n! affects the number of words to be predicted. If \lstinline!n! is greater than zero, the function recursively calls itself to return a sequence of the second word inputted \lstinline!word2! and \lstinline!loop-next-words! called with \lstinline!word2!, \lstinline!the-next-word! and \lstinline!n-1! as input arguments. If \lstinline!n! is zero, then the function returns a sequence of \lstinline!word2! and \lstinline!the-next-word!. Therefore it returns an overall sequence of length \lstinline!n!$+2$ starting with the original \lstinline!word2! predicting the following \lstinline!n!$+1$ words.
 %
@@ -271,7 +281,7 @@ It is possible to take this a step further by predicting the next $m$ words from
 %\lstinline!join-words! takes the words which as individual elements in a sequence and joined them together to form a continuous string with spaces between them. This is purely to make the results more readable.
 
 
-\lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. %It joins the original input context to the results from \lstinline!loop-next-words! called with the final word of the context, the next predicted word of the context and \lstinline!n!$-2$ as arguments.
+%\noindent \lstinline!predict-text! takes a context which is a vector of strings and an integer, the number of words to be predicted. %It joins the original input context to the results from \lstinline!loop-next-words! called with the final word of the context, the next predicted word of the context and \lstinline!n!$-2$ as arguments.
 
 \section{Prediction By Letter}
 
