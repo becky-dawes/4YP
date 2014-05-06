@@ -14,10 +14,16 @@ G_{\boldsymbol{u}}(s)=\frac{N(\boldsymbol{u}s)}{\sum_{s' \in \Sigma}N(\boldsymbo
 
 \subsection{Power Law Scaling and the Pitman-Yor Process}\label{sec:PitmanYor}
 
-Natural language follows a power law scaling. This means that there are a large number of words that appear very infrequently and a small number of words that occur very often. The maximum likelihood estimation given in Equation \ref{eq:SM1} will perform well for the frequently occurring symbols, but not for the rare ones. This was initially discussed in Section \ref{sec:smoothing}, which implemented smoothing to counteract the problem. However, a Pitman-Yor prior follows the power law properties of natural language much more accurately.
+Natural language follows a power law scaling. This means that there are a large number of words that appear very infrequently and a small number of words that occur very often. The graph of word counts for \textit{The Wonderful Wizard of Oz} (Figure \ref{fig:ozCountsGraph}) illustrates this. The maximum likelihood estimation given in Equation \ref{eq:SM1} will perform well for the frequently occurring symbols, but not for the rare ones. This was initially discussed in Section \ref{sec:smoothing}, which implemented smoothing to counteract the problem. However, a Pitman-Yor prior follows the power law properties of natural language much more accurately.
 
 The Pitman-Yor process (PYP), $G=\{G(s)\}_{s\in\Sigma}$, has three parameters. These are the base distribution, $G_{0}=\{G_{0}(s)\}_{s\in\Sigma}$ (mean of PYP and prior on frequency of each symbol), the discount parameter, $\alpha$, which is between 0 and 1 (affects exponent of power law), and the concentration parameter, $c$, (affects variability around $G_{0}$). When $\alpha=0$, the PYP becomes the Dirichlet process. A PYP with discount parameter $\alpha$ and prior $G_{0}$ is written $G\sim\mathcal{PY}(\alpha,G_{0})$ (we assume in this project that $c=0$).
 
+\begin{figure}
+\centering
+\includegraphics[width=1\linewidth]{wizard-of-oz-word-counts-graph.png}
+\caption{Graph of Word Counts for \textit{The Wonderful Wizard of Oz} \cite{baum2008wonderful}}
+\label{fig:ozCountsGraph}
+\end{figure}
 
 
 %\subsection{Pitman-Yor Processes}\label{sec:PitmanYor}
@@ -268,7 +274,7 @@ The strings occurring in the training corpus can be stored most efficiently in a
 \\
 11.\ \ \ \ \Tree [.$\bullet$ [.i \$ ppi\$ [.ssi ppi\$ ssippi\$ ] ] [.p pi\$ i\$ ] [.s [.i ppi\$ ssippi\$ ] [.si ppi\$ ssippi\$ ] ] mississippi\$ ]
 
-\subsection{The Chinese Restaurant Process}
+\subsection{The Chinese Restaurant Process} \label{sec:chineseRestaurantProcess}
 
 The Chinese Restaurant Process (CRP) is commonly used in language modelling. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be assigned to a corresponding draw from the base distribution (equivalent to seating a customer at an existing table) or to a new draw from the base distribution (equivalent to seating a customer at a new table).
 
