@@ -7,6 +7,7 @@
 (use 'clojure.pprint)
 
 
+(use '(incanter core stats charts datasets))
 
 
 (defrecord suffix_node [children cnt])
