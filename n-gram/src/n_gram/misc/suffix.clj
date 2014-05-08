@@ -7,7 +7,6 @@
 (use 'clojure.pprint)
 
 
-(use '(incanter core stats charts datasets))
 
 
 (defrecord suffix_node [children cnt])
@@ -115,8 +114,8 @@
 
 
 (defn branch_node_indices "Branches node with node keys as vector of character indices"
-  [root-node params old-node new-node tree-text] (let [old-node-indices (create-indices-memo tree-text old-node) new-node-indices (create-indices-memo tree-text new-node) 
-                                                       new-sub-node-indices (create-indices-memo tree-text (subs old-node (count new-node) (count old-node)))
+  [root-node params old-node new-node tree-text] (let [old-node-indices (create-indices-memo tree-text (clojure.string/reverse old-node)) new-node-indices (create-indices-memo tree-text (clojure.string/reverse new-node)) 
+                                                       new-sub-node-indices (create-indices-memo tree-text (clojure.string/reverse (subs old-node (count new-node) (count old-node))))
                                                        children (assoc (get-in root-node (into params [old-node-indices :children])) new-sub-node-indices (get-in root-node (into params [old-node-indices]))) ;find all children of old node and associate them with the rest of the old node (i.e. child of new node)
                                                        new-root-node (dissoc-in root-node (into params [old-node-indices]))] ;dissociate old node from root node
                                                    (add_children_memo (assoc-in new-root-node (into params  [new-node-indices]) (build_suffix_node)) new-node-indices children params))) ;associate new node with root node and add all children
@@ -217,12 +216,12 @@
 
 (def check_for_children_memo "Memoize check_for_children" (memoize check_for_children))
 
-(defn check_range "Compares the suffix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the suffix longer than the match)]"
-  ([range suffix root_word] (check_range range suffix root_word (count (dereference-indices-memo root_word range)))) 
-  ([range suffix root_word length] (let [range_letters (dereference-indices-memo root_word range) match (re-find (re-pattern (str "^" range_letters)) suffix)] 
+(defn check_range "Compares the prefix to the range on the child node and returns a vector with the values [(matching string) (is the match length equal to the range length) (is the prefix longer than the match)]"
+  ([range prefix root_word] (check_range range prefix root_word (count (dereference-indices-memo root_word range)))) 
+  ([range prefix root_word length] (let [range_letters (clojure.string/reverse (dereference-indices-memo root_word range)) match (re-find (re-pattern (str "^" range_letters)) prefix)] 
                                      (if (nil? match) 
-                                       (check_range (create-indices-memo root_word (subs range_letters 0 (dec (count range_letters)))) suffix root_word length)
-                                       [match (= length (count match)) (> (count suffix) (count match))]))))
+                                       (check_range (create-indices-memo root_word (clojure.string/reverse (subs range_letters 0 (dec (count range_letters))))) prefix root_word length)
+                                       [match (= length (count match)) (> (count prefix) (count match))]))))
 
 (def check_range_memo "Memoized check_range" (memoize check_range))
 
@@ -244,59 +243,59 @@
                                                  (assoc-in 
                                                    (dissoc-in node (into params [:children letter]))
                                                    (into params [:children letter]) (build_restaurant_node new_range [(first old_depth) (dec (+ (first old_depth) new_range_length))]))
-                                                 (into params [:children letter :children new_letter]) (build_restaurant_node [(+ (first old_range) new_range_length) (last old_range)] children restaurant [(+ (first old_depth) new_range_length) (last old_depth)]))
+                                                 (into params [:children letter :children new_letter]) (build_restaurant_node [(first old_range) (- (last old_range) new_range_length)] children restaurant [(+ (first old_depth) new_range_length) (last old_depth)]))
                                                (keys restaurant) (into params [:children letter]))))
 
 (def branch_memo "Memoized branch" (memoize branch))
 
 (defn build_tree "Builds a suffix tree for the given word"
-  ([word] (do (println (str "input length = " (count word))) (build_tree word (build_restaurant_node [0 0]) word [] 1)) )
-  ([word root_node root_word params new_depth] (do
-                                                 (println (str "before recursive call: " (count word)))
+  ([word]  (build_tree word (build_restaurant_node [0 0]) word [] 1)) 
+  ([word root_node root_word params new_depth] 
                                                  (let [word_length (count word)
                                                        root_node (if (empty? params) (cond (> 2 word_length) root_node 
                                                                    ;(= 2 (count word)) (build_tree (str (reduce str (rest word))) root_node root_word params new_depth)
-                                                                   :else (build_tree (subs word 1 word_length) root_node root_word params new_depth))
+                                                                   :else (build_tree (subs word 0 (dec word_length)) root_node root_word params new_depth))
                                                                                  root_node) 
-                                                                     suffix (cond (< 1 (count word)) (subs word 0 (dec word_length))
+                                                                     prefix (cond (< 1 (count word)) (clojure.string/reverse (subs word 0 (dec word_length)))
                                                                                  ; (= 2 (count word)) (str (reduce str (butlast word)))
                                                                                   :else "")
-                                                                     suffix_start (str (first suffix))
+                                                                     new_depth (if (= prefix "") (dec new_depth) new_depth)
+                                                                     prefix_count (if (= prefix "") 1 (count prefix))
+                                                                     prefix_start (str (first prefix))
                                                                      letter (str (last word))
                                                                      children (get-in root_node (into params [:children]))]
-                                                                 (do (println (str "after recursive call: " word_length))
+                                                                 
                                                                    (if (empty? children) 
                                                                      (check_table_customer_consistency_memo
-                                                                       (assoc-in root_node (into params [:children suffix_start]) 
-                                                                                 (build_restaurant_node (create-indices-memo root_word suffix) letter [new_depth (dec (+ new_depth (count suffix)))]) 
+                                                                       (assoc-in root_node (into params [:children prefix_start]) 
+                                                                                 (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse prefix)) letter [new_depth (dec (+ new_depth prefix_count))]) 
                                                                                  )
                                                                        letter params)
-                                                                     (if (check_for_children_memo suffix_start (keys children))
-                                                                       (let [match_results (check_range_memo (get-in root_node (into params [:children suffix_start :range])) suffix root_word)]
+                                                                     (if (check_for_children_memo prefix_start (keys children))
+                                                                       (let [match_results (check_range_memo (get-in root_node (into params [:children prefix_start :range])) prefix root_word)]
                                                                          (if (second match_results)
                                                                            (if (nth match_results 2)
-                                                                               (let [new_suffix (subs suffix (count (first match_results)) (count suffix))]
+                                                                               (let [new_prefix (subs prefix (count (first match_results)) (count prefix))]
                                                                                (check_table_customer_consistency_memo
                                                                                  (check_table_customer_consistency_memo  
-                                                                                   (build_tree (str new_suffix letter) root_node root_word (into params [:children suffix_start]) (+ new_depth (- (count suffix) (count new_suffix))))
-                                                                                   letter (into params [:children suffix_start]))
+                                                                                   (build_tree (str (clojure.string/reverse new_prefix) letter) root_node root_word (into params [:children prefix_start]) (+ new_depth (- (count prefix) (count new_prefix))))
+                                                                                   letter (into params [:children prefix_start]))
                                                                                  letter params))
                                                                              (check_table_customer_consistency_memo root_node letter params))
-                                                                           (let [new-range (create-indices-memo root_word (first match_results)) matching_branch_range (get-in root_node (into params [:children suffix_start :range]))
-                                                                                 new_branch (dereference-indices-memo root_word new-range)]
+                                                                           (let [new-range (create-indices-memo root_word (clojure.string/reverse (first match_results))) matching_branch_range (get-in root_node (into params [:children prefix_start :range]))]
                                                                              (check_table_customer_consistency_memo 
                                                                                (check_table_customer_consistency_memo
                                                                                  (assoc-in 
-                                                                                   (branch_memo root_node suffix_start new-range 
-                                                                                           (subs (dereference-indices-memo root_word matching_branch_range) (count (first match_results)) (inc (count (first match_results)))) params)
-                                                                                   (into params [:children suffix_start :children (subs suffix (count (first match_results)) (inc (count (first match_results))))]) 
-                                                                                   (build_restaurant_node (create-indices-memo root_word (subs suffix (count (first match_results)) (count suffix))) letter [(+ new_depth (count (first match_results))) (dec (+ new_depth (count suffix)))]))
-                                                                                 letter (into params [:children suffix_start]))
+                                                                                   (branch_memo root_node prefix_start new-range 
+                                                                                           (subs (clojure.string/reverse (dereference-indices-memo root_word matching_branch_range)) (count (first match_results)) (inc (count (first match_results)))) params)
+                                                                                   (into params [:children prefix_start :children (subs prefix (count (first match_results)) (inc (count (first match_results))))]) 
+                                                                                   (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse (subs prefix (count (first match_results)) (count prefix)))) letter [(+ new_depth (count (first match_results))) (dec (+ new_depth (count prefix)))]))
+                                                                                 letter (into params [:children prefix_start]))
                                                                                letter params)))
                                                                          )
                                                                        (check_table_customer_consistency_memo
-                                                                         (assoc-in root_node (into params [:children suffix_start]) (build_restaurant_node (create-indices-memo root_word suffix) letter [new_depth (dec (+ new_depth (count suffix)))]))
-                                                                         letter params))))))))
+                                                                         (assoc-in root_node (into params [:children prefix_start]) (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse prefix)) letter [new_depth (dec (+ new_depth (count prefix)))]))
+                                                                         letter params))))))
 
 (def build_tree_memo "Memoized build_tree" (memoize build_tree))
 
@@ -368,16 +367,20 @@
                                            (determine_letter tree new_params)))
                                          letter)))
 
-(defn next_letter [tree context root_text] (let [children (keys (get tree :children))]
+(defn next_letter [tree context root_text] (let [children (keys (get tree :children))
+                                                 context (clojure.string/reverse context)]
                                              (if (check_for_children_memo (str (first context)) children) ;are there any children starting with first letter of context
                                                (let [range_results (check_range_memo (get-in tree [:children (str (first context)) :range]) context root_text)]
                                                    (if (second range_results)
                                                      (if (last range_results)
-                                                       (next_letter (get-in tree [:children (first range_results)]) (subs context (count (first range_results)) (count context)) root_text)  ;context length> match length - recursivley call with increased depth
+                                                       (next_letter (get-in tree [:children (str (first context))]) (clojure.string/reverse (subs context (count (first range_results)) (count context))) root_text)  ;context length> match length - recursivley call with increased depth
                                                      (determine_letter tree [:children (str (first context))])) ;match length=range length - search with child params
                                                      ;otherwise
                                                      
-                                                       (determine_letter tree [])));otherwise, instantiate node mid-way and search parent distribution
+                                                       (determine_letter (branch_memo tree (str (first context)) 
+                                                                                      (create-indices-memo root_text (clojure.string/reverse (first range_results))) 
+                                                                                      (subs (clojure.string/reverse (dereference-indices-memo root_text (get-in tree [:children (str (first context)) :range]))) (count (first range_results)) (inc (count (first range_results))))
+                                                                                      []) [:children (str (first context))])));otherwise, instantiate node mid-way and search parent distribution
                                      
                                                (determine_letter tree []))))
 
