@@ -2,7 +2,7 @@
 
 \section{Perplexity}\label{sec:perplexity}
 
-Language models are compared by evaluating the perplexity of the data for each. A better model has a smaller perplexity. Perplexity is defined in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. We can approximate this to Equation \ref{eq:HD-perplexity-approx}.
+Language models are compared by evaluating the perplexity of the data for each. A better model has a smaller perplexity. Perplexity is defined in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})=\sum_{i}Q_{i}\log_{2}\hat{P_{i}}$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. For a bi-gram model, we can approximate this to Equation \ref{eq:HD-perplexity-approx}, where $T$ is the total number of words in the corpus.
 
 \begin{equation}
 \text{Perplexity}=2^{H(Q;\hat{P})}
@@ -14,11 +14,16 @@ Language models are compared by evaluating the perplexity of the data for each. 
 \label{eq:HD-perplexity-approx}
 \end{equation}
 
+Another definition of perplexity is $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} \cite{wood2011sequence}. This is relevant for the Sequence Memoizer implementation as it considers context of infinite length.
+
+\begin{equation}
+\ell(\boldsymbol{x})=-\frac{1}{|\boldsymbol{x}|}\sum_{i=1}^{|\boldsymbol{x}|}\log_{2}P(x_{i}|\boldsymbol{x}_{1:i-1})
+\label{eq:ellX}
+\end{equation}
+
 Perplexity was found for the hierarchical Dirichlet model as in the following code. We find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ for all bigrams as a vector, using the optimal values for $\alpha$ and $\boldsymbol{m}$. All elements in the vector are then multiplied together and the result is raised to the power $-\frac{1}{T}$, where $T$ is the total number of words in the corpus.
 
-\begin{lstlisting}
-(defn perplexity [] (Math/pow (reduce * (map #(P (second %) (first %) alpha-optimum m-optimum) pairs)) (- (/ 1 N))))
-\end{lstlisting}
+
 
 \section{Comparison of $n$-gram Smoothing Techniques}
 

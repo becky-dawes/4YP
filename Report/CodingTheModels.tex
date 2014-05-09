@@ -87,13 +87,17 @@ The Clojure code was divided into \textit{packages} (like modules) and \textit{n
 
 The namespace hierarchy for this project is detailed in Figure \ref{fig:namespaceHierarchy}.
 
+
+
 \begin{figure}[h]
 \centering
-\begin{tikzpicture}
-\node{\Tree[.$\bullet$ core [.\textit{letters} file\_reader hierarchical\_dirichlet letter\_maker letter\_predictor letter\_probs ] [.\textit{words} file\_reader good\_turing interpolation word\_maker word\_predictor word\_probs ] [.\textit{misc} misc\_functions ] ]};
-\end{tikzpicture}
+\resizebox{1\linewidth}{!}{%
+\begin{tikzpicture}[font=\Huge]
+\tikzset{sibling distance=0.5}
+\tikzset{multiline/.style={align=center,anchor=north}}
+\node[multiline]{\Tree[.$\bullet$ core [.\textit{letters} {file\\reader} {hierarchical\\dirichlet} {letter\\maker} {letter\\predictor} {letter\\probs} ] [.\textit{words} {file\\reader} {good\\turing} {word\\maker} {word\\predictor} {word\\probs} ] [.\textit{misc} {misc\\functions} ] ]};
+\end{tikzpicture}}
 \caption{Code Architecture}
 \label{fig:namespaceHierarchy}
 \end{figure}
 
-\todo[inline]{Architecture Diagram}

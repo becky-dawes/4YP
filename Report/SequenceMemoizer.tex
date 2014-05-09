@@ -62,79 +62,28 @@ The empty context has prior $G_{0}$ and discount $\alpha_{0}$ (Equation \ref{eq:
 
 \todo[inline]{Re-word}
 
-\subsection{Prediction}
-
-\todo[inline]{SM prediction}
-
-\subsubsection{Stick Breaking Process} \cite{teh2010dirichlet}
-
-\todo[inline]{Explain stick breaking process}
-
-\begin{subequations}
-\begin{align}
-\beta_{k}&\sim\text{Beta}(1,\alpha)
-\\
-\theta_{k}^{*}&\sim H
-\\
-\pi_{k}&=\beta_{k}\prod_{l=1}^{k-1}(1-\beta_{k})
-\\
-G&=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}
-\end{align}
-\end{subequations}
-
-$G\sim\text{Dir}(\alpha,H)$. Starting with a stick of length 1, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ etc. The stick breaking distribution over $\pi$ is sometimes written $\pi\sim\text{GEM}(\alpha)$, where the letters stand for Griffiths, Engen and McCloskey.
-
-\subsubsection{Coagulation}
-
-\todo[inline]{Re-word coagulation section}
-
-Consider a tree constructed so that all nodes have a context consisting of just one symbol. An infinite tree built in this way for all possible combinations of symbols is the most accurate way of expressing language. However, it is not the most compact. \textit{Coagulation} is the process of combining symbols to create a longer context if a node has only one child. This is essentially marginalisation.
-
-Consider a  graphical model $G_{1}\rightarrow G_{2}\rightarrow G_{3}$, with $G_{2}$ having no children other than $G_{3}$. $G_{2}$ can be marginalised out, leaving $G_{1}\rightarrow G_{3}$. If $G_{2}|G_{1}\sim\mathcal{PY}(d_{1},0,G_{1})$ and $G_{3}|G_{2}\sim\mathcal{PY}(d_{2},0,G_{2})$ then $G_{3}|G_{1}\sim\mathcal{PY}(d_{1}d_{2},0,G_{1})$ with $G_{2}$ marginalised out \cite{wood2009stochastic}.
-
-The stick breaking construction of $G_{2}|G_{1}$ and $G_{3}|G_{2}$: weights distributed according to GEM distributions with concentration parameters=0 (Equation \ref{eq:SMSD-marginalisation}), where $\delta_{\theta}$ is a point mass located at $\theta$. We can coagulate the sticks associated with each subset of the point masses of $G_{3}$ that correspond to a point mass of $G_{2}$ such that $G_{3}=\sum_{i=1}^{\infty}\tau_{i}\delta_{\phi_{i}}$ where $\tau_{i}=\sum_{j=1}^{\infty}\kappa_{j}I(z_{j}=i)$.
-
-\begin{subequations}
-\begin{align}
-G_{2}&=\sum_{i=1}^{\infty}\pi_{i}\delta_{\phi_{i}}
-\\
-\phi_{i}&\sim^{iid}G_{1}
-\\
-\boldsymbol{\pi}&\sim\text{GEM}(d_{1},0)
-\\
-G_{3}&=\sum_{j=1}^{\infty}\kappa_{j}\delta_{\psi_{j}}
-\\
-\psi_{j}&\sim^{iid}G_{2}
-\\
-\boldsymbol{\kappa}&\sim\text{GEM}(d_{2},0)
-\end{align}
-\label{eq:SMSD-marginalisation}
-\end{subequations}
-
-\subsubsection{Fragmentation}
-
-\todo[inline]{Explain and re-word fragmentation}
-
-\textit{Fragmentation} is the opposite of coagulation. Each stick $\tau_{i}$ is broken into a infinite number of sticks and the resulting sticks are re-ordered by \textit{size-biased permutation}. The size-biased permutation of a set of positive numbers is obtained by iteratively picking (without replacement) entries with probabilities proportional to their sizes.
-
-Define a fragmentation $\boldsymbol{\tau}$ by $\text{GEM}(d,c)$: for each stick $\tau_{i}$, draw $\boldsymbol{\rho}_{i}\sim\text{GEM}(d,c)$, define $\tilde{\kappa}_{ik}=\tau_{i}\rho_{ik}$ for all $k$ and let $\boldsymbol{\kappa}=(\kappa_{j})_{j=1}^{\infty}$ be the size-biased permutation of $(\tilde{k}_{ik})_{ik=1}^{\infty}$. Require fragmentation operation to return $\boldsymbol{\pi}=(\pi_{i})_{i=1}^{\infty}$. Sticks are directly extracted from the reversal of the size-biased permutation, which maps each $\kappa_{j}$ to some $\tau_{i}$. Set $z_{j}=i$ and define $\pi_{i}$ as the asymptotic proportion of $z_{j}$s that take the value $i$ (Equation \ref{eq:SMSD6}). $(\boldsymbol{\kappa},\boldsymbol{\pi},\boldsymbol{z})\sim\text{FRAG}_{\text{GEM}(d,c)}(\boldsymbol{\tau})$ if $\boldsymbol{\kappa}$, $\boldsymbol{\pi}$ and $\boldsymbol{z}$ constructed as above.
-
-\begin{equation}
-\pi_{i}=\lim_{j \to \infty}\frac{1}{j}\sum_{l=1}^{j}I(z_{l}=i)
-\label{eq:SMSD6}
-\end{equation}
-
-\subsubsection{Sec 5}
-
-\todo[inline]{Rename section}
-
-\todo[inline]{Difference between trie and tree}
-
-Want to compute predictive probability of a symbol $v$ given a context $\boldsymbol{s}$ that is not in training set. Predictive probability is $\mathbb{E}[G_{[\boldsymbol{s}]}(v)]=\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$, where $\boldsymbol{s}'$ is the longest suffix of $\boldsymbol{s}$ that occurs in the prefix trie and the expectations are taken over the posterior. $\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$ can be estimated by averaging over the seating arrangements of the restaurant corresponding to $\boldsymbol{s}'$. If $\boldsymbol{s}'$ does not appear in prefix tree, need to reinstantiate the corresponding restaurant.
-
-Consider $\boldsymbol{s}=[\text{oca}]$. Longest suffix in prefix trie is $\boldsymbol{s}'=[\text{ca}]$. This does not appear in prefix tree as $G_{[\text{ca}]}$ has been marginalised out. Reinstantiate by fragmenting $G_{[\text{oaca}]}|G_{[\text{a}]}$ into $G_{[\text{ca}]}|G_{[\text{a}]}$ and $G_{[\text{oaca}]}|G_{[\text{ca}]}$. Suppose there are $K$ tables in the $G_{[\text{oaca}]}|G_{[\text{a}]}$ restaurant, table $k$ having $n_{k}$ customers. Independently for each table $k$, sample a partition of $n_{k}$ customers in a restaurant corresponding to a PYP with discount parameter $d_{3}d_{4}$ and concentration parameter $-d_{2}d_{3}d_{4}$. This results in $J_{k}$ tables with number of customers $n_{kj}$, $\sum_{j=1}^{J_{k}}n_{kj}=n_{k}$. The $n_{k}$ customers at the original table are now seated at $J_{k}$ tables in the $G_{[\text{oaca}]}|G_{[\text{ca}]}$ restaurant with table $j$ having $n_{kj}$ customers. Each of these tables sends a customer to the $G_{[\text{ca}]}|G_{[\text{a}]}$ restaurant. These customers are all seated at the same table. There was one customer in the $G_{[\text{a}]}|G_{[]}$ restaurant corresponding to the original table in $G_{[\text{oaca}]}|G_{[\text{a}]}$ with $n_{k}$ customers. There is still one customer in the $G_{[\text{a}]}|G_{[]}$ corresponding to the new table in $G_{[\text{ca}]}|G_{[\text{a}]}$, therefore this restaurant's seating arrangement need not be altered.
-
-\todo[inline]{Re-explain using mississippi}
+%\subsection{Prediction}
+%
+%\todo[inline]{SM prediction}
+%
+%\subsubsection{Stick Breaking Process} \cite{teh2010dirichlet}
+%
+%\todo[inline]{Explain stick breaking process}
+%
+%\begin{subequations}
+%\begin{align}
+%\beta_{k}&\sim\text{Beta}(1,\alpha)
+%\\
+%\theta_{k}^{*}&\sim H
+%\\
+%\pi_{k}&=\beta_{k}\prod_{l=1}^{k-1}(1-\beta_{k})
+%\\
+%G&=\sum_{k=1}^{\infty}\pi_{k}\delta_{\theta_{k}^{*}}
+%\end{align}
+%\end{subequations}
+%
+%$G\sim\text{Dir}(\alpha,H)$. Starting with a stick of length 1, we break it at $\beta_{1}$, assigning $\pi_{1}$ to be the length of stick we just broke off. Now recursively break the other portion to obtain $\pi_{2},\pi_{3}$ etc. The stick breaking distribution over $\pi$ is sometimes written $\pi\sim\text{GEM}(\alpha)$, where the letters stand for Griffiths, Engen and McCloskey.
+%
 
 %\subsubsection{Teh - HBLMBPYP}
 %
@@ -293,7 +242,7 @@ P(z_{n+1}=K)=\frac{\alpha+Nd}{n+\alpha}
 
 
 
-The CRP is implemented in our prefix tree representation of the training corpus as a Multi-Floor CRP (MFCRP). This is a hierarchical distribution. Seating a customer at a new table means drawing from the parent restaurant (i.e. creating a new table based on the CRP probabilities in the base distribution).
+The CRP is implemented in our prefix tree representation of the training corpus as a Multi-Floor CRP (MFCRP). This is a hierarchical distribution. Seating a customer at a new table means drawing from the parent restaurant (i.e. creating a new table based on the CRP probabilities in the parent node).
 
 % This says that customers in any given restaurant either must be associated with direct observations of draws from the underlying $G_{\boldsymbol{u}}$, or must have come from a table in a child restaurant. Each table $k$ in the MFCRP is given a label $\psi_{v}^{k}$ which is an i.i.d. draw from the base distribution. We can achieve this by picking component $w$ with probability $\lambda_{w\rightarrow v}$ and drawing from the chosen parent distribution $G_{w}$. Let $s_{v}^{k}$ be the chosen component. This corresponds to table $k$ being located on floor $s_{v}^{k}$ of a multi-floor- restaurant.
 
@@ -445,29 +394,29 @@ This becomes more complex for words which require branching of nodes (such as ``
 
 \section{Building the Prefix Tree}
 
-\todo[inline]{Update with depth}
 
-A new class of object was created to store the information required for each node object: \lstinline!(defrecord restaurant_node [range children restaurant])!, where the fields are defined as follows:
+
+A new class of object was created to store the information required for each node object: \lstinline!(defrecord restaurant_node [range children restaurant depth])!, where the fields are defined as follows:
 
 \begin{itemize}
 \item \lstinline!range!: a vector containing the indices (with respect to the original string) of the first and last letters of the branch's substring
 \item \lstinline!children!: a hash map of the node's children (with keys as the first letter of each child branch's substring and values as new \lstinline!restaurant_node! objects)
-\item \lstinline!restaurant!: a hash map of restaurant tables (with keys as the unique symbols and values as a vector of the form \lstinline![number_of_tables number_of_customers]!)
-\item \lstinline!depth!: a vector containing the start and end depth of the branch's context (based on an uncoagulated prefix trie)
+\item \lstinline!restaurant!: a hash map of restaurant tables (with keys as the unique symbols and values as a vector with each element denoting the number of fusers at a particular table)
+\item \lstinline!depth!: a vector containing the start and end depth of the branch's context (based on an uncoagulated prefix trie - see Section \ref{sec:predictingText})
 \end{itemize}
 
 \noindent The final tree for ``the" is as in Figure \ref{fig:theCodePrefixTree}.
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \centering
 \singlespacing
 \begin{lstlisting}
 {:range [],
  :children
- {"h" {:range [0 2], :children {}, :restaurant {"e" [1 1]}, :depth [1 2]},
-  "t" {:range [0 1], :children {}, :restaurant {"h" [1 1]}, :depth [1 1]},
-  "" {:range [0 0], :children {}, :restaurant {"t" [1 1]}, :depth [0 0]}},
- :restaurant {"e" [1 1], "h" [1 1], "t" [1 1]},
+ {"h" {:range [0 2], :children {}, :restaurant {"e" [1]}, :depth [1 2]},
+  "t" {:range [0 1], :children {}, :restaurant {"h" [1]}, :depth [1 1]},
+  "" {:range [0 0], :children {}, :restaurant {"t" [1]}, :depth [0 0]}},
+ :restaurant {"e" [1], "h" [1], "t" [1]},
  :depth [0 0]}
 \end{lstlisting}
 \doublespacing
@@ -489,9 +438,9 @@ A new class of object was created to store the information required for each nod
  
  \subsection{Tree Building Procedure}\label{sec:treeBuildingProcedure}
 
- 
+ Figure \ref{fig:buildTreeFlowchart} details the tree building procedure. The cycle continues until the longest prefix has been constructed. A main \lstinline!build_tree! function was written with several auxiliary functions supporting it. 
 
-    \begin{figure}
+    \begin{figure}[h!]
     \centering
 \begin{tikzpicture}[node distance = 4cm, auto,>=triangle 45]
 
@@ -501,10 +450,10 @@ A new class of object was created to store the information required for each nod
     \node [decision, below of=start] (child_check) {Do any of root node's children match last symbol of context?};
  \node [decision, below of=child_check] (match_range_check) {Does child's range match context?};
  \node [decision, below of=match_range_check] (table_check) {Is there already a table for the last symbol of the prefix in the node's restaurant?};
- \node [block, left of=table_check, node distance=7.25cm] (inc_count) {Incremement customer count};
+ \node [block, left of=table_check, node distance=7.25cm] (inc_count) {Seat new customer};
  \node [block, below of=table_check] (new_table) {Create table with one customer};
  \node [block, right of=match_range_check, node distance=5.25cm] (new_root_node) {Set matching node as new root node};
- \node [block, left of=match_range_check,node distance=5.4cm] (branch) {Branch node into two sections and instantiate table for last symbol of prefix};
+ \node [block, left of=match_range_check,node distance=5.4cm] (branch) {Branch node into two sections and seat customer for last symbol of prefix};
  \node [block, left of=new_table, node distance=9cm] (create_node) {Create child node for context with a table with one customer for last symbol of prefix};
  \node [block, below of=new_table] (consistency_check) {Check that number of customers in root node's restaurant is equal to total number of tables for that symbol in its children's restaurants};
  \node [block, right of=consistency_check, node distance =7cm] (repeat) {Consider next longest prefix};
@@ -532,11 +481,11 @@ A new class of object was created to store the information required for each nod
 \label{fig:buildTreeFlowchart}
 \end{figure}
 
-Figure \ref{fig:buildTreeFlowchart} details the tree building procedure. The cycle continues until the longest prefix has been constructed. A main \lstinline!build_tree! function was written with several auxiliary functions supporting it. 
+
 
 Checking whether a node's range matches a given context was done using regular expressions. It is necessary to discern between full and partial matches with both the range and the context, so a function  \lstinline!check_range! was written which returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_range_length is_context_length_greater_than_match_length]!.
 
-The function \lstinline!branch! is used to branch a node when a context matches part of the branch substring. It dissociates the current node from the tree (line 9) and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range.
+The function \lstinline!branch! is used to split a node when a context matches part of the branch substring. It dissociates the current node from the tree and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range.
  
 % The method for building a tree is as follows:
 % \begin{enumerate}
@@ -703,8 +652,9 @@ The \lstinline!build_tree! function has four input arguments:
 \item \lstinline!params!: the parameters describing the node being built on (for example, the object described by \lstinline![:children "a"]! is the child of the root node whose range begins with the letter ``a"; the object described by \lstinline![:children "a" :range]! is the range of that node) 
 \end{itemize}
 
-\noindent It then recursively calls itself, removing one character from the beginning of \lstinline!word! until the tree for the final character is constructed. This then becomes the new \lstinline!root_node!. This  continues for each prefix, ensuring that the tree is built up from the shortest prefix first. This function gives a full tree for the word ``mississippi" as shown in Figure \ref{fig:mississippiCodePrefixTree}.
+\noindent It then recursively calls itself, removing one character from the beginning of \lstinline!word! until the tree for the final character is constructed. This then becomes the new \lstinline!root_node!. This  continues for each prefix, ensuring that the tree is built up from the shortest prefix first. 
 
+During construction, customers were assigned to tables based on the CRP probabilities. For example, when constructing the prefix tree for the string ``miss", there are two child nodes with one table  each for the symbol ``s". Therefore, there are two possible seating arrangements in the root node: one table for ``s" with two customers, or two tables for ``s" with one customer each. When seating the second customer, the table is assigned by calculating the CRP probabilities normalised over the ``s" tables only. This means that the total number of tables is 1 and the total number of customers is 1. The code assigns tables by generating the probabilities of all possible options and then assigning each to a probability range (.i.e. if there is a 50\% chance of seating the customer at an existing or new table, then we could say that any number up to and including 0.5 corresponds to an existing table, and any number between 0.5 and 1 corresponds to a new table). A random number between 0 and 1 is then generated and the customer is seated according to which probability range this lies in. A possible full tree for the word ``mississippi" is shown in Figure \ref{fig:mississippiCodePrefixTree}.
 
 %\noindent Lines 4-10 re-define the root node: if the suffix is longer than one symbol, the function calls itself recursively, removing the first symbol from the beginning of \lstinline!word!; otherwise the root node is unchanged (the different methods in lines 8 and 9 are due to Clojure's treatment of strings vs. characters, but produce the same results). This ensures that the tree is built up from the shortest suffix first. The data structure created by the shortest suffix is then passed back to its calling function so that the node(s) for the next shortest suffix can be built onto it. 
 %
@@ -716,7 +666,7 @@ The \lstinline!build_tree! function has four input arguments:
 
 
 
- The \lstinline!range! field reduces the memory required to store the tree as all branches are now defined by a two-element vector instead of string (which could have unlimited length). Storing the node children as a hash map allows us to identify each branch by the first letter of its substring, thereby reducing search times, as the indices vector does not need to be dereferenced in order to check if a particular branch is relevant.
+
  
  \begin{figure}[h!]
 \centering
@@ -724,51 +674,110 @@ The \lstinline!build_tree! function has four input arguments:
 \begin{lstlisting}
 {:range [], :children
  {"p" {:range [8 9], :children
-   {"p" {:range [0 9], :children {}, :restaurant {"i" [1 1]}, :depth [2 10]},
-    "i" {:range [0 8], :children {}, :restaurant {"p" [1 1]}, :depth [2 9]}},
-   :restaurant {"i" [1 1], "p" [1 1]}, :depth [1 1]},
+   {"p" {:range [0 9], :children {}, :restaurant {"i" [1]}, :depth [2 10]},
+    "i" {:range [0 8], :children {}, :restaurant {"p" [1]}, :depth [2 9]}},
+   :restaurant {"i" [1], "p" [1]}, :depth [1 1]},
   "i" {:range [1 2], :children
    {"s" {:range [1 4], :children
-     {"s" {:range [0 4], :children {}, :restaurant {"p" [1 1]}, :depth [5 8]},
-      "m" {:range [0 1], :children {}, :restaurant {"s" [1 1]}, :depth [5 5]}},
-     :restaurant {"p" [1 1], "s" [1 1]}, :depth [2 4]},
-    "m" {:range [0 1], :children {}, :restaurant {"s" [1 1]}, :depth [2 2]}},
-   :restaurant {"p" [1 1], "s" [1 2]}, :depth [1 1]},
+     {"s" {:range [0 4], :children {}, :restaurant {"p" [1]}, :depth [5 8]},
+      "m" {:range [0 1], :children {}, :restaurant {"s" [1]}, :depth [5 5]}},
+     :restaurant {"p" [1], "s" [1]}, :depth [2 4]},
+    "m" {:range [0 1], :children {}, :restaurant {"s" [1]}, :depth [2 2]}},
+   :restaurant {"p" [1], "s" [1 1]}, :depth [1 1]},
   "s" {:range [2 3], :children
    {"s" {:range [1 3], :children
-     {"s" {:range [0 4], :children {}, :restaurant {"i" [1 1]}, :depth [4 7]},
-      "m" {:range [0 1], :children {}, :restaurant {"i" [1 1]}, :depth [4 4]}},
-     :restaurant {"i" [1 2]}, :depth [2 3]},
+     {"s" {:range [0 4], :children {}, :restaurant {"i" [1]}, :depth [4 7]},
+      "m" {:range [0 1], :children {}, :restaurant {"i" [1]}, :depth [4 4]}},
+     :restaurant {"i" [2]}, :depth [2 3]},
     "i" {:range [1 2], :children
-     {"s" {:range [0 4], :children {}, :restaurant {"s" [1 1]}, :depth [3 6]},
-      "m" {:range [0 1], :children {}, :restaurant {"s" [1 1]}, :depth [3 3]}},
-     :restaurant {"s" [1 2]}, :depth [2 2]}},
-   :restaurant {"i" [1 1], "s" [1 1]}, :depth [1 1]},
-  "m" {:range [0 1], :children {}, :restaurant {"i" [1 1]}, :depth [1 1]},
-  "" {:range [0 0], :children {}, :restaurant {"m" [1 1]}, :depth [0 0]}},
- :restaurant {"p" [1 2], "s" [1 2], "i" [1 3], "m" [1 1]}, :depth [0 0]}
+     {"s" {:range [0 4], :children {}, :restaurant {"s" [1]}, :depth [3 6]},
+      "m" {:range [0 1], :children {}, :restaurant {"s" [1]}, :depth [3 3]}},
+     :restaurant {"s" [1 1]}, :depth [2 2]}},
+   :restaurant {"i" [1], "s" [1 1]}, :depth [1 1]},
+  "m" {:range [0 1], :children {}, :restaurant {"i" [1]}, :depth [1 1]},
+  "" {:range [0 0], :children {}, :restaurant {"m" [1]}, :depth [0 0]}},
+ :restaurant {"p" [1 1], "s" [1 1 1 1], "i" [1 1 1], "m" [1]}, :depth [0 0]} 
  \end{lstlisting}
 \doublespacing
 \caption{Prefix Tree for ``mississippi"}
 \label{fig:mississippiCodePrefixTree}
 \end{figure}
 
-\section{Predicting Text}
+ The \lstinline!range! field reduces the memory required to store the tree as all branches are now defined by a two-element vector instead of string (which could have unlimited length). Storing the node children as a hash map allows us to identify each branch by the first letter of its substring, thereby reducing search times, as the indices vector does not need to be dereferenced in order to check if a particular branch is relevant.
 
-Once the tree has been built, prediction is rather straightforward. Given a particular context, one must search through the tree for a match. If a match cannot be found, then a node may be instantiated, either by extending a branch, or by fragmenting an existing branch. As mentioned earlier, the probability of choosing an existing table is $\frac{n_{k}-d}{n+\alpha}$, where $n_{k}$ is the number of customers seated at that table, $d$ and $\alpha$ are the discount parameter and concentration parameter (zero in this project) respectively and $n$ is the total number of customers in the restaurant. The probability of choosing a new table (i.e. drawing a symbol from the parent distribution) is $\frac{\alpha+Nd}{n+\alpha}$, where $N$ is the number of tables in the restaurant. Drawing from the parent distribution means repeating this process again at the next highest node. 
+\section{Predicting Text}\label{sec:predictingText}
 
-Discount parameters vary depending on a node's \textit{depth} in the tree. In this project, the values given in \textit{A Stochastic Memoizer for Sequence Data} \cite{wood2009stochastic} were used. These are $d_{[0,1,2,...]}=(0.62, 0.69, 0.74, 0.80, 0.95, 0.95, ...)$. In this situation, \textit{depth} actually refers to the depth in a prefix \textit{trie}, that is a tree in which no coagulation has taken place. Figure \ref{fig:prefixTrie} shows the trie for ``mississippi". When coagulation takes place, the discount parameters must be multiplied together in accordance with the following theorem: 
+Once the tree has been built, prediction is rather straightforward. Given a particular context, one must search through the tree for a match. If a match cannot be found, then a node may be instantiated, either by extending a branch, or by fragmenting an existing branch. As mentioned earlier, the probability of choosing an existing table is $\frac{n_{k}-d}{n+\alpha}$, where $n_{k}$ is the number of customers seated at that table, $d$ and $\alpha$ are the discount parameter and concentration parameter (taken to be zero for our purposes) respectively and $n$ is the total number of customers in the restaurant. The probability of choosing a new table (i.e. drawing a symbol from the parent distribution) is $\frac{\alpha+Nd}{n+\alpha}$, where $N$ is the number of tables in the restaurant. Drawing from the parent distribution means repeating this process again at the next highest node. As with tree construction, customers are drawn by assigning probability ranges for all possible options and then generating a random number between 0 and 1 to determine which to choose.
+
+Discount parameters vary depending on a node's \textit{depth} in the tree. In this project, the values given in \textit{A Stochastic Memoizer for Sequence Data} \cite{wood2009stochastic} were used. These are $d_{[0,1,2,...]}=(0.62, 0.69, 0.74, 0.80, 0.95, 0.95, ...)$. In this situation, depth actually refers to the depth in a prefix \textit{trie}, that is a tree in which no \textit{coagulation} (the process of combining symbols to create longer contexts for nodes with only one child) has taken place (all nodes have a context consisting of just one symbol). In the representation discussed earlier, coagulation inherently took place during construction. This is essentially marginalisation. Figure \ref{fig:prefixTrie} shows the prefix trie for ``mississippi". When coagulation takes place, the discount parameters must be multiplied together in accordance with the following theorem: 
 \\
 
 \noindent\framebox{\vbox{\noindent\textbf{Coagulation Theorem:}
 \\
 If $G_{2}|G_{1}\sim\mathcal{PY}(d_{1},0,G_{1})$ and $G_{3}|G_{2}\sim\mathcal{PY}(d_{2},0,G_{2})$ then $G_{3}|G_{1}\sim\mathcal{PY}(d_{1}d_{2},0,G_{1})$ with $G_{2}$ marginalised out.}}\cite{wood2009stochastic}
 
-\begin{figure}[h]
+\begin{figure}[h!]
 \Tree [.$\bullet$ m [.p [.i [.s [.s [.i [.s [.s [.i m ] ] ] ] ] ] ] [.p [.i [.s [.s [.i [.s [.s [.i m ] ] ] ] ] ] ] ] ] [.i [.s [.s [.i m [.s [.s [.i m ] ] ] ] ] ] m [.p [.p [.i [.s [.s [.i [.s [.s [.i m ] ] ] ] ] ] ] ] ] ] [.s [.i m ] [.s [.i m ] [.i [.s [.s [.i m ] ] ] ] [.i [.s [.s [.i m ] ] ] ] ] ] ]
 \caption{Prefix Trie for ``mississippi"}
 \label{fig:prefixTrie}
 \end{figure}
+
+
+%\subsubsection{Coagulation}
+%
+%\todo[inline]{Re-word coagulation section}
+%
+%Consider a tree constructed so that all nodes have a context consisting of just one symbol. An infinite tree built in this way for all possible combinations of symbols is the most accurate way of expressing language. However, it is not the most compact. \textit{Coagulation} is the process of combining symbols to create a longer context if a node has only one child. This is essentially marginalisation.
+%
+%Consider a  graphical model $G_{1}\rightarrow G_{2}\rightarrow G_{3}$, with $G_{2}$ having no children other than $G_{3}$. $G_{2}$ can be marginalised out, leaving $G_{1}\rightarrow G_{3}$. If $G_{2}|G_{1}\sim\mathcal{PY}(d_{1},0,G_{1})$ and $G_{3}|G_{2}\sim\mathcal{PY}(d_{2},0,G_{2})$ then $G_{3}|G_{1}\sim\mathcal{PY}(d_{1}d_{2},0,G_{1})$ with $G_{2}$ marginalised out \cite{wood2009stochastic}.
+%
+%The stick breaking construction of $G_{2}|G_{1}$ and $G_{3}|G_{2}$: weights distributed according to GEM distributions with concentration parameters=0 (Equation \ref{eq:SMSD-marginalisation}), where $\delta_{\theta}$ is a point mass located at $\theta$. We can coagulate the sticks associated with each subset of the point masses of $G_{3}$ that correspond to a point mass of $G_{2}$ such that $G_{3}=\sum_{i=1}^{\infty}\tau_{i}\delta_{\phi_{i}}$ where $\tau_{i}=\sum_{j=1}^{\infty}\kappa_{j}I(z_{j}=i)$.
+%
+%\begin{subequations}
+%\begin{align}
+%G_{2}&=\sum_{i=1}^{\infty}\pi_{i}\delta_{\phi_{i}}
+%\\
+%\phi_{i}&\sim^{iid}G_{1}
+%\\
+%\boldsymbol{\pi}&\sim\text{GEM}(d_{1},0)
+%\\
+%G_{3}&=\sum_{j=1}^{\infty}\kappa_{j}\delta_{\psi_{j}}
+%\\
+%\psi_{j}&\sim^{iid}G_{2}
+%\\
+%\boldsymbol{\kappa}&\sim\text{GEM}(d_{2},0)
+%\end{align}
+%\label{eq:SMSD-marginalisation}
+%\end{subequations}
+
+\subsection{Handling Contexts Which Are Not Straightforward}
+
+It is important to consider what will happen if we are asked to predict the symbols following a context that does not appear in the training data. Using again the prefix tree for ``mississippi" (Figure \ref{fig:mississippiCRPTree}), what will happen if we predict based on the context ``pi"? In this case, we follow the branch for ``i" and then find that there is no child starting with ``p". Therefore, we must instantiate a branch for ``p". Since this new restaurant has no tables, there is a 100\% probability that we must create a new table. This means drawing a symbol from the parent restaurant (that of node ``i").
+
+Another possibility is that we want to predict the symbol following a context that has been marginalised out. For example, to predict based on the context ``is", we follow the branch for ``i" and then find that the child branch for ``s" has been coagulated to form the context ``ssi". In this case, \textit{fragmentation} must take place. This is the opposite of coagulation. The branch for ``ssi" is split into two parts, one for ``s" and one for ``si". A restaurant is then instantiated at this new node. The tables are populated by using the condition stipulated earlier that the number of customers for each symbol in a restaurant must be equal to the total number of tables for that symbol in its child restaurants. Prediction then takes place by drawing a symbol from this new restaurant.
+
+%\todo[inline]{Explain and re-word fragmentation}
+%
+%\textit{Fragmentation} is the opposite of coagulation. Each stick $\tau_{i}$ is broken into a infinite number of sticks and the resulting sticks are re-ordered by \textit{size-biased permutation}. The size-biased permutation of a set of positive numbers is obtained by iteratively picking (without replacement) entries with probabilities proportional to their sizes.
+%
+%Define a fragmentation $\boldsymbol{\tau}$ by $\text{GEM}(d,c)$: for each stick $\tau_{i}$, draw $\boldsymbol{\rho}_{i}\sim\text{GEM}(d,c)$, define $\tilde{\kappa}_{ik}=\tau_{i}\rho_{ik}$ for all $k$ and let $\boldsymbol{\kappa}=(\kappa_{j})_{j=1}^{\infty}$ be the size-biased permutation of $(\tilde{k}_{ik})_{ik=1}^{\infty}$. Require fragmentation operation to return $\boldsymbol{\pi}=(\pi_{i})_{i=1}^{\infty}$. Sticks are directly extracted from the reversal of the size-biased permutation, which maps each $\kappa_{j}$ to some $\tau_{i}$. Set $z_{j}=i$ and define $\pi_{i}$ as the asymptotic proportion of $z_{j}$s that take the value $i$ (Equation \ref{eq:SMSD6}). $(\boldsymbol{\kappa},\boldsymbol{\pi},\boldsymbol{z})\sim\text{FRAG}_{\text{GEM}(d,c)}(\boldsymbol{\tau})$ if $\boldsymbol{\kappa}$, $\boldsymbol{\pi}$ and $\boldsymbol{z}$ constructed as above.
+%
+%\begin{equation}
+%\pi_{i}=\lim_{j \to \infty}\frac{1}{j}\sum_{l=1}^{j}I(z_{l}=i)
+%\label{eq:SMSD6}
+%\end{equation}
+%
+%\subsubsection{Sec 5}
+%
+%\todo[inline]{Rename section}
+%
+%\todo[inline]{Difference between trie and tree}
+%
+%Want to compute predictive probability of a symbol $v$ given a context $\boldsymbol{s}$ that is not in training set. Predictive probability is $\mathbb{E}[G_{[\boldsymbol{s}]}(v)]=\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$, where $\boldsymbol{s}'$ is the longest suffix of $\boldsymbol{s}$ that occurs in the prefix trie and the expectations are taken over the posterior. $\mathbb{E}[G_{[\boldsymbol{s}']}(v)]$ can be estimated by averaging over the seating arrangements of the restaurant corresponding to $\boldsymbol{s}'$. If $\boldsymbol{s}'$ does not appear in prefix tree, need to reinstantiate the corresponding restaurant.
+%
+%Consider $\boldsymbol{s}=[\text{oca}]$. Longest suffix in prefix trie is $\boldsymbol{s}'=[\text{ca}]$. This does not appear in prefix tree as $G_{[\text{ca}]}$ has been marginalised out. Reinstantiate by fragmenting $G_{[\text{oaca}]}|G_{[\text{a}]}$ into $G_{[\text{ca}]}|G_{[\text{a}]}$ and $G_{[\text{oaca}]}|G_{[\text{ca}]}$. Suppose there are $K$ tables in the $G_{[\text{oaca}]}|G_{[\text{a}]}$ restaurant, table $k$ having $n_{k}$ customers. Independently for each table $k$, sample a partition of $n_{k}$ customers in a restaurant corresponding to a PYP with discount parameter $d_{3}d_{4}$ and concentration parameter $-d_{2}d_{3}d_{4}$. This results in $J_{k}$ tables with number of customers $n_{kj}$, $\sum_{j=1}^{J_{k}}n_{kj}=n_{k}$. The $n_{k}$ customers at the original table are now seated at $J_{k}$ tables in the $G_{[\text{oaca}]}|G_{[\text{ca}]}$ restaurant with table $j$ having $n_{kj}$ customers. Each of these tables sends a customer to the $G_{[\text{ca}]}|G_{[\text{a}]}$ restaurant. These customers are all seated at the same table. There was one customer in the $G_{[\text{a}]}|G_{[]}$ restaurant corresponding to the original table in $G_{[\text{oaca}]}|G_{[\text{a}]}$ with $n_{k}$ customers. There is still one customer in the $G_{[\text{a}]}|G_{[]}$ corresponding to the new table in $G_{[\text{ca}]}|G_{[\text{a}]}$, therefore this restaurant's seating arrangement need not be altered.
+%
+%\todo[inline]{Re-explain using mississippi}
 
 %    \begin{figure}
 %    \centering
