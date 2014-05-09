@@ -77,9 +77,8 @@ P_{base}(w_{i}|w_{i-n+1}^{i-1})=\lambda_{n}P_{ML}(w_{i}|w_{i-n+1}^{i-1})+(1-\lam
 %\label{eq:chenGoodman4}
 %\end{equation}
 
-Chen and Goodman found that Katz smoothing and Jelinek-Mercer smoothing performed consistently well across training set sizes for bi-gram and tri-gram models. Katz smoothing performed better on tri-gram models produced from large training sets and on bi-gram models in general. They also found that Church-Gale smoothing outperformed all existing methods on bi-gram models produced from large training sets. %Chen and Goodman's \lstinline!one-count! and \lstinline!average-count! methods were superior to existing methods for tri-gram models and performed well on bi-gram models.
+Chen and Goodman found that Katz smoothing performed better on tri-gram models produced from large training sets and on bi-gram models in general. They also found that Church-Gale smoothing outperformed all existing methods on bi-gram models produced from large training sets. %Chen and Goodman's \lstinline!one-count! and \lstinline!average-count! methods were superior to existing methods for tri-gram models and performed well on bi-gram models.
 
-\todo[inline]{Re-word}
 
 \subsection{Hierarchical Models}
 
@@ -95,7 +94,7 @@ MacKay and Peto \cite{mackay1995hierarchical} built on the $n$-gram model, but a
 
 
 
-Wood and Teh \cite{wood2008hierarchical} \cite{wood2009hierarchical} also used the idea of a hierarchical model, but this time using a Pitman-Yor Process (PYP). They define the distribution of $n$-grams as in Equation \ref{eq:HNBASLMDA1}, where $\mathcal{PY}(d,\alpha,\mathcal{H})$ is a PYP with discount $d$, concentration $\alpha$ and base distribution $\mathcal{H}$ ($\mathbb{E}[G(s)]=\mathcal{H}(x)$), $x$s are \textit{types} (unique words or symbols), $w$s are \textit{tokens} (observed instances of types) and $\mathcal{U}$ is the uniform distribution over types. The posterior predictive distribution for the next word/symbol to appear in a particular context given the entire training corpus $\mathcal{C}$ is given by Equation \ref{eq:HBNASLMDA2.1posterior}, where $h$ is the context vector consisting of $n-1$ words/symbols, $K,\alpha,d,[c_{k}]_{k=1}^{K}$ and $[\phi_{k}]_{k=1}^{K}$ are parameters and variables used in the Chinese restaurant franchise sampler (explained in Section \ref{sec:chineseRestaurantProcess}) for the HPYP, $N$ is the number of times the context $h$ occurs in the training data, $h'$ is $h$ with one word removed and $\delta(0)=1,\delta(x)=0\ \forall\ x\neq0$ is a standard indicator function. The first term in the sum in this equation is related to the count of the number of times $w$ occurs after $h$ in the training corpus. The second term correspond to the \textit{back-off} probability of $w$ following a shorter-by-one-word context $h'$.
+Wood and Teh \cite{wood2009hierarchical} also used the idea of a hierarchical model, but this time using a Pitman-Yor Process (PYP). They define the distribution of $n$-grams as in Equation \ref{eq:HNBASLMDA1}, where $\mathcal{PY}(d,\alpha,\mathcal{H})$ is a PYP with discount $d$, concentration $\alpha$ and base distribution $\mathcal{H}$ ($\mathbb{E}[G(s)]=\mathcal{H}(x)$), $x$s are \textit{types} (unique words or symbols), $w$s are \textit{tokens} (observed instances of types) and $\mathcal{U}$ is the uniform distribution over types. The posterior predictive distribution for the next word/symbol to appear in a particular context given the entire training corpus $\mathcal{C}$ is given by Equation \ref{eq:HBNASLMDA2.1posterior}, where $h$ is the context vector consisting of $n-1$ words/symbols, $K,\alpha,d,[c_{k}]_{k=1}^{K}$ and $[\phi_{k}]_{k=1}^{K}$ are parameters and variables used in the Chinese restaurant franchise sampler (explained in Section \ref{sec:chineseRestaurantProcess}) for the HPYP, $N$ is the number of times the context $h$ occurs in the training data, $h'$ is $h$ with one word removed and $\delta(0)=1,\delta(x)=0\ \forall\ x\neq0$ is a standard indicator function. The first term in the sum in this equation is related to the count of the number of times $w$ occurs after $h$ in the training corpus. The second term correspond to the \textit{back-off} probability of $w$ following a shorter-by-one-word context $h'$.
 
 \begin{align}
 G_{[]}&\sim\mathcal{PY}(d_{0},\alpha_{0},\mathcal{U}) \nonumber
@@ -116,11 +115,9 @@ P(w|h,\mathcal{C})=\mathbb{E}\left[\sum_{k=1}^{K}\frac{c_{k}-d_{i}}{\alpha+N}\de
 \label{eq:HBNASLMDA2.1posterior}
 \end{equation}
 
-They further extend this to create a Hierarchical, Hierarchical PYP (HHPYP). This allows statistical sharing between models over multiple domains $\mathcal{D}_{i}$. This form of this distribution is given by Equation \ref{eq:HHPYP1}. This distribution over words in a particular context in a particular domain could reasonably either back off to a distribution over words given a shorter context in the same domain or a distribution over words given the whole context in a general domain. The parameter $\pi$ controls how closely the base distribution is tied to the domain specific model or the general model. It was found that the HHPYP model achieved lower test perplexity than the HPYP model of the same data. The HHPYP may also require less domain specific training data that a naive model to achieve a given test corpus perplexity (see Section \ref{sec:perplexity}).
+They further extend this to create a Hierarchical, Hierarchical PYP (HHPYP) \cite{wood2008hierarchical} . This allows statistical sharing between models over multiple domains $\mathcal{D}_{i}$. This form of this distribution is given by Equation \ref{eq:HHPYP1}. This distribution over words in a particular context in a particular domain could either back off to a distribution over words given a shorter context in the same domain or a distribution over words given the whole context in a general domain. It was found that the HHPYP model achieved lower test perplexity than the HPYP model of the same data. 
 
 
-
-\todo[inline]{Re-word}
 
 \begin{equation}
 G_{\{w_{t-2},w_{t-1}\}}^{\mathcal{D}_{i}}\sim\mathcal{PY}(d_{j},\theta_{j},\pi G_{\{w_{t-1}\}}^{\mathcal{D}_{i}}+(1-\pi)G_{\{w_{t-1},w_{t-1}\}}^{0})
@@ -132,6 +129,5 @@ G_{\{w_{t-2},w_{t-1}\}}^{\mathcal{D}_{i}}\sim\mathcal{PY}(d_{j},\theta_{j},\pi G
 
 In 2009, Wood, Archambeau, Gasthaus, James and Teh developed a hierarchical Bayesian nonparametric model called the \textit{Sequence Memoizer} \cite{wood2009stochastic} \cite{wood2011sequence}. This is explored is detail in Chapter \ref{chap:seqMem}. The Sequence Memoizer stores training data in a \textit{suffix tree}, allowing infinite strings to be stored, and models text as an HPYP. It is claimed that it ``achieves the best known test perplexity on a well studied corpus" \cite{wood2009stochastic}.
 
-Bartlett and Wood later developed \textit{Deplump}, ``a general purpose, lossless, batch compressor based on ... the sequence memoizer" \cite{bartlett2011deplump}. This uses the fact that the Sequence Memoizer has a space complexity that is a function of the number of nodes in the suffix tree... \todo[inline]{Deplump}
-
+Bartlett and Wood later developed \textit{Deplump}, ``a general purpose, lossless, batch compressor based on [...] the sequence memoizer" \cite{bartlett2011deplump}. This uses the fact that the Sequence Memoizer has a space complexity that is a function of the number of nodes in the suffix tree. Deplump maintains a fixed-length ``reference sequence" and ``a dynamically updated suffix tree referencing only suffixes found therein", as it cannot maintain a suffix tree representation of the entire input sequence. Streaming Deplump (for stream compression) repeatedly produces a predictive distribution for the succeeding symbols given a particular context and encodes the next symbol by passing the predictive distribution to an entropy encoder. Experiments showed that the algorithm scales to very long sequences and that streaming Deplump performed significantly better than batch Deplump .
 

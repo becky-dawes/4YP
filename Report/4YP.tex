@@ -50,7 +50,7 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 
 \title{Purely Functional Implementations of Smoothing $n$-gram Models}
 \author{Rebecca Dawes}
-%\date{}							% Activate to display a given date or no date
+\date{Trinity Term 2014}							% Activate to display a given date or no date
 
 \usepackage{fancyhdr}
 \usepackage{qtree}
@@ -89,7 +89,7 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 %	  \def\item{\def\item{\tab\latexitem}\latexitem}}
 %	 {\endinparaenum}
 
-
+\usepackage[nottoc]{tocbibind}
 
 \begin{document}
 
@@ -97,6 +97,7 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 \includepdf[pages=-]{Declaration_of_Authorship_4YP}
 \listoftodos
 \tableofcontents
+\addtocontents{toc}{~\hfill\textbf{Page}\par}
 \input{Introduction}
 \input{NewLiteratureReview}
 %\input{LiteratureReview}
@@ -109,11 +110,27 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 \input{Results}
 \input{Conclusion}
 \bibliographystyle{unsrt}
+
 \bibliography{Bibliography}
+
+\includepdf{end_of_report}
+
+\addtocontents{toc}{%
+ \protect\vspace{0.5em}% 
+ \protect\noindent END OF REPORT\protect\par
+ \protect\vspace{-1em}%
+}
+
 %\def\sectionname{Appendix}
 %\addappheadtotoc
+
 \begin{appendices}
-\includepdf[pagecommand={\chapter{}}]{Rebecca Dawes DSE Risk Assessment}
-\end{appendices}
+
+\includepdf[pagecommand={\chapter*{Appendix A: Risk Assessment}\addcontentsline{toc}{chapter}{ A: Risk Assessment}}]{Rebecca Dawes DSE Risk Assessment}
+
+\chapter*{Appendix B: Code Listings}
 \todo[inline]{Attach code}
+\addcontentsline{toc}{chapter}{ B: Code Listings}
+\end{appendices}
+
 \end{document}

@@ -198,7 +198,7 @@ The empty context has prior $G_{0}$ and discount $\alpha_{0}$ (Equation \ref{eq:
 %
 \section{Prefix Trees} \label{sec:prefixTrees}
 
-The strings occurring in the training corpus can be stored most efficiently in a prefix tree. These are best explained by means of an example. A simple prefix tree is built up by considering each prefix of a string individually (a prefix being any substring where the first symbol is the beginning of the original string - i.e. for the word ``the", the possible prefixed are ``t", ``th" and ``the"). A tree is then built up starting with the shortest prefix, then the next shortest etc. Any common substrings encountered cause the tree to branch. Construction of the prefix tree for ``mississippi" is detailed below. %Note that the symbol ``\$" denotes the end of the word.
+The strings occurring in the training corpus can be stored most efficiently in a prefix tree. These are best explained by means of an example. A simple prefix tree is built up by considering each prefix of a string individually (a prefix being any substring where the first symbol is the beginning of the original string - i.e. for the word ``the", the possible prefixes are ``t", ``th" and ``the"). A tree is then built up starting with the shortest prefix, then the next shortest etc. Any common substrings encountered cause the tree to branch. Construction of the prefix tree for ``mississippi" is detailed below. %Note that the symbol ``\$" denotes the end of the word.
 
 \qtreecenterfalse
 

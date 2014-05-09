@@ -1,10 +1,7 @@
 \chapter{Hierarchical Dirichlet Model} \label{chap:HierarchicalDirichletModel}
 
-Typical bi-gram language models as described in Chapter \ref{chap:n-gram} often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance as there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}. 
+Typical bi-gram language models as described in Chapter \ref{chap:n-gram} often perform poorly. This is because the conditional count $F_{w_{t}|w_{t-1}}$ has large variance as there are so many possible couplets $w_{t-1}w_{t}$ that only a small fraction of them exist in the training data. Instead, a commonly used solution is that of Equation \ref{eq:MacKayPetoKludge} \cite{mackay1995hierarchical}. Deleted interpolation \cite{jelinek1980interpolated} is used to set $\lambda$. 
 
-Deleted interpolation \cite{jelinek1980interpolated} is used to set $\lambda$. Description...
-
-\todo[inline]{Explain deleted interpolation}
 
 \begin{equation}
 \hat{P}(w_{t}|w_{t-1})=\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}
@@ -23,26 +20,26 @@ MacKay and Peto \cite{mackay1995hierarchical} used a hierarchical Dirichlet mode
 
 This model is based on the idea that there is a $W\times W$ transition matrix, $Q$, which represents some unknown parameters. This means that $P(w_{t}=i|w_{t-1}=j)\equiv q_{i|j}$, where $q_{i|j}$ is an element in the matrix $Q$. A single row of $Q$ may be denoted $\boldsymbol{q}_{|j}$ and represents the probability transitions from state $j$.
 
-Denoting the model $\mathscr{H}$, we can then begin finding values of interest. Using Bayes theorem, we can infer the parameters, as in Equation \ref{eq:HD-Q|DH}, where $D$ is the data and $k$ is dimensionality of $Q$. Here $P(D|Q,\mathscr{H})$ is the likelihood and $P(Q|\mathscr{H})$ is the prior distribution. We can then use this to find the probability of the next word in a given context, as in Equation \ref{eq:HD-wt|wt-1DH}.
+Denoting the model $\mathscr{H}$, we can then begin finding values of interest. Using Bayes theorem, we can infer the parameters, as in Equation \ref{eq:HD-Q|DH}, where $\mathcal{D}$ is the data and $k$ is dimensionality of $Q$. Here $P(\mathcal{D}|Q,\mathscr{H})$ is the likelihood and $P(Q|\mathscr{H})$ is the prior distribution. We can then use this to find the probability of the next word in a given context by marginalising out $Q$, as in Equation \ref{eq:HD-wt|wt-1DH}.
 
 \begin{align}
-P(Q|D,\mathscr{H})&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})P(\mathscr{H})}{P(D|\mathscr{H})P(\mathscr{H})} \nonumber
+P(Q|\mathcal{D},\mathscr{H})&=\frac{P(\mathcal{D}|Q,\mathscr{H})P(Q|\mathscr{H})P(\mathscr{H})}{P(\mathcal{D}|\mathscr{H})P(\mathscr{H})} \nonumber
 \\
-&=\frac{P(D|Q,\mathscr{H})P(Q|\mathscr{H})}{\int P(D|Q,\mathscr{H})P(Q|\mathscr{H})d^{k}Q}
+&=\frac{P(\mathcal{D}|Q,\mathscr{H})P(Q|\mathscr{H})}{\int P(\mathcal{D}|Q,\mathscr{H})P(Q|\mathscr{H})d^{k}Q}
 \label{eq:HD-Q|DH}
 \end{align}
 
 \begin{align}
-P(w_{t}|W_{t-1},D,\mathscr{H})&=\int P(w_{t}|w_{t-1},Q,D,\mathscr{H})P(Q|D,\mathscr{H})d^{k}Q \nonumber
+P(w_{t}|W_{t-1},\mathcal{D},\mathscr{H})&=\int P(w_{t}|w_{t-1},Q,\mathcal{D},\mathscr{H})P(Q|\mathcal{D},\mathscr{H})d^{k}Q \nonumber
 \\
-&=\int q_{w_{t}|w_{t-1}}P(Q|D,\mathscr{H})d^{k}Q
+&=\int q_{w_{t}|w_{t-1}}P(Q|\mathcal{D},\mathscr{H})d^{k}Q
 \label{eq:HD-wt|wt-1DH}
 \end{align}
 
-We can now use our knowledge of the language model to define the likelihood function more clearly. If $F_{i|j}$ is the $n$-gram count of word $i$ appearing given word $j$, then it simplifies to Equation \ref{eq:HD-D|QHsimple}.
+We can now use our knowledge of the language model to define the likelihood function more clearly. Assuming that we know the first word of the data set to start with, $P(\mathcal{D}|Q,\mathscr{H})$ is simply the product of all the elements of $Q$. If $F_{i|j}$ is the $n$-gram count of word $i$ appearing given word $j$, then it simplifies to Equation \ref{eq:HD-D|QHsimple}.
 
 \begin{align}
-P(D|Q,\mathscr{H})&=\prod_{t}q_{w_{t}|w_{t-1}} \nonumber
+P(\mathcal{D}|Q,\mathscr{H})&=\prod_{t}q_{w_{t}|w_{t-1}} \nonumber
 \\
 &=\prod_{j}\prod_{i}q_{i|j}^{F_{i|j}}
 \label{eq:HD-D|QHsimple}
@@ -121,48 +118,47 @@ P(Q|\mathscr{H}_{D})=\int\prod_{j}\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\al
 
 \subsection{Inferring the Parameters and Hyperparameters}
 
-Level 1 inference involves inferring a distribution for $Q$. For this, we assume that we know $\boldsymbol{m}$ and $\alpha$. Equation \ref{eq:HD-Q|D-alpham-H} then gives the posterior for $Q$ using Bayes Rule. This is separable into a product over contexts $j$.
+We can infer a distribution for $Q$ by assuming that we know $\boldsymbol{m}$ and $\alpha$. Equation \ref{eq:HD-Q|D-alpham-H} then gives the posterior for $Q$ using Bayes Rule. This is separable into a product over contexts $j$.
 
 \begin{align}
-P(Q|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{P(D|Q,\mathscr{H}_{D})P(Q,\mathscr{H}_{D})}{P(D,\alpha \boldsymbol{m},\mathscr{H}_{D})}\nonumber
+P(Q|\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{P(\mathcal{D}|Q,\mathscr{H}_{D})P(Q,\mathscr{H}_{D})}{P(\mathcal{D},\alpha \boldsymbol{m},\mathscr{H}_{D})}\nonumber
 \\
-&=\frac{P(D|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}\nonumber
+&=\frac{P(\mathcal{D}|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(\mathcal{D}|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m},\mathscr{H}_{D})}\nonumber
 \\
-&=\frac{P(D|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})} \nonumber
+&=\frac{P(\mathcal{D}|Q,\mathscr{H}_{D})P(Q|\alpha\boldsymbol{m},\mathscr{H}_{D})}{P(\mathcal{D}|\alpha\boldsymbol{m},\mathscr{H}_{D})} \nonumber
 \\
-&=\prod_{j}P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})
+&=\prod_{j}P(\boldsymbol{q}_{|j}|\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})
 \label{eq:HD-Q|D-alpham-H}
 \end{align}
 
-\noindent $P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ is then given by Equation \ref{eq:HD-q|D-alpham-H}. This can be used for prediction, as in Equation \ref{eq:HD-i|j-D-alpham-H}, where $f_{i|j}=\frac{F_{i|j}}{F_{j}}$ and $\lambda_{j}=\frac{\alpha}{F_{j}+\alpha}$.
+\noindent $P(\boldsymbol{q}_{|j}|\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})$ is then given by Equation \ref{eq:HD-q|D-alpham-H}. This can be used for prediction, as in Equation \ref{eq:HD-i|j-D-alpham-H}, where $f_{i|j}=\frac{F_{i|j}}{F_{j}}$ and $\lambda_{j}=\frac{\alpha}{F_{j}+\alpha}$.
 
-\todo[inline]{Explain}
 
 \begin{align}
-P(\boldsymbol{q}_{|j}|D,\alpha\boldsymbol{m},\mathscr{H}_{D})&\propto\prod_{i}q_{i|j}^{F_{i|j}+\alpha m_{i}-1}\delta(\sum_{i}q_{i|j}-1) \nonumber
+P(\boldsymbol{q}_{|j}|\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})&\propto\prod_{i}q_{i|j}^{F_{i|j}+\alpha m_{i}-1}\delta(\sum_{i}q_{i|j}-1) \nonumber
 \\
 &=\text{Dirichlet}^{(I)}(\boldsymbol{q}_{|j}|\boldsymbol{F}+\alpha\boldsymbol{m})
 \label{eq:HD-q|D-alpham-H}
 \end{align}
 
 \begin{align}
-P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{F_{i|j}+\alpha m_{i}}{\sum_{i'}F_{i'|j}+\alpha m_{i'}} \nonumber
+P(i|j,\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})&=\frac{F_{i|j}+\alpha m_{i}}{\sum_{i'}F_{i'|j}+\alpha m_{i'}} \nonumber
 \\
 &=\lambda_{j}m_{i}+(1-\lambda_{j})f_{i|j}
 \label{eq:HD-i|j-D-alpham-H}
 \end{align}
 
-Level 2 inference involves inferring the hyperparameters. We find that the posterior distribution for $\alpha\boldsymbol{m}$ is as in Equation \ref{eq:HD-alpham|D-H}. We are interested in finding the maximum $[\alpha\boldsymbol{m}]^{MP}$ of this posterior distribution. This leads us to Equation \ref{eq:HD-i|j-D-H}. We expect the posterior to be sharply peaked in $\alpha\boldsymbol{m}$, therefore it is effectively a delta function (hence the approximation in the second line). This means that we optimise for $\alpha\boldsymbol{m}$ instead of marginalising it out. 
+We find that the posterior distribution for $\alpha\boldsymbol{m}$ is as in Equation \ref{eq:HD-alpham|D-H}. We are interested in finding the maximum $[\alpha\boldsymbol{m}]^{MP}$ of this posterior distribution. This leads us to Equation \ref{eq:HD-i|j-D-H}. We expect the posterior to be sharply peaked in $\alpha\boldsymbol{m}$, therefore it is effectively a delta function (hence the approximation in the second line). This means that we optimise for $\alpha\boldsymbol{m}$ instead of marginalising it out. 
 
 \begin{equation}
-P(\alpha\boldsymbol{m}|D,\mathscr{H}_{D})=\frac{P(D|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m}|\mathscr{H}_{D})}{P(D|\mathscr{H}_{D})}
+P(\alpha\boldsymbol{m}|\mathcal{D},\mathscr{H}_{D})=\frac{P(\mathcal{D}|\alpha\boldsymbol{m},\mathscr{H}_{D})P(\alpha\boldsymbol{m}|\mathscr{H}_{D})}{P(\mathcal{D}|\mathscr{H}_{D})}
 \label{eq:HD-alpham|D-H}
 \end{equation}
 
 \begin{align}
-P(i|j,D,\mathscr{H}_{D})&=\int P(\alpha\boldsymbol{m}|D,\mathscr{H}_{D})P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})d^{W}(\alpha\boldsymbol{m}) \nonumber
+P(i|j,\mathcal{D},\mathscr{H}_{D})&=\int P(\alpha\boldsymbol{m}|\mathcal{D},\mathscr{H}_{D})P(i|j,\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})d^{W}(\alpha\boldsymbol{m}) \nonumber
 \\
-&\simeq P(i|j,D,[\alpha\boldsymbol{m}]^{MP},\mathscr{H}_{D})
+&\simeq P(i|j,\mathcal{D},[\alpha\boldsymbol{m}]^{MP},\mathscr{H}_{D})
 \label{eq:HD-i|j-D-H}
 \end{align}
 
@@ -171,18 +167,20 @@ P(i|j,D,\mathscr{H}_{D})&=\int P(\alpha\boldsymbol{m}|D,\mathscr{H}_{D})P(i|j,D,
 The evidence for $\alpha\boldsymbol{m}$ is given by Equation \ref{eq:HD-D|alpham}. This can be optimised by differentiating with respect to $u_{i}=\alpha m_{i}$ and setting the result to be equal to zero. For this we use the digamma function, $\Psi(x)\equiv\frac{\partial log\Gamma(x)}{\partial x}$, as in Equation \ref{eq:HD-diff-logPD|u}. Note that $\sum_{i'}u_{i'}=\alpha$.
 
 \begin{align}
-P(D|\alpha\boldsymbol{m})&=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\boldsymbol{m}) \nonumber
+P(\mathcal{D}|\alpha\boldsymbol{m})&=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\boldsymbol{m}) \nonumber
 \\
 &=\prod_{j}\left(\frac{\prod_{i}\Gamma(F_{i|j}+\alpha m_{i})}{\Gamma(F_{j}+\alpha)}\frac{\Gamma(\alpha)}{\prod_{i}\Gamma(\alpha m_{i})}\right)
 \label{eq:HD-D|alpham}
 \end{align}
 
 \begin{equation}
-\frac{\partial}{\partial u_{i}}\log P(D|\boldsymbol{u})=\sum_{j}[\Psi(F_{i|j}+u_{i})-\Psi(F_{j}+\sum_{i'}u_{i'})+\Psi(\sum_{i'}u_{i'})-\Psi(u_{i})] 
+\frac{\partial}{\partial u_{i}}\log P(\mathcal{D}|\boldsymbol{u})=\sum_{j}[\Psi(F_{i|j}+u_{i})-\Psi(F_{j}+\sum_{i'}u_{i'})+\Psi(\sum_{i'}u_{i'})-\Psi(u_{i})] 
 \label{eq:HD-diff-logPD|u}
 \end{equation}
 
-We can now make some assumptions to make finding $\boldsymbol{u}=\alpha\boldsymbol{m}$ simpler. Since we know that $\sum_{i}m_{i}=1$, it is clear that each $m_{i}$ will be approximately equal to $\frac{1}{\text{size of vocabulary}}$. Therefore we can assume that $u_{i}=\alpha m_{i}<1$. We use the digamma recurrence relationship, $\Psi(x+1)=\Psi(x)+\frac{1}{x}$, to simplify the differential, as in Equation \ref{eq:HD-digamma-F-u}. The final line is based on the assumption that $F_{i|j}\geq 1$. We can also approximate the terms $\Psi(\alpha)-\Psi(F_{j}+\alpha)$ using the equation $Psi(x)=\frac{d}{dx}\log\Gamma(x)\simeq\log(x)-\frac{1}{2x}+O(\frac{1}{x^{2}})$.
+MacKay and Peto approximate the value for $\boldsymbol{u}=\alpha\boldsymbol{m}$ in the following way:
+
+\noindent\framebox{\vbox{Since we know that $\sum_{i}m_{i}=1$, it is clear that each $m_{i}$ will be approximately equal to $\frac{1}{\text{size of vocabulary}}$. Therefore we can assume that $u_{i}=\alpha m_{i}<1$. We use the digamma recurrence relationship, $\Psi(x+1)=\Psi(x)+\frac{1}{x}$, to simplify the differential, as in Equation \ref{eq:HD-digamma-F-u}. The final line is based on the assumption that $F_{i|j}\geq 1$. We can also approximate the terms $\Psi(\alpha)-\Psi(F_{j}+\alpha)$ using the equation $\Psi(x)=\frac{d}{dx}\log\Gamma(x)\simeq\log(x)-\frac{1}{2x}+O(\frac{1}{x^{2}})$.
 
 \begin{align}
 \Psi(F_{i|j}+u_{i})-\Psi(u_{i})&=\frac{1}{F_{i|j}-1+u_{i}}+\Psi(F_{i|j}-1+u_{i})-\Psi(u_{i}) \nonumber
@@ -197,9 +195,6 @@ We can now make some assumptions to make finding $\boldsymbol{u}=\alpha\boldsymb
 \label{eq:HD-digamma-F-u}
 \end{align}
 
-NEED TO EXPLAIN ALL OF THIS PROPERLY
-
-\todo[inline]{Explain finding hyperparameters}
 
 We can then find the optimal hyperparameters by Equation \ref{eq:HD-u-i-MP}, where $K(\alpha)$ is given by Equation \ref{eq:HD-K}. For each count $F$ and word $i$, we let $N_{Fi}$ be the number of context $j$ such that $F_{i|j}\geq F$. $F_{i}^{\text{max}}$ is the largest $F$ such that $N_{Fi}>0$. This gives Equations \ref{eq:HD-Gi} and \ref{eq:HD-Hi} for the values $G_{i}$ and $H_{i}$ respectively. $V_{i}$ is the number of entries in row $i$ of $F_{i|j}$ that are non-zero.
 
@@ -222,6 +217,8 @@ G_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{f-1}
 H_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{(f-1)^{2}}
 \label{eq:HD-Hi}
 \end{equation}
+
+}}\cite{mackay1995hierarchical}
 
 \section{Implementation}
 
@@ -269,7 +266,5 @@ Equations \ref{eq:HD-u-i-MP}-\ref{eq:HD-Hi} were all implemented in code to find
 %				(find-optimum-u alpha)))))
 %\end{lstlisting}
 %
-Having found optimum values for $\alpha$ and $\boldsymbol{u}$ (and therefore also for $\boldsymbol{m}$), we can then very simply find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ as in Equation \ref{eq:HD-i|j-D-alpham-H}: we search the map of bi-gram counts for the bi-gram $i|j$ to find $F_{i|j}$; $F_{j}$ is found by searching the map of uni-gram counts for the word $j$; $m_{i}$ is simply the corresponding element of $\boldsymbol{m}$ for word $i$.
-
-\todo[inline]{Explain MacKay and Peto implementation}
+Having found optimum values for $\alpha$ and $\boldsymbol{u}$ (and therefore also for $\boldsymbol{m}$), we can then very simply find $P(i|j,\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})$ as in Equation \ref{eq:HD-i|j-D-alpham-H}: we search the map of bi-gram counts for the bi-gram $i|j$ to find $F_{i|j}$; $F_{j}$ is found by searching the map of uni-gram counts for the word $j$; $m_{i}$ is simply the corresponding element of $\boldsymbol{m}$ for word $i$.
 

@@ -2,7 +2,7 @@
 
 \section{Programming Languages}
 
-One of the first considerations when performing any machine learning task is often deciding which language should be used for building the model and performing inference. Engineers often use MATLAB for their calculations, but its features are not suitable for these purposes.
+One of the first considerations when performing any machine learning task is often deciding which language should be used for building the model and performing inference. Engineers often use MATLAB\footnote{\url{http://www.mathworks.co.uk/products/matlab/}} for their calculations, but its features are not suitable for general programming purposes.
 
 \subsection{Object Oriented Languages}
 
@@ -20,7 +20,7 @@ Object oriented programming is modular, allowing separation of code into differe
 
 \subsubsection{Java}
 
-Java is an object oriented language created by Sun Microsystems. It has the tagline ``write once, run anywhere", meaning that the code does not need to be recompiled to run on a new system architecture. Applications are compiled to byte code and can run on any Java Virtual Machine (JVM).
+Java\footnote{\url{http://www.java.com}} is an object oriented language created by Sun Microsystems. It has the tagline ``write once, run anywhere", meaning that the code does not need to be recompiled to run on a new system architecture. Applications are compiled to byte code and can run on any Java Virtual Machine (JVM).
 
 Some key benefits of using Java are:
 
@@ -32,16 +32,16 @@ Some key benefits of using Java are:
 
 \end{itemize}
 
-Java has been used in the past to create a version of the Sequence Memoizer. However...
+\noindent Java has been used in the past to create a version of the Sequence Memoizer. 
 
-\todo[inline]{Discussion of Java}
+
 
 
 \subsubsection{C++}
 
 C++ is another object oriented language in which the Sequence Memoizer has already been implemented. It has been around for much longer than Java and is based on another language, C. Although there is a large amount of support available, it is generally considered to be a more difficult language to learn than Java.
 
-\todo[inline]{Discussion of C++}
+
 
 \subsection{Functional Languages}
 
@@ -63,7 +63,7 @@ Macros are a very important feature of Lisps. These are similar to functions, bu
 
 \subsection{Language Choice}
 
-The final choice of language for implementing the models was Clojure. Clojure is a Lisp language that runs on the JVM. Its compact syntax makes coding the complex functions and data structure relatively simple. There are also many  built-in functions that are particularly useful for this project's purposes, for example, \lstinline!frequencies!, which counts the number of occurrences of each unique value in a sequence, or \lstinline!first! and \lstinline!last!, which allow for easy selection of the first and last entries in a set.
+The final choice of language for implementing the models was Clojure\footnote{\url{http://clojure.org}}. Clojure is a Lisp language that runs on the JVM. Its compact syntax makes coding the complex functions and data structure relatively simple. There are also many  built-in functions that are particularly useful for this project's purposes, for example, \lstinline!frequencies!, which counts the number of occurrences of each unique value in a sequence, or \lstinline!first! and \lstinline!last!, which allow for easy selection of the first and last entries in a set.
 
 Clojure allows the use of \textit{memoization}, which greatly increases processing speeds. This is the technique of storing already calculated results in cache so that they need not be computed again if a function is called with the same arguments. Throughout this project, all functions were memoized where possible.
 
@@ -73,11 +73,11 @@ Clojure has its own built-in ``terminal" called the \textit{REPL}. This stands f
 
 \section{Integrated Development Environment}
 
-Eclipse is a freely available \textit{Integrated Development Environment} (IDE), an application with facilities for software development. It is mainly intended for use with Java, but a plugin called Counterclockwise exists for Clojure development. Since it is an IDE with which I was already familiar, it seemed a logical choice for this project. 
+Eclipse\footnote{\url{http://www.eclipse.org}} is a freely available \textit{Integrated Development Environment} (IDE), an application with facilities for software development. It is mainly intended for use with Java, but a plugin called Counterclockwise\footnote{\url{https://code.google.com/p/counterclockwise/}} exists for Clojure development. Since it is an IDE with which I was already familiar, it seemed a logical choice for this project. 
 
 \section{Version Control}
 
-GitHub is an online hosting service for projects using Git \textit{version control}, a way of managing changes to files. Git records any changes made to tracked files and keeps a record of these. This means that changes can be reversed at any time and it is possible to revert to a previous version of the code. For collaborative projects, this makes it easy for multiple users to edit different parts of the code. 
+GitHub\footnote{\url{https://github.com}} is an online hosting service for projects using Git\footnote{\url{http://git-scm.com}} \textit{version control}, a way of managing changes to files. Git records any changes made to tracked files and keeps a record of these. This means that changes can be reversed at any time and it is possible to revert to a previous version of the code. For collaborative projects, this makes it easy for multiple users to edit different parts of the code. 
 
 An online GitHub account links to a Git repository, where the code is stored. Members of a team can then ``pull" the latest version of this code to their local filesystem. After editing a file, the user can then ``push" their changes back to the repository so that all other users can have the latest updates. 
 
@@ -95,7 +95,7 @@ The namespace hierarchy for this project is detailed in Figure \ref{fig:namespac
 \begin{tikzpicture}[font=\Huge]
 \tikzset{sibling distance=0.5}
 \tikzset{multiline/.style={align=center,anchor=north}}
-\node[multiline]{\Tree[.$\bullet$ core [.\textit{letters} {file\\reader} {hierarchical\\dirichlet} {letter\\maker} {letter\\predictor} {letter\\probs} ] [.\textit{words} {file\\reader} {good\\turing} {word\\maker} {word\\predictor} {word\\probs} ] [.\textit{misc} {misc\\functions} ] ]};
+\node[multiline]{\Tree[.$\bullet$ core [.\textit{letters} {file\\reader} {hierarchical\\dirichlet} {letter\\maker} {letter\\predictor} {letter\\probs} ] {sequence\\memoizer} [.\textit{words} {file\\reader} {good\\turing} {word\\maker} {word\\predictor} {word\\probs} ] [.\textit{misc} {misc\\functions} ] ]};
 \end{tikzpicture}}
 \caption{Code Architecture}
 \label{fig:namespaceHierarchy}
