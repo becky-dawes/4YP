@@ -33,3 +33,10 @@
      (cons (take 3 theWords) "")))
 
 (def make-trios-memo "Memoized make-trios" (memoize make-trios))
+
+(defn make-4s "Creates a sequence of the word 4s from the input"
+  [theWords] (if (> (count theWords) 4)
+     (cons(take 4 theWords)(lazy-seq(make-4s (rest theWords))))
+     (cons (take 4 theWords) "")))
+
+(def make-4s-memo "Memoized make-4s" (memoize make-4s))

@@ -1,9 +1,18 @@
 (ns n-gram.words.file-reader (:require [n-gram.misc.misc-functions :refer :all]
-                                       [n-gram.words.word-maker :refer :all]))
+                                       [n-gram.words.word-maker :refer :all]
+                                       ))
 
 (use 'clojure.java.io)
 
-(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz-chapter-1.txt")) 
+(def alpha1 "alpha for 1-gram" 1)
+
+(def alpha2 "alpha for 2-gram" 1)
+
+(def alpha3 "alpha for 3-gram" 1)
+
+(def alpha4 1)
+
+(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz.txt")) 
 
 (def lines "All lines in file" (with-open [rdr (reader file-name)] 
              (doall (line-seq rdr))))
@@ -47,7 +56,7 @@ removed and converted to lower case"
 
 ;(def words (make-words-memo words-vector))
 
-(def words (make-words-memo words-vector))
+(def words (make-words-memo raw-words-vector))
 
 
 (def N "Count of all words in text" (count words))
@@ -60,7 +69,7 @@ removed and converted to lower case"
 
 (def counts-1 "Frequencies of each distinct word in text" (frequencies words))
 
-(def new-counts-1 (into {} (filter #(-> % val (< 50)) counts-1)))
+(def additive-counts-1 (zipmap (keys counts-1) (map #(+ alpha1 %) (vals counts-1))))
 
 
 ;(def n-gram-count-maps (zipmap [1] ["counts-1"]))
@@ -116,7 +125,7 @@ removed and converted to lower case"
 
 ;(def pairs "Sequence of all pairs of words in text" (make-pairs-memo words-vector))
 
-(def pairs "Sequence of all pairs of words in text" (make-pairs-memo words-vector))
+(def pairs "Sequence of all pairs of words in text" (make-pairs-memo raw-words-vector))
 
 (println "Finding pair frequencies")
 
@@ -124,7 +133,7 @@ removed and converted to lower case"
 
 (def counts-2 "Map of frequencies of all pairs of words in text" (frequencies pairs))
 
-(def new-counts-2 (into {} (filter #(-> % val (< 40)) counts-2)))
+(def additive-counts-2 (zipmap (keys counts-2) (map #(+ alpha2 %) (vals counts-2))))
 
 ;(def n-gram-count-maps (assoc n-gram-count-maps 2 "counts-2"))
 
@@ -155,13 +164,15 @@ removed and converted to lower case"
 
 ; Create sequence of all word trios
 
-(def trios "Sequence of all trios of words in text" (make-trios-memo words-vector))
+(def trios "Sequence of all trios of words in text" (make-trios-memo raw-words-vector))
 
 (println "Finding trio frequencies")
 
 ; Find frequency of each word trio
 
 (def counts-3 "Frequencies of all trios of words in text" (frequencies trios))
+
+(def additive-counts-3 (zipmap (keys counts-3) (map #(+ alpha3 %) (vals counts-3))))
 
 ;(def n-gram-count-maps (assoc n-gram-count-maps 3 "counts-3"))
 
@@ -176,4 +187,16 @@ removed and converted to lower case"
 ;(def freqs-3 "Map of normalised frequencies of all trios of words in text" (zipmap trio-keys (map #(/ % total-trio-count) trio-vals)))
 
 (println (str (count counts-3) " distinct trios"))
+
+
+(def fours "Sequence of all 4s of words in text" (make-4s-memo raw-words-vector))
+
+(println "Finding 4s frequencies")
+
+; Find frequency of each word trio
+
+(def counts-4 "Frequencies of all 4s of words in text" (frequencies fours))
+
+(def additive-counts-4 (zipmap (keys counts-4) (map #(+ alpha4 %) (vals counts-4))))
+
 

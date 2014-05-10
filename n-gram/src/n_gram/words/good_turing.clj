@@ -57,6 +57,8 @@
 
 (def counts-of-counts-3 "3-gram counts-of-counts map" (generate-counts-of-counts-memo counts-3))
 
+(def counts-of-counts-4 "4-gram counts-of-counts map" (generate-counts-of-counts-memo counts-4))
+
 ;(def cumsum-counts-of-counts-3 "Cumulative sum of all pair counts" 
 ;  (generate-cumulative-sum-memo counts-of-counts-3))
 ;

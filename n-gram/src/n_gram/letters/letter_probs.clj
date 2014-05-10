@@ -1,5 +1,6 @@
 (ns n-gram.letters.letter-probs (:require [n-gram.misc.misc-functions :refer :all]
-                                          [n-gram.letters.file-reader :refer :all]))
+                                          [n-gram.letters.file-reader :refer :all]
+                                          [n-gram.words.file-reader :refer [formattedText]]))
 
 
 
@@ -41,3 +42,27 @@
                        :else (println "Please enter a letter string of length 3 or less"))))
 
 (def p-letter-memo "Memoized p-letter" (memoize p-letter))
+
+(defn log2 [n]
+  (/ (Math/log n) (Math/log 2)))
+
+(defn loop_sum_probs-2 [text] (let [prob (/ (counts-ASCII-2 (reduce str (take 2 text))) (counts-ASCII-1 (str (reduce str (take 1 text)))))];(p2-memo (first (first text)) (first (second text)))];(/ (counts-2 (into (second text) (first text))) (counts-1 (first text)))]
+                                (if (> (count text) 2) 
+                                (+ (log2 prob) (loop_sum_probs-2 (subs text 1 (count text))))
+                                (log2 prob))))
+
+(defn loop_sum_probs-3 [text] (let [prob (/ (counts-ASCII-3 (reduce str (take 3 text))) (counts-ASCII-2 (reduce str (take 2 text))))];(p3-memo (first (first text)) (first (second text)) (first (nth text 2)))];(/ (counts-3  (into (nth text 2) (into (first text) (second text)))) (counts-2 (into (second text) (first text))))]
+                                (if (> (count text) 3) 
+                                                       (+ (log2 prob) (loop_sum_probs-3 (subs text 1 (count text))))
+                                (log2 prob))))
+
+(defn loop_sum_probs-4 [text] (let [prob (/ (counts-ASCII-4 (reduce str (take 4 text))) (counts-ASCII-3 (reduce str (take 3 text))))];(p4-memo (first (first text)) (first (second text)) (first (nth text 2)) (first (nth text 3)))]; (/ (counts-4  (into (nth text 3) (into (first text) (into (nth text 2) (second text))))) (counts-3 (into (nth text 2) (into (first text) (second text)))))]
+                                (if (> (count text) 4) 
+                                                       (+ (log2 prob) (loop_sum_probs-4 (subs text 1 (count text))))
+                                (log2 prob))))
+
+(defn ell [n] (let [probs (cond (= n 2) (loop_sum_probs-2 formattedText)
+                                (= n 3) (loop_sum_probs-3 formattedText)
+                                (= n 4) (loop_sum_probs-4 formattedText))] (- (* probs (/ 1 (count formattedText))))))
+
+(defn perplexity [n] (Math/pow 2 (ell n)))
