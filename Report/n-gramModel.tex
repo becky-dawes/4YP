@@ -219,7 +219,7 @@ This method of smoothing runs into problems when $N_{r+1}$ is zero, as $n$-grams
 
 %\lstinline!n-r-plus-one! finds the index (\lstinline!n-r-index!) of a given $r$ by searching for it in the map \lstinline!n-r-counts-keys-n!. If this value is equal to the total number of $N_{r}$ values, the value of $N_{r}$ corresponding to the $r$ inputted is returned. Otherwise, we search for the $r$ value ($r+1$) corresponding to the index \lstinline!n-r-index!$+1$ in \lstinline!n-r-index-keys!. We then search for this new $r$ value using the function \lstinline!n-r! to find $N_{r+1}$.
 
-\subsection{Other Smoothing Possibilities}
+\subsection{Other Smoothing Possibilities}\label{sec:otherSmoothing}
 
 Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but I did not pursue this).
 

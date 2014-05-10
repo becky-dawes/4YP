@@ -2,32 +2,83 @@
 
 \section{Perplexity}\label{sec:perplexity}
 
-Language models are compared by evaluating the perplexity of the data for each. A better model has a smaller perplexity. Perplexity is defined in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})=\sum_{i}Q_{i}\log_{2}\hat{P_{i}}$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. For a bi-gram model, we can approximate this to Equation \ref{eq:HD-perplexity-approx}, where $T$ is the total number of words in the corpus.
+Language models are compared by evaluating the \textit{perplexity} of the data for each. A better model has a smaller perplexity. Perplexity is defined as $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} for the Sequence Memoizer ($\infty$-gram) \cite{wood2011sequence} and as in Equation \ref{eq:ellXngram} for all other $n$-grams. % in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})=\sum_{i}Q_{i}\log_{2}\hat{P_{i}}$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. For a bi-gram model, MacKay and Peto approximate this to Equation \ref{eq:HD-perplexity-approx} \cite{mackay1995hierarchical}, where $T$ is the total number of words in the corpus.
 
-\begin{equation}
-\text{Perplexity}=2^{H(Q;\hat{P})}
-\label{eq:HD-perplexity}
-\end{equation}
+%\begin{equation}
+%\text{Perplexity}=2^{H(Q;\hat{P})}
+%\label{eq:HD-perplexity}
+%\end{equation}
+%
+%\begin{equation}
+%\text{Perplexity}\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-\frac{1}{T}}
+%\label{eq:HD-perplexity-approx}
+%\end{equation}
 
-\begin{equation}
-\text{Perplexity}\simeq\left[\prod_{t=2}^{T}\hat{P}(w_{t}|w_{t-1})\right]^{-\frac{1}{T}}
-\label{eq:HD-perplexity-approx}
-\end{equation}
-
-Another definition of perplexity is $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} \cite{wood2011sequence}. This is relevant for the Sequence Memoizer implementation as it considers context of infinite length.
+%Another definition of perplexity is $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} \cite{wood2011sequence}. This is relevant for the Sequence Memoizer implementation as it considers context of infinite length.
 
 \begin{equation}
 \ell(\boldsymbol{x})=-\frac{1}{|\boldsymbol{x}|}\sum_{i=1}^{|\boldsymbol{x}|}\log_{2}P(x_{i}|\boldsymbol{x}_{1:i-1})
 \label{eq:ellX}
 \end{equation}
 
+\begin{equation}
+\ell(\boldsymbol{x})=-\frac{1}{|\boldsymbol{x}|}\sum_{i=1}^{|\boldsymbol{x}|}\log_{2}P(x_{i}|\boldsymbol{x}_{i-n+1:i-1})
+\label{eq:ellXngram}
+\end{equation}
+
 Perplexity was found for the hierarchical Dirichlet model as in the following code. We find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ for all bigrams as a vector, using the optimal values for $\alpha$ and $\boldsymbol{m}$. All elements in the vector are then multiplied together and the result is raised to the power $-\frac{1}{T}$, where $T$ is the total number of words in the corpus.
+
+\todo[inline]{Am I using this?}
 
 
 
 \section{Comparison of $n$-gram Smoothing Techniques}
 
-\todo[inline]{Comparison of n-gram smoothing techniques}
+The models covered in Chapter \ref{chap:n-gram} were all compared by considering their performance using the training corpus \textit{The Wonderful Wizard of Oz} \cite{baum2008wonderful}. Firstly, models where $n$-grams represented groups of words in the text were compared. The values of $n$ were varied, as well as the smoothing methods. The results are shown in Table \ref{table:wordNGram}. The $<$unk$>$ smoothing refers to simply replacing the first appearance of all words with $<unk>$ (see Section \ref{sec:otherSmoothing}).
+
+\begin{table}[h!]
+\caption{Comparison of Perplexities for Word $n$-gram Models}
+\label{table:wordNGram}
+\begin{center}
+    \begin{tabular}{|c| c| c|}
+    \hline
+    $\boldsymbol{n}$ & \textbf{Smoothing} & \textbf{Perplexity} \\ \hline
+    2 & none & 24.703 \\ \hline
+    3 & none & 2.919 \\ \hline
+    4 & none & 1.266 \\ \hline
+    2 & $<$unk$>$ & 25.962 \\ \hline
+    3 & $<$unk$>$ & 3.556 \\ \hline
+    4 & $<$unk$>$ & 1.367 \\ \hline
+    2 & Additive & 1.576$\times$10\textsuperscript{8} \\ \hline
+    3 & Additive & 4.444$\times$10\textsuperscript{10} \\ \hline
+    4 & Additive & 5.419$\times$10\textsuperscript{13} \\ \hline
+    2 & Good-Turing & $\infty$ \\ \hline
+    3 & Good-Turing & $\infty$ \\ \hline
+    4 & Good-Turing& $\infty$ \\ \hline
+    \end{tabular}
+    \end{center}
+    \end{table}
+
+All models were also tested on their response when asked to predict following a simple context. For bi-gram models, the context was ``dorothy". The unsmoothed model and the model with additive smoothing both predicted the same words: ``dorothy and the scarecrow and". After this the prediction continues in a loop of ``and the scarecrow and the...". The $<$unk$>$ smoothing returned ``dorothy and the $<$unk$>$ $<$unk$>$...". Good-Turing smoothing, however, returned something quite different: ``dorothy and i should be a heart and...". 
+
+The tri-gram models were asked to predict text following the context ``dorothy and". All models returned the same results: ``dorothy and her friends were walking some of us he". Whilst this is obviously not perfect, it is a lot closer to natural language than the bi-gram prediction. The 4-gram models predicted a similarly readable result. Given the context ``dorothy and her", the following text was returned: ``dorothy and her friends were walking but the woodman to chop away the".
+
+Prediction by considering $n$-grams as groups of letters was less successful. Perplexities are given in Table \ref{table:letterPerplexity}. Given the character ``d", the bi-gram model predicted ``d the the ...". Given ``d ", the tri-gram model predicted ``d the the...". Given ``d t", the 4-gram model predicted ``d t    ....".
+
+\begin{table}[h!]
+\caption{Comparison of Perplexities for Letter $n$-gram Models}
+\label{table:letterPerplexity}
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+$\boldsymbol{n}$ & \textbf{Smoothing} & \textbf{Perplexity} \\ \hline
+2 & none & 9.327 \\ \hline
+3 & none & 5.502 \\ \hline
+4 & none & 3.583 \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
 
 \section{Evaluation of Hierarchical Models}
 
