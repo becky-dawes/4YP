@@ -49,9 +49,9 @@ The models covered in Chapter \ref{chap:n-gram} were all compared by considering
     2 & $<$unk$>$ & 25.962 \\ \hline
     3 & $<$unk$>$ & 3.556 \\ \hline
     4 & $<$unk$>$ & 1.367 \\ \hline
-    2 & Additive & 1.576$\times$10\textsuperscript{8} \\ \hline
-    3 & Additive & 4.444$\times$10\textsuperscript{10} \\ \hline
-    4 & Additive & 5.419$\times$10\textsuperscript{13} \\ \hline
+    2 & Additive & 3933.026 \\ \hline
+    3 & Additive & 2787000 \\ \hline
+    4 & Additive & 1.399$\times$10\textsuperscript{7} \\ \hline
     2 & Good-Turing & $\infty$ \\ \hline
     3 & Good-Turing & $\infty$ \\ \hline
     4 & Good-Turing& $\infty$ \\ \hline
@@ -63,7 +63,9 @@ All models were also tested on their response when asked to predict following a 
 
 The tri-gram models were asked to predict text following the context ``dorothy and". All models returned the same results: ``dorothy and her friends were walking some of us he". Whilst this is obviously not perfect, it is a lot closer to natural language than the bi-gram prediction. The 4-gram models predicted a similarly readable result. Given the context ``dorothy and her", the following text was returned: ``dorothy and her friends were walking but the woodman to chop away the".
 
-Prediction by considering $n$-grams as groups of letters was less successful. Perplexities are given in Table \ref{table:letterPerplexity}. Given the character ``d", the bi-gram model predicted ``d the the ...". Given ``d ", the tri-gram model predicted ``d the the...". Given ``d t", the 4-gram model predicted ``d t    ....".
+The above results clearly show that a larger value of $n$ gives a better perplexity, except for in additive smoothing (this may be due to non-optimal parameter values - all $\alpha$ values were set to 1). The models employing Good-Turing smoothing had infinite complexity due to some values of $N_{r+1}$ being zero (see Section \ref{sec:goodTuringSmoothing}). Catering for unknown $n$-grams is very important, but testing has shown that the methods of smoothing used were not very effective, instead driving perplexity values up. 
+
+Prediction by considering $n$-grams as groups of letters was less successful. Perplexities are given in Table \ref{table:letterPerplexity}. Given the character ``d", the bi-gram model predicted ``d the the ...". Given ``d ", the tri-gram model predicted ``d the the...". Given ``d t", the 4-gram model predicted ``d t \ \ \ ....".
 
 \begin{table}[h!]
 \caption{Comparison of Perplexities for Letter $n$-gram Models}
@@ -79,10 +81,15 @@ $\boldsymbol{n}$ & \textbf{Smoothing} & \textbf{Perplexity} \\ \hline
 \end{center}
 \end{table}
 
+Again, larger values of $n$ gave better results for perplexity. However, these simple $n$-gram models clearly are unable to provide the kind of natural language prediction for which we are looking.
 
 \section{Evaluation of Hierarchical Models}
 
-\todo[inline]{Evaluation of hierarchical models}
+MacKay and Peto's hierarchical Dirichlet model (see Chapter \ref{chap:HierarchicalDirichletModel}) was implemented using letter groups as $n$-grams. The bi-gram model achieved a perplexity of 44.693 for \textit{The Wonderful Wizard of Oz}. Its prediction given the letter ``d" was ``d the the the ...". This is slightly better than that of the simple $n$-gram model, but the value for perplexity is much higher. 
+
+Implementation of the same model using word groups as $n$-grams would probably yield better prediction results, but it was decided that prediction on a character level is more useful in general and so this was not investigated.
+
+
 
 \section{Comparison of Model Performance with Wikipedia}
 
