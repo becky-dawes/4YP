@@ -35,17 +35,18 @@
                             (= (count letters) 3) (str (last (key (apply max-key val (find-letter-4-memo (vector_to_string (butlast (butlast letters))) (vector_to_string (butlast letters)) 
                                                                                                    (str (last letters))))))))))
   ([letters the-map] (let [letters (clojure.string/lower-case letters)] 
-               (cond (= (count letters) 1) (key (apply max-key val (find-letter-pair-memo (str (last letters)) the-map)))
-                     (= (count letters) 2)
-                            (let [results-map (find-letter-trio-memo (vector_to_string (butlast letters)) (str (last letters)) the-map)]
-                              (if (zero? (sum (vals results-map))) 
-                                (next-letter (str (last letters)) the-map)
-                                (key (apply max-key val results-map))))
-                            (= (count letters) 3) 
-                            (let [results-map (find-letter-4-memo (vector_to_string (butlast letters)) (str (last letters)) the-map)]
-                              (if (zero? (sum (vals results-map))) 
-                                (next-letter (str (butlast letters) (last letters)) the-map)
-                                (key (apply max-key val results-map))))))))
+               ;(cond (= (count letters) 1) 
+               (key (apply max-key val (find-letter-pair-memo (str (last letters)) the-map))))))
+                   ;  (= (count letters) 2)
+                    ;        (let [results-map (find-letter-trio-memo (vector_to_string (butlast letters)) (str (last letters)) the-map)]
+                     ;         (if (zero? (sum (vals results-map))) 
+                      ;          (next-letter (str (last letters)) the-map)
+                       ;         (key (apply max-key val results-map))))
+                        ;    (= (count letters) 3) 
+                         ;   (let [results-map (find-letter-4-memo (vector_to_string (butlast letters)) (str (last letters)) the-map)]
+                          ;    (if (zero? (sum (vals results-map))) 
+                           ;     (next-letter (str (butlast letters) (last letters)) the-map)
+                            ;    (key (apply max-key val results-map))))))))
 
 (def next-letter-memo "Memoized next-letter" (memoize next-letter))
 
@@ -56,10 +57,10 @@
                                           (- n 1)))
                   (str (last letters) the-next-letter))))
   ([letters n the-map] (let [the-next-letter (next-letter-memo letters the-map) ](if (< 0 n)  
-                            (str (last letters)
-                                      (loop-next-letters (str (last letters) the-next-letter) (- n 1) the-map) 
-                                         )
-                (str (last letters) [the-next-letter])))))
+                            
+                                      (str (last letters) (loop-next-letters the-next-letter (- n 1) the-map) )
+                                         
+                the-next-letter))))
 
 (def loop-next-letters-memo "Memoized loop-next-letters" (memoize loop-next-letters))
 

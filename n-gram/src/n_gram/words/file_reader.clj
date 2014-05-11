@@ -12,7 +12,7 @@
 
 (def alpha4 1)
 
-(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz.txt")) 
+(def file-name "Name of file from which text is read" (str "the-wonderful-wizard-of-oz-chapter-1.txt")) 
 
 (def lines "All lines in file" (with-open [rdr (reader file-name)] 
              (doall (line-seq rdr))))

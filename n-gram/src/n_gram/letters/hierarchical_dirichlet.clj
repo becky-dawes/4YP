@@ -89,10 +89,35 @@
 
 (def P-memo (memoize P))
 
-(defn perplexity ([alpha m] (Math/pow (reduce * (map #(P (str (second %)) (str (first %)) alpha m) all-char-pairs)) (- (/ 1 N-letter))))
-([] (Math/pow (reduce * (map #(P (str (second %)) (str (first %)) alpha-optimum m-optimum) all-char-pairs)) (- (/ 1 N-letter)))))
+(defn log2 [n]
+  (/ (Math/log n) (Math/log 2)))
 
-(def perplexity-memo "Memoized perplexity" (memoize perplexity))
+(defn loop_sum_probs-2 [text] (let [prob (P (second text)  (first text))];(g-t-prob-memo [(first (first text)) (first (second text))])];;(/ (counts-2 (into (second text) (first text))) (counts-1 (first text)))]
+                                (if (> (count text) 2) 
+                                (+ (log2 prob) (loop_sum_probs-2 (rest text)))
+                                (log2 prob))))
+
+;(defn loop_sum_probs-3 [text] (let [prob (p3-memo (first (first text)) (first (second text)) (first (nth text 2)))];(g-t-prob-memo [(first (first text)) (first (second text)) (first (nth text 2))])];;(/ (counts-3  (into (nth text 2) (into (first text) (second text)))) (counts-2 (into (second text) (first text))))]
+ ;                               (if (> (count text) 3) 
+  ;                                                     (+ (log2 prob) (loop_sum_probs-3 (rest text)))
+   ;                             (log2 prob))))
+
+;(defn loop_sum_probs-4 [text] (let [prob (p4-memo (first (first text)) (first (second text)) (first (nth text 2)) (first (nth text 3)))];(g-t-prob-memo [(first (first text)) (first (second text)) (first (nth text 2)) (first (nth text 3))])];; (/ (counts-4  (into (nth text 3) (into (first text) (into (nth text 2) (second text))))) (counts-3 (into (nth text 2) (into (first text) (second text)))))]
+ ;                               (if (> (count text) 4) 
+  ;                                                     (+ (log2 prob) (loop_sum_probs-4 (rest text)))
+   ;                             (log2 prob))))
+
+(defn ell [n] (let [probs (cond (= n 2) (loop_sum_probs-2 letters)
+                                ;(= n 3) (loop_sum_probs-3 words)
+                                ;(= n 4) (loop_sum_probs-4 words)
+                                )] (- (* probs (/ 1 (count letters))))))
+
+(defn perplexity [n] (Math/pow 2 (ell n)))
+
+;(defn perplexity ([alpha m] (Math/pow (reduce * (map #(P (str (second %)) (str (first %)) alpha m) all-char-pairs)) (- (/ 1 N-letter))))
+;([] (Math/pow (reduce * (map #(P (str (second %)) (str (first %)) alpha-optimum m-optimum) all-char-pairs)) (- (/ 1 N-letter)))))
+
+;(def perplexity-memo "Memoized perplexity" (memoize perplexity))
 
 (def map-of-pairs-probs (zipmap all-char-pairs (map #(P (str (second %)) (str (first %)) alpha-optimum m-optimum) all-char-pairs)))
 

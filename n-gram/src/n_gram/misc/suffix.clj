@@ -1,6 +1,7 @@
 (ns n-gram.misc.suffix
   (:require
-    [n-gram.misc.misc-functions :refer :all])
+    [n-gram.misc.misc-functions :refer :all]
+    [n-gram.words.file-reader :refer [formattedText]])
   )
 
 (use 'clojure.pprint)

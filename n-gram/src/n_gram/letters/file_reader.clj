@@ -2,7 +2,7 @@
                                          [n-gram.letters.letter-maker :refer :all]
                                          [n-gram.words.file-reader :refer [formattedText]]))
 
-(def all-chars "Map of all lower case characters, numbers and space" (map #(str %) (map char (concat (range 32 33 )(range 48 58) (range 97 123)  ))))
+(def all-chars "Map of all lower case characters, numbers and space" (map #(str %) (map char (concat (range 32 33 ) [39] (range 48 58) (range 97 123)  ))))
 
 (def all-char-pairs "Map of all possible pairs of lower case characters, numbers and space" (map #(reduce str %) (selections all-chars 2)))
 
