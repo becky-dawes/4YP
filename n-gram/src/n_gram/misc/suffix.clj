@@ -187,8 +187,8 @@
                          (let [assignment (assign_customer node params letter)]
                            (if (= (first assignment) "") 
                              (check_table_customer_consistency (assoc-in node (into params [:restaurant letter]) (into parent_restaurant [1])) letter params)
-                             (let [new_tables (first (map #(if (= (.indexOf parent_restaurant %) (second assignment)) (inc %) %) parent_restaurant))]
-                               (check_table_customer_consistency (assoc-in node (into params [:restaurant letter]) [new_tables]) letter params))))
+                             (let [new_tables (apply vector  (map #(if (= (.indexOf parent_restaurant %) (second assignment)) (inc %) %) parent_restaurant))]
+                               (check_table_customer_consistency (assoc-in node (into params [:restaurant letter]) new_tables) letter params))))
                          (check_table_customer_consistency (assoc-in node (into params [:restaurant letter]) [1]) letter params)))
                        (= difference 1)
                        (if (not (zero? table_count))
@@ -196,13 +196,17 @@
                          (let [assignment (assign_customer node params letter)]
                            (if (= (first assignment) "") 
                              (assoc-in node (into params [:restaurant letter]) (into parent_restaurant [1]))
-                             (let [new_tables (first (map #(if (= (.indexOf parent_restaurant %) (second assignment)) (inc %) %) parent_restaurant))]
-                               (assoc-in node (into params [:restaurant letter]) [new_tables]))))
+                             (let [new_tables (apply vector (map #(if (= (.indexOf parent_restaurant %) (second assignment)) (inc %) %) parent_restaurant))]
+                               (assoc-in node (into params [:restaurant letter]) new_tables))))
                          (assoc-in node (into params [:restaurant letter]) [1])))
+                       (< difference (- 1)) (let [new_tables (if (= (last parent_restaurant) 1) (into [] (butlast parent_restaurant)) (apply vector (map #(if (= (.indexOf parent_restaurant %) (.indexOf parent_restaurant (last parent_restaurant))) (dec %) %) parent_restaurant)))]
+                                              (check_table_customer_consistency (assoc-in node (into params [:restaurant letter]) new_tables) letter params))
+                       (= difference (- 1)) (let [new_tables (if (= (last parent_restaurant) 1) (into [] (butlast parent_restaurant)) (apply vector (map #(if (= (.indexOf parent_restaurant %) (.indexOf parent_restaurant (last parent_restaurant))) (dec %) %) parent_restaurant)))]
+                                             (assoc-in node (into params [:restaurant letter]) new_tables))
                        (zero? difference)
                        node)))
                            
-(def check_table_customer_consistency_memo "Memoized check_table_customer_consistency" (memoize check_table_customer_consistency))
+;(def check_table_customer_consistency "Memoized check_table_customer_consistency" (memoize check_table_customer_consistency))
 
 (defn check_for_children "Checks if there are any children starting with the given letter"
   [letter children] (if (< 0 (count children)) 
@@ -221,10 +225,10 @@
 
 (defn check_consistency_all_tables "Checks that the number of tables in all children is equal to the number of customers in the node's restaurant for all letters"
   [node tables params] (if (<= 1 (count tables)) 
-                        (check_table_customer_consistency_memo node (first tables) params)
-                        (check_consistency_all_tables (check_table_customer_consistency_memo node (first tables) params) (rest tables) params)))
+                        (check_table_customer_consistency node (first tables) params)
+                        (check_consistency_all_tables (check_table_customer_consistency node (first tables) params) (rest tables) params)))
 
-(def check_consistency_all_tables_memo "Memoized check_consistency_all_tables" (memoize check_consistency_all_tables))
+;(def check_consistency_all_tables_memo "Memoized check_consistency_all_tables" (memoize check_consistency_all_tables))
 
 (defn branch "Replaces the node with another with range new_range and children a copy of the old node but with the remaining range"
   [node letter new_range new_letter params] (let [old_range (get-in node (into params [:children letter :range])) 
@@ -232,7 +236,7 @@
                                                  children (get-in node (into params [:children letter :children]))
                                                  old_depth (get-in node (into params [:children letter :depth]))
                                                  new_range_length (- (last new_range) (first new_range))]
-                                             (check_consistency_all_tables_memo
+                                             (check_consistency_all_tables
                                                (assoc-in 
                                                  (assoc-in 
                                                    (dissoc-in node (into params [:children letter]))
@@ -240,7 +244,7 @@
                                                  (into params [:children letter :children new_letter]) (build_restaurant_node [(first old_range) (- (last old_range) new_range_length)] children restaurant [(+ (first old_depth) new_range_length) (last old_depth)]))
                                                (keys restaurant) (into params [:children letter]))))
 
-(def branch_memo "Memoized branch" (memoize branch))
+;(def branch_memo "Memoized branch" (memoize branch))
 
 (defn build_tree "Builds a suffix tree for the given word"
   ([word]  (build_tree word (build_restaurant_node [0 0]) word [] 1)) 
@@ -260,7 +264,7 @@
                                                                      children (get-in root_node (into params [:children]))]
                                                                  
                                                                    (if (empty? children) 
-                                                                     (check_table_customer_consistency_memo
+                                                                     (check_table_customer_consistency
                                                                        (assoc-in root_node (into params [:children prefix_start]) 
                                                                                  (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse prefix)) letter [new_depth (dec (+ new_depth prefix_count))]) 
                                                                                  )
@@ -270,28 +274,28 @@
                                                                          (if (second match_results)
                                                                            (if (nth match_results 2)
                                                                                (let [new_prefix (subs prefix (count (first match_results)) (count prefix))]
-                                                                               (check_table_customer_consistency_memo
-                                                                                 (check_table_customer_consistency_memo  
+                                                                               (check_table_customer_consistency
+                                                                                 (check_table_customer_consistency  
                                                                                    (build_tree (str (clojure.string/reverse new_prefix) letter) root_node root_word (into params [:children prefix_start]) (+ new_depth (- (count prefix) (count new_prefix))))
                                                                                    letter (into params [:children prefix_start]))
                                                                                  letter params))
-                                                                             (check_table_customer_consistency_memo root_node letter params))
+                                                                             (check_table_customer_consistency root_node letter params))
                                                                            (let [new-range (create-indices-memo root_word (clojure.string/reverse (first match_results))) matching_branch_range (get-in root_node (into params [:children prefix_start :range]))]
-                                                                             (check_table_customer_consistency_memo 
-                                                                               (check_table_customer_consistency_memo
+                                                                             (check_table_customer_consistency 
+                                                                               (check_table_customer_consistency
                                                                                  (assoc-in 
-                                                                                   (branch_memo root_node prefix_start new-range 
+                                                                                   (branch root_node prefix_start new-range 
                                                                                            (subs (clojure.string/reverse (dereference-indices-memo root_word matching_branch_range)) (count (first match_results)) (inc (count (first match_results)))) params)
                                                                                    (into params [:children prefix_start :children (subs prefix (count (first match_results)) (inc (count (first match_results))))]) 
                                                                                    (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse (subs prefix (count (first match_results)) (count prefix)))) letter [(+ new_depth (count (first match_results))) (dec (+ new_depth (count prefix)))]))
                                                                                  letter (into params [:children prefix_start]))
                                                                                letter params)))
                                                                          )
-                                                                       (check_table_customer_consistency_memo
+                                                                       (check_table_customer_consistency
                                                                          (assoc-in root_node (into params [:children prefix_start]) (build_restaurant_node (create-indices-memo root_word (clojure.string/reverse prefix)) letter [new_depth (dec (+ new_depth (count prefix)))]))
                                                                          letter params))))))
 
-(def build_tree_memo "Memoized build_tree" (memoize build_tree))
+;(def build_tree_memo "Memoized build_tree" (memoize build_tree))
 
 
 (def uniform_letters_distribution_limits (generate_prob_limits_loop_memo (zipmap (map #(str %) (map char (concat (range 32 33 )(range 48 58) (range 97 123)  ))) (repeat 37 [(float (/ 1 37))]))))
@@ -315,7 +319,7 @@
                                                      (determine_letter tree [:children (str (first context))])) ;match length=range length - search with child params
                                                      ;otherwise
                                                      
-                                                       (determine_letter (branch_memo tree (str (first context)) 
+                                                       (determine_letter (branch tree (str (first context)) 
                                                                                       (create-indices-memo root_text (clojure.string/reverse (first range_results))) 
                                                                                       (subs (clojure.string/reverse (dereference-indices-memo root_text (get-in tree [:children (str (first context)) :range]))) (count (first range_results)) (inc (count (first range_results))))
                                                                                       []) [:children (str (first context))])));otherwise, instantiate node mid-way and search parent distribution
