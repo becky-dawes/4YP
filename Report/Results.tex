@@ -26,9 +26,9 @@ Language models are compared by evaluating the \textit{perplexity} of the data f
 \label{eq:ellXngram}
 \end{equation}
 
-Perplexity was found for the hierarchical Dirichlet model as in the following code. We find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ for all bigrams as a vector, using the optimal values for $\alpha$ and $\boldsymbol{m}$. All elements in the vector are then multiplied together and the result is raised to the power $-\frac{1}{T}$, where $T$ is the total number of words in the corpus.
-
-\todo[inline]{Am I using this?}
+%Perplexity was found for the hierarchical Dirichlet model as in the following code. We find $P(i|j,D,\alpha\boldsymbol{m},\mathscr{H}_{D})$ for all bigrams as a vector, using the optimal values for $\alpha$ and $\boldsymbol{m}$. All elements in the vector are then multiplied together and the result is raised to the power $-\frac{1}{T}$, where $T$ is the total number of words in the corpus.
+%
+%\todo[inline]{Am I using this?}
 
 
 
@@ -89,8 +89,32 @@ MacKay and Peto's hierarchical Dirichlet model (see Chapter \ref{chap:Hierarchic
 
 Implementation of the same model using word groups as $n$-grams would probably yield better prediction results, but it was decided that prediction on a character level is more useful in general and so this was not investigated.
 
+Unfortunately, due to hardware restraints, the Sequence Memoizer code was unable to handle large training corpora. This was due to the amount of memory required for constructing the prefix tree. Testing was performed on a tree built using only the first chapter of \textit{The Wonderful Wizard of Oz}. A comparison of perplexities for this chapter for the different models is shown in Table \ref{table:chapterOnePerplexities}. From this, it is clear that the Sequence Memoizer implementation has the best result. Considering that the smaller training corpus increased the perplexities for the 3- and 4-gram models, it is plausible to expect that a larger training corpus would reduce the perplexity of the Sequence Memoizer model.
+
+Prediction took place at the character level. Due to the small training corpus, the probability of seating a customer at a new table was often higher than choosing any of the existing tables, and so often the predicted character was unexpected. However, unlike the other models, we are not restricted in the length of context used for prediction. Given a longer context, the results are often very much in line with the training text. 
+
+\begin{table}
+\caption{Comparison of Perplexities for Chapter 1 of \textit{The Wonderful Wizard of Oz}}
+\label{table:chapterOnePerplexities}
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Model} & \textbf{Perplexity} \\ \hline
+2-gram (no smoothing) & 8.523 \\ \hline
+3-gram (no smoothing) & 4.371 \\ \hline
+4-gram (no smoothing) & 2.368 \\ \hline
+Hierarchical Dirichlet & 44.554 \\ \hline
+Sequence Memoizer & 1.008 \\ \hline
+\end{tabular} 
+\end{center} 
+\end{table}
+
+Given the context "dorothy lived ", the Sequence Memoizer model predicted a varying jumble of letters and numbers. Given a much longer context, the model predicted a string of characters which existed in the training data. It is clear from this that a larger training corpus would allow much more natural prediction.  
+
+\section{Discussion}
+
+The testing has shown that a larger value of $n$ generally gives a much better perplexity. The Sequence Memoizer essentially sets $n$ to infinity and therefore achieves the best perplexity of all the models. Prediction by word has been shown to yield much better results (qualitatively) than by letter, as the number of possible variations of successive words is much smaller than that of successive letters. It is also much more difficult to test for good prediction by the letter simply by inspection, as one incorrect letter turns a word to gibberish. 
+
+The tests on the different methods of $n$-gram smoothing proved inconclusive, with the perplexities varying drastically between models. However, it has become clear that Good-Turing smoothing is generally unacceptable unless that training corpus is sufficiently large that there is at least one $n$-gram for every possible value of $r$ (count).
 
 
-\section{Comparison of Model Performance with Wikipedia}
-
-\todo[inline]{Comparison of model performance with wikipedia}

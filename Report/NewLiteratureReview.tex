@@ -5,21 +5,21 @@
 
 \subsection{$n$-gram Models}
 
-The simplest form of language model is that of an $n$-gram, a sequence of $n$ contiguous characters or words. The counts of unique $n$-grams in a training corpus are used to predict the next word/character following a given context (Equation \ref{eq:n-gramProb}, where $c()$ denotes the count of a given $n$-gram - this can be extended for larger $n$). However, this means that any $n$-gram not found in the training corpus will have zero count and therefore will be assigned zero probability of following any context. This leads to overfitting to the the training data. Smoothing techniques have been established to account for this problem. These all in some way follow the method of ``taking from the rich and giving to the poor", i.e. they take some probability mass from those words seen in the training corpus and associate it with words that were not seen. $n$-grams are discussed in more detail in Chapter \ref{chap:n-gram}. 
+The simplest form of language model is that of an $n$-gram, a sequence of $n$ contiguous characters or words. The counts of unique $n$-grams in a training corpus are used to predict the next word/character following a given context (Equation \ref{eq:n-gramProb}, where $w_{t-n+1:t-1}$ denotes the sequence of words or symbols from $(t-n+1)$ to $(t-1)$ and where ML stands for \textit{maximum likelihood}). However, this means that any $n$-gram not found in the training corpus will have zero count and therefore will be assigned zero probability of following any context. This leads to overfitting to the the training data. Smoothing techniques have been established to account for this problem. These all in some way follow the method of ``taking from the rich and giving to the poor", i.e. they take some probability mass from those words seen in the training corpus and associate it with words that were not seen. $n$-grams are discussed in more detail in Chapter \ref{chap:n-gram}. 
 
 \begin{equation}
-P_{ML}(w_{i}|w_{i-1})\simeq\frac{c(w_{i-1}w_{i})}{c(w_{i-1})}
+P_{ML}(w_{t}|w_{t-n+1:t-1})\simeq\frac{count(w_{t-n+1:t})}{count(w_{t-n+1:t-1})}
 \label{eq:n-gramProb}
 \end{equation}
 
 
 Chen and Goodman \cite{chen1996empirical} \cite{chen1999empirical} compared a range of different smoothing techniques, namely Additive smoothing (discussed in Section \ref{sec:additiveSmoothing}), Church-Gale smoothing, Jelinek-Mercer smoothing, Baseline smoothing and Katz smoothing.  
 
-Additive smoothing is defined as in Equation \ref{eq:additiveSmoothing}. Good-Turing smoothing (discussed in Section \ref{sec:goodTuringSmoothing}) has been found to perform slightly better and states that an $n$-gram that occurs $r$ times has an adjusted count of $r^{*}$ according to Equation \ref{eq:goodTuringSmoothing}, where $N_{r}$ is the number of $n$-grams with count $r$ in the training corpus. Katz smoothing extends this method by adding the interpolation of higher-order models with lower-order models. 
+Additive smoothing is defined as in Equation \ref{eq:additiveSmoothing}, where $\alpha$ is a nominative value added to all counts and $|V|$ is the size of the vocabulary. Good-Turing smoothing (discussed in Section \ref{sec:goodTuringSmoothing}) has been found to perform slightly better and states that an $n$-gram that occurs $r$ times has an adjusted count of $r^{*}$ according to Equation \ref{eq:goodTuringSmoothing}, where $N_{r}$ is the number of $n$-grams with count $r$ in the training corpus. Katz smoothing extends this method by adding the interpolation of higher-order models with lower-order models. 
 
 \begin{equation}
 \label{eq:additiveSmoothing}
-P_{add}(w_{i}|w_{i-n+1}^{i-1})=\frac{c(w_{i-n+1}^{i})+\delta}{c(w_{i-n+1}^{i-1})+\delta|V|}
+P_{additive}(w_{t}|w_{t-n+1:t-1})=\frac{count(w_{t-n+1:t})+\alpha}{count(w_{t-n+1:t-1})+\alpha|V|}
 \end{equation}
 
 \begin{equation}
@@ -36,17 +36,17 @@ r^{*}=\frac{(r+1)S(N_{jr+1})}{S(N_{jr})}
 
 %Chen and Goodman found that Church-Gale smoothing outperformed the other methods for bigram models. 
 %
-Jelinek-Mercer smoothing involves partitioning the $\lambda_{w_{i-n+1}^{i-1}}$ into buckets according to $c(w_{i-n+1}^{i-1})$, where all $\lambda_{w_{i-n+1}^{i-1}}$ in the same bucket have the same value. Chen and Goodman then take the conditional probability of a word to be as in Equation \ref{eq:chenGoodman3}.
+Jelinek-Mercer smoothing involves partitioning the $\lambda_{w_{t-n+1:t-1}}$ into buckets according to $count(w_{t-n+1:t-1})$, where all $\lambda_{w_{t-n+1:t-1}}$ in the same bucket have the same value. Chen and Goodman then take the conditional probability of a word to be as in Equation \ref{eq:chenGoodman3}.
 
 \begin{equation}
-P_{interp}(w_{i}|w_{i-n+1}^{i-1})=\lambda_{w_{i-n+1}^{i-1}}P_{ML}(w_{i}|w_{i-n+1}^{i-1})+(1-\lambda_{w_{i-n+1}^{i-1}})P_{interp}(w_{i}|w_{i-n+2}^{i-1})
+P_{interpolation}(w_{t}|w_{t-n+1:t-1})=\lambda_{w_{t-n+1:t-1}}P_{ML}(w_{t}|w_{t-n+1:t-1})+(1-\lambda_{w_{t-n+1:t-1}})P_{interp}(w_{t}|w_{t-n+2:t-1})
 \label{eq:chenGoodman3}
 \end{equation}
 
-For Baseline smoothing, Chen and Goodman used an instance of Jelinek-Mercer smoothing with all $\lambda_{w_{i-n+1}^{i-1}}$ constrained to be the same for each $n$, $\lambda_{n}$. This gives Equation \ref{eq:chenGoodmanBaseline}.
+For Baseline smoothing, Chen and Goodman used an instance of Jelinek-Mercer smoothing with all $\lambda_{w_{t-n+1:t-1}}$ constrained to be the same for each $n$ ($\lambda_{n}$). This gives Equation \ref{eq:chenGoodmanBaseline}.
 
 \begin{equation}
-P_{base}(w_{i}|w_{i-n+1}^{i-1})=\lambda_{n}P_{ML}(w_{i}|w_{i-n+1}^{i-1})+(1-\lambda_{n})P_{base}(w_{i}|w_{i-n+2}^{i-1})
+P_{baseline}(w_{t}|w_{t-n+1:t-1})=\lambda_{n}P_{ML}(w_{t}|w_{t-n+1:t-1})+(1-\lambda_{n})P_{baseline}(w_{t}|w_{t-n+2:t-1})
 \label{eq:chenGoodmanBaseline}
 \end{equation}
 
@@ -87,14 +87,14 @@ MacKay and Peto \cite{mackay1995hierarchical} built on the $n$-gram model, but a
 
 
 \begin{equation}
-\hat{P}(w_{t}|w_{t-1})-\lambda f_{w_{t}}+(1-\lambda)f_{w_{t}|w_{t-1}}
+\hat{P}(w_{t}|w_{t-1})=\lambda P_{ML}(w_{t})+(1-\lambda)P_{ML}(w_{t}|w_{t-1})
 \label{eq:MacKayPeto1}
 \end{equation}
 
 
 
 
-Wood and Teh \cite{wood2009hierarchical} also used the idea of a hierarchical model, but this time using a Pitman-Yor Process (PYP). They define the distribution of $n$-grams as in Equation \ref{eq:HNBASLMDA1}, where $\mathcal{PY}(d,\alpha,\mathcal{H})$ is a PYP with discount $d$, concentration $\alpha$ and base distribution $\mathcal{H}$ ($\mathbb{E}[G(s)]=\mathcal{H}(x)$), $x$s are \textit{types} (unique words or symbols), $w$s are \textit{tokens} (observed instances of types) and $\mathcal{U}$ is the uniform distribution over types. The posterior predictive distribution for the next word/symbol to appear in a particular context given the entire training corpus $\mathcal{C}$ is given by Equation \ref{eq:HBNASLMDA2.1posterior}, where $h$ is the context vector consisting of $n-1$ words/symbols, $K,\alpha,d,[c_{k}]_{k=1}^{K}$ and $[\phi_{k}]_{k=1}^{K}$ are parameters and variables used in the Chinese restaurant franchise sampler (explained in Section \ref{sec:chineseRestaurantProcess}) for the HPYP, $N$ is the number of times the context $h$ occurs in the training data, $h'$ is $h$ with one word removed and $\delta(0)=1,\delta(x)=0\ \forall\ x\neq0$ is a standard indicator function. The first term in the sum in this equation is related to the count of the number of times $w$ occurs after $h$ in the training corpus. The second term correspond to the \textit{back-off} probability of $w$ following a shorter-by-one-word context $h'$.
+Wood and Teh \cite{wood2009hierarchical} also used the idea of a hierarchical model, but this time using a Pitman-Yor Process (PYP). They define the distribution of $n$-grams as in Equation \ref{eq:HNBASLMDA1}, where $\mathcal{PY}(d,\alpha,G)$ is a PYP with discount $d$, concentration $\alpha$ and base distribution $G$, $x$s are \textit{types} (unique words or symbols), $w$s are \textit{tokens} (observed instances of types) and $\mathcal{U}$ is the uniform distribution over types. The posterior predictive distribution for the next word/symbol to appear in a particular context given the entire training set $\mathcal{D}$ is given by Equation \ref{eq:HBNASLMDA2.1posterior}, where $\boldsymbol{u}$ is the context, $N,\alpha,d,n_{k}, n$ and $z_{k}$ are parameters used in the Chinese Restaurant Process (explained in Section \ref{sec:chineseRestaurantProcess}) for the HPYP, $\boldsymbol{u}'$ is $\boldsymbol{u}$ with one word removed and $\mathbb{I}(0)=1,\mathbb{I}(x)=0$ is an indicator function. The first term in the sum in this equation is related to the count of the number of times $w$ occurs after $\boldsymbol{u}$ in the training corpus. The second term correspond to the \textit{back-off} probability of $w$ following a shorter-by-one-word context $\boldsymbol{u}'$.
 
 \begin{align}
 G_{[]}&\sim\mathcal{PY}(d_{0},\alpha_{0},\mathcal{U}) \nonumber
@@ -103,15 +103,15 @@ G_{[x_{1}]}&\sim\mathcal{PY}(d_{1},\alpha_{1},G_{[]}) \nonumber
 \\
 &\vdots\nonumber 
 \\
-G_{[x_{j}...x_{1}]}&\sim\mathcal{PY}(d_{j},\alpha_{j},G_{[x_{j-1}...x_{1}]}) \nonumber
+G_{[x_{i}...x_{1}]}&\sim\mathcal{PY}(d_{i},\alpha_{i},G_{[x_{i-1}...x_{1}]}) \nonumber
 \\
-w_{t}|w_{t-n+1}...w_{t-1}&\sim G_{[w_{t-n+1}...w_{t-1}]} 
+w_{i}|w_{i-n+1}...w_{i-1}&\sim G_{[w_{i-n+1}...w_{i-1}]} 
 \label{eq:HNBASLMDA1}
 \end{align}
 
 
 \begin{equation}
-P(w|h,\mathcal{C})=\mathbb{E}\left[\sum_{k=1}^{K}\frac{c_{k}-d_{i}}{\alpha+N}\delta(w-\phi_{k})+\frac{\alpha+dK}{\alpha+N}P(w|h',\mathcal{C})\right]
+P(w|\boldsymbol{u},\mathcal{D})=\mathbb{E}\left[\sum_{k=1}^{N}\frac{n_{k}-d_{i}}{\alpha+n}\mathbb{I}(w=z_{k})+\frac{\alpha+dN}{\alpha+n}P(w|\boldsymbol{u}',\mathcal{D})\right]
 \label{eq:HBNASLMDA2.1posterior}
 \end{equation}
 
@@ -120,14 +120,14 @@ They further extend this to create a Hierarchical, Hierarchical PYP (HHPYP) \cit
 
 
 \begin{equation}
-G_{\{w_{t-2},w_{t-1}\}}^{\mathcal{D}_{i}}\sim\mathcal{PY}(d_{j},\theta_{j},\pi G_{\{w_{t-1}\}}^{\mathcal{D}_{i}}+(1-\pi)G_{\{w_{t-1},w_{t-1}\}}^{0})
+G_{[w_{t-2},w_{t-1}]}^{\mathcal{D}_{i}}\sim\mathcal{PY}(d_{j},\theta_{j},\pi G_{[w_{t-1}]}^{\mathcal{D}_{i}}+(1-\pi)G_{[w_{t-1},w_{t-1}]}^{0})
 \label{eq:HHPYP1}
 \end{equation}
 
 
 \section{State of the Art}
 
-In 2009, Wood, Archambeau, Gasthaus, James and Teh developed a hierarchical Bayesian nonparametric model called the \textit{Sequence Memoizer} \cite{wood2009stochastic} \cite{wood2011sequence}. This is explored is detail in Chapter \ref{chap:seqMem}. The Sequence Memoizer stores training data in a \textit{suffix tree}, allowing infinite strings to be stored, and models text as an HPYP. It is claimed that it ``achieves the best known test perplexity on a well studied corpus" \cite{wood2009stochastic}.
+In 2009, Wood, Archambeau, Gasthaus, James and Teh developed a hierarchical Bayesian nonparametric model called the \textit{Sequence Memoizer} \cite{wood2009stochastic} \cite{wood2011sequence}. This is explored is detail in Chapter \ref{chap:seqMem}. The Sequence Memoizer stores training data in a \textit{prefix tree} (see Section \ref{sec:prefixTrees}), allowing infinite strings to be stored, and models text as an HPYP. It is claimed that it ``achieves the best known test perplexity on a well studied corpus" \cite{wood2009stochastic}.
 
 Bartlett and Wood later developed \textit{Deplump}, ``a general purpose, lossless, batch compressor based on [...] the sequence memoizer" \cite{bartlett2011deplump}. This uses the fact that the Sequence Memoizer has a space complexity that is a function of the number of nodes in the suffix tree. Deplump maintains a fixed-length ``reference sequence" and ``a dynamically updated suffix tree referencing only suffixes found therein", as it cannot maintain a suffix tree representation of the entire input sequence. Streaming Deplump (for stream compression) repeatedly produces a predictive distribution for the succeeding symbols given a particular context and encodes the next symbol by passing the predictive distribution to an entropy encoder. Experiments showed that the algorithm scales to very long sequences and that streaming Deplump performed significantly better than batch Deplump .
 

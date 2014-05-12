@@ -8,7 +8,7 @@ An $n$-gram language model predicts the next item in a sequence as an $(n-1)$-Ma
 
 \begin{equation}
 \label{eq:Bayes}
-p(A,B)=p(A|B)p(B)=p(B|A)p(A)
+P(A,B)=P(A|B)P(B)=P(B|A)P(A)
 \end{equation}
 
 
@@ -38,7 +38,7 @@ For a bigram model, the maximum likelihood estimate is as in Equation \ref{eq:n-
 
 \begin{subequations}
 \begin{align}
-p(w_{2}|w_{1})&=\frac{p(w_{1}, w_{2})}{p(w_{1})}
+P_{ML}(w_{2}|w_{1})&=\frac{P(w_{1}, w_{2})}{P(w_{1})}
 \\
 &= \frac{count(w_{1}, w_{2})}{N-1} \times \frac{N}{count(w_{1})}
 \\
@@ -108,7 +108,7 @@ Regular expressions are again used to split the text on every space, thereby cre
 
 \section{Smoothing} \label{sec:smoothing}
 
-Smoothing accounts for new words which do not exist in the training corpus. From Equation \ref{eq:n-gramMLE} it is clear to see that any $n$-grams not appearing in the training corpus will be assigned a count of zero and therefore the the model overfits to the data. Smoothing is a way of assigning non-zero probabilities to unseen $n$-grams. There are many possible methods to achieve this, as detailed below.
+Smoothing accounts for new words which do not exist in the training corpus. From Equation \ref{eq:n-gramMLE} it is clear to see that any $n$-grams not appearing in the training corpus will be assigned a count of zero and therefore the model overfits to the data. Smoothing is a way of assigning non-zero probabilities to unseen $n$-grams. There are many possible methods to achieve this, as detailed below.
 
 \subsection{Additive Smoothing} \label{sec:additiveSmoothing}
 
@@ -116,11 +116,11 @@ Additive or Laplace smoothing consists of adding to the counts of all $n$-grams 
 
 \begin{subequations}
 \begin{align}
-p(w_{1})&=\frac{count(w_{1})+\alpha_{1}}{N+M\alpha_{1}} \label{eq:1-gramAdditiveSmoothing}
+P(w_{1})&=\frac{count(w_{1})+\alpha_{1}}{N+M\alpha_{1}} \label{eq:1-gramAdditiveSmoothing}
 \\
-p(w_{2}| w_{1})&=\frac{count(w_{1}, w_{2})+\alpha_{2}}{((N-1)+M^{2}\alpha_{2})p(w_{1})} \label{eq:2-gramAdditiveSmoothing}
+P(w_{2}| w_{1})&=\frac{count(w_{1}, w_{2})+\alpha_{2}}{((N-1)+M^{2}\alpha_{2})P(w_{1})} \label{eq:2-gramAdditiveSmoothing}
 \\
-p(w_{3}| w_{1}, w_{2}) &= \frac{count(w_{1}, w_{2}, w_{3})+\alpha_{3}}{((N-2)+M^{3}\alpha_{3})p(w_{1}, w_{2})} \label{eq:3-gramAdditiveSmoothing}
+P(w_{3}| w_{1}, w_{2}) &= \frac{count(w_{1}, w_{2}, w_{3})+\alpha_{3}}{((N-2)+M^{3}\alpha_{3})P(w_{1}, w_{2})} \label{eq:3-gramAdditiveSmoothing}
 \end{align}
 \end{subequations}
 
@@ -221,7 +221,7 @@ This method of smoothing runs into problems when $N_{r+1}$ is zero, as $n$-grams
 
 \subsection{Other Smoothing Possibilities}\label{sec:otherSmoothing}
 
-Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but I did not pursue this).
+Instead of using one of the smoothing techniques mentioned above, we can train a model that uses a specific symbol for an unknown word, \lstinline!<unk>!. This is done by replacing the first occurrence of each word in the training corpus with \lstinline!<unk>! (another option would be to choose a vocabulary in advance and replace all other words with \lstinline!<unk>!, but this was not pursued).
 
 
 \section{Prediction}

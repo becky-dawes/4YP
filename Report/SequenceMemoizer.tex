@@ -42,10 +42,16 @@ P(\boldsymbol{x}_{T+1}=s|\boldsymbol{x})=\int P(\boldsymbol{x}_{T+1}=s|G)P(G|\bo
 \label{eq:SM3}
 \end{equation}
 
-\todo[inline]{Am I using this?}
+
 
 \subsection{Hierarchical Pitman-Yor Processes}
-Similarly to Chapter \ref{chap:HierarchicalDirichletModel}, we employ the use of hierarchical processes. In this case, these are hierarchical PYPs (HPYP). We denote the empty context as $\epsilon$ and the parent of a context $\boldsymbol{u}$ (i.e. $\boldsymbol{u}$ with the first symbol from the left removed) as $\sigma(\boldsymbol{u})$. These give Equations \ref{eq:SM4a}-\ref{eq:SM4c}.
+Similarly to Chapter \ref{chap:HierarchicalDirichletModel}, we employ the use of hierarchical processes. In this case, these are hierarchical PYPs (HPYP). We denote the empty context as $\epsilon$ and the parent of a context $\boldsymbol{u}$ (i.e. $\boldsymbol{u}$ with the first symbol from the left removed) as $\sigma(\boldsymbol{u})$. These give Equations \ref{eq:SM4a}-\ref{eq:SM4c}. These state that:
+
+\begin{itemize}
+\item The empty context has prior and discount  $G_{0}$ and $\alpha_{0}$ respectively (Equation \ref{eq:SM4a})
+\item The context $\boldsymbol{u}$ has prior and discount $G_{\sigma(\boldsymbol{u})}$ and $\alpha_{|\boldsymbol{u}|}$ respectively (Equation \ref{eq:SM4b})
+\item Each symbol $x_{i}$ given that the previous $n$ symbols $x_{i-n:i-1}$ are the context $\boldsymbol{u}$ is distributed $G_{\boldsymbol{u}}$ (Equation \ref{eq:SM4c})
+\end{itemize}
 
 \begin{subequations}
 \label{eq:SM4}
@@ -58,9 +64,7 @@ x_{i}|\boldsymbol{x}_{i-n:i-1}=\boldsymbol{u},G_{\boldsymbol{u}}&\sim G_{\boldsy
 \end{align}
 \end{subequations}
 
-The empty context has prior $G_{0}$ and discount $\alpha_{0}$ (Equation \ref{eq:SM4a}) and any context $\boldsymbol{u}$, given its parent $\sigma(\boldsymbol{u})$, has prior $G_{\sigma(\boldsymbol{u})}$ and discount $\alpha_{|\boldsymbol{u}|}$ (Equation \ref{eq:SM4b}). The distribution over each symbol $x_{i}$ in $\boldsymbol{x}$, given that its context $\boldsymbol{u}$ consists of the previous $n$ symbols $\boldsymbol{x}_{i-n:i-1}$, is $G_{\boldsymbol{u}}$ (Equation \ref{eq:SM4c}).
 
-\todo[inline]{Re-word}
 
 %\subsection{Prediction}
 %
@@ -225,7 +229,7 @@ The strings occurring in the training corpus can be stored most efficiently in a
 
 \subsection{The Chinese Restaurant Process} \label{sec:chineseRestaurantProcess}
 
-The Chinese Restaurant Process (CRP) is commonly used in language modelling. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be assigned to a corresponding draw from the base distribution (equivalent to seating a customer at an existing table) or to a new draw from the base distribution (equivalent to seating a customer at a new table).
+Inference in the Sequence Memoizer involves Gibbs sampling in a Chinese Restaurant Process (CRP) representation. Imagine a Chinese restaurant with an infinite number of tables. At a particular time, a new customer may choose to sit either at an existing table, or at a new unoccupied table. In our case, tables are labelled with symbols. There can be more than one table with a given symbol. Each symbol in a corpus can either be assigned to a corresponding draw from the base distribution (equivalent to seating a customer at an existing table) or to a new draw from the base distribution (equivalent to seating a customer at a new table).
 
 
 If $n$ customers are already seated giving $N$ occupied tables, the probabilities of the next customer sitting at an occupied table or choosing a new table are given by Equations \ref{eq:CRPExisting} and \ref{eq:CRPNew} respectively \cite{wood2009hierarchical}, where $z_{n+1}$ is the table at which the customer will sit, $n_{k}$ is the number of customers sitting at the $k$\textsuperscript{th} table, $d$ is the discount parameter, $\alpha$ is the concentration parameter and $K$ denotes a new table. 

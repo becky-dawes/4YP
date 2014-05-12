@@ -10,7 +10,7 @@ Object oriented programming is based on the concept of defining ``objects", whic
 
 \begin{itemize}
 
-\item \textbf{Encapsulation:} information hiding - only authorised parties may access data. This helps to avoid unwanted side-effects and allows type-checking on method calls.
+\item \textbf{Encapsulation:} information hiding (only authorised parties may access data) - this helps to avoid unwanted side-effects and allows type-checking on method calls
 \item \textbf{Inheritance:} the ability to create class hierarchies with classes inheriting features from their parent
 \item \textbf{Polymorphism:} subclasses may inherit methods but change their functionality
 
@@ -81,23 +81,23 @@ GitHub\footnote{\url{https://github.com}} is an online hosting service for proje
 
 An online GitHub account links to a Git repository, where the code is stored. Members of a team can then ``pull" the latest version of this code to their local filesystem. After editing a file, the user can then ``push" their changes back to the repository so that all other users can have the latest updates. 
 
-\section{Program Architecture}
-
-The Clojure code was divided into \textit{packages} (like modules) and \textit{namespaces} (like classes). The \textit{core} file (like the \textit{main} method in Java programs) contains the first code executed at run time. All other namespaces are employed using the \lstinline!require! keyword. 
-
-The namespace hierarchy for this project is detailed in Figure \ref{fig:namespaceHierarchy}.
-
-
-
-\begin{figure}[h]
-\centering
-\resizebox{1\linewidth}{!}{%
-\begin{tikzpicture}[font=\Huge]
-\tikzset{sibling distance=0.5}
-\tikzset{multiline/.style={align=center,anchor=north}}
-\node[multiline]{\Tree[.$\bullet$ core [.\textit{letters} {file\\reader} {hierarchical\\dirichlet} {letter\\maker} {letter\\predictor} {letter\\probs} ] {sequence\\memoizer} [.\textit{words} {file\\reader} {good\\turing} {word\\maker} {word\\predictor} {word\\probs} ] [.\textit{misc} {misc\\functions} ] ]};
-\end{tikzpicture}}
-\caption{Code Architecture}
-\label{fig:namespaceHierarchy}
-\end{figure}
+%\section{Program Architecture}
+%
+%The Clojure code was divided into \textit{packages} (like modules) and \textit{namespaces} (like classes). The \textit{core} file (like the \textit{main} method in Java programs) contains the first code executed at run time. All other namespaces are employed using the \lstinline!require! keyword. 
+%
+%The namespace hierarchy for this project is detailed in Figure \ref{fig:namespaceHierarchy}.
+%
+%
+%
+%\begin{figure}[h]
+%\centering
+%\resizebox{1\linewidth}{!}{%
+%\begin{tikzpicture}[font=\Huge]
+%\tikzset{sibling distance=0.5}
+%\tikzset{multiline/.style={align=center,anchor=north}}
+%\node[multiline]{\Tree[.$\bullet$ core [.\textit{letters} {file\\reader} {hierarchical\\dirichlet} {letter\\maker} {letter\\predictor} {letter\\probs} ] {sequence\\memoizer} [.\textit{words} {file\\reader} {good\\turing} {word\\maker} {word\\predictor} {word\\probs} ] [.\textit{misc} {misc\\functions} ] ]};
+%\end{tikzpicture}}
+%\caption{Code Architecture}
+%\label{fig:namespaceHierarchy}
+%\end{figure}
 
