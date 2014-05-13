@@ -158,7 +158,7 @@ P(\alpha\boldsymbol{m}|\mathcal{D},\mathscr{H}_{D})=\frac{P(\mathcal{D}|\alpha\b
 \begin{align}
 P(i|j,\mathcal{D},\mathscr{H}_{D})&=\int P(\alpha\boldsymbol{m}|\mathcal{D},\mathscr{H}_{D})P(i|j,\mathcal{D},\alpha\boldsymbol{m},\mathscr{H}_{D})d^{W}(\alpha\boldsymbol{m}) \nonumber
 \\
-&\simeq P(i|j,\mathcal{D},[\alpha\boldsymbol{m}]^{MP},\mathscr{H}_{D})
+&\simeq P(i|j,\mathcal{D},[\alpha\boldsymbol{m}]_{\text{max}},\mathscr{H}_{D})
 \label{eq:HD-i|j-D-H}
 \end{align}
 
@@ -173,6 +173,7 @@ P(\mathcal{D}|\alpha\boldsymbol{m})&=\prod_{j}P(\boldsymbol{F}_{|j}|\alpha\bolds
 \label{eq:HD-D|alpham}
 \end{align}
 
+\vbox{
 \begin{equation}
 \frac{\partial}{\partial (\alpha m_{i})}\log P(\mathcal{D}|\boldsymbol{\alpha\boldsymbol{m}})=\sum_{j}[\Psi(F_{i|j}+\alpha m_{i})-\Psi(F_{j}+\sum_{i'}\alpha m_{i'})+\Psi(\sum_{i'}\alpha m_{i'})-\Psi(\alpha m_{i})] 
 \label{eq:HD-diff-logPD|u}
@@ -185,8 +186,8 @@ MacKay and Peto approximate the value for $\alpha\boldsymbol{m}$ in the followin
 \begin{align}
 \Psi(F_{i|j}+\alpha m_{i})-\Psi(\alpha m_{i})&=\frac{1}{F_{i|j}-1+\alpha m_{i}}+\Psi(F_{i|j}-1+\alpha m_{i})-\Psi(\alpha m_{i}) \nonumber
 \\
-&=\frac{1}{F_{i|j}-1+\alpha m_{i}}+\frac{1}{F_{i|j}-2+\alpha m_{i}}+\Psi(F_{i|j}-2+\alpha m_{i})-\Psi(\alpha m_{i}) \nonumber
-\\
+%&=\frac{1}{F_{i|j}-1+\alpha m_{i}}+\frac{1}{F_{i|j}-2+\alpha m_{i}}+\Psi(F_{i|j}-2+\alpha m_{i})-\Psi(\alpha m_{i}) \nonumber
+%\\
 &=\frac{1}{F_{i|j}-1+\alpha m_{i}}+\frac{1}{F_{i|j}-2+\alpha m_{i}}+...+\frac{1}{1+\alpha m_{i}}+\Psi(1+\alpha m_{i})-\Psi(\alpha m_{i}) \nonumber
 \\
 &=\frac{1}{F_{i|j}-1+\alpha m_{i}}+...+\frac{1}{1+\alpha m_{i}}+\frac{1}{\alpha m_{i}} \nonumber
@@ -196,7 +197,7 @@ MacKay and Peto approximate the value for $\alpha\boldsymbol{m}$ in the followin
 \end{align}
 
 
-We can then find the optimal hyperparameters by Equation \ref{eq:HD-u-i-MP}, where $K(\alpha)$ is given by Equation \ref{eq:HD-K}. For each count $F$ and word $i$, we let $N_{Fi}$ be the number of context $j$ such that $F_{i|j}\geq F$. $F_{i}^{\text{max}}$ is the largest $F$ such that $N_{Fi}>0$. This gives Equations \ref{eq:HD-Gi} and \ref{eq:HD-Hi} for the values $G_{i}$ and $H_{i}$ respectively. $V_{i}$ is the number of entries in row $i$ of $F_{i|j}$ that are non-zero.
+We can then find the optimal hyperparameters by Equation \ref{eq:HD-u-i-MP}, where $K(\alpha)$ is given by Equation \ref{eq:HD-K}. For each count $F$ and word $i$, we let $N_{Fi}$ be the number of contexts $j$ such that $F_{i|j}\geq F$. $F_{i}^{\text{max}}$ is the largest $F$ such that $N_{Fi}>0$. This gives Equations \ref{eq:HD-Gi} and \ref{eq:HD-Hi} for the values $G_{i}$ and $H_{i}$ respectively. $V_{i}$ is the number of entries in row $i$ of $F_{i|j}$ that are non-zero.
 
 \begin{equation}
 [\alpha m_{i}]_{\text{max}}=\frac{2V_{i}}{K([\alpha]_{\text{max}})-G_{i}+\sqrt{(K([\alpha]_{\text{max}})-G_{i})^{2}+4H_{i}V_{i}}}
@@ -218,7 +219,7 @@ H_{i}=\sum_{f=2}^{F_{i}^{\text{max}}}\frac{N_{fi}}{(f-1)^{2}}
 \label{eq:HD-Hi}
 \end{equation}
 
-}}\cite{mackay1995hierarchical}
+}}\cite{mackay1995hierarchical}}
 
 \section{Implementation}
 

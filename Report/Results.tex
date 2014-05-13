@@ -43,18 +43,21 @@ The models covered in Chapter \ref{chap:n-gram} were all compared by considering
     \begin{tabular}{|c| c| c|}
     \hline
     $\boldsymbol{n}$ & \textbf{Smoothing} & \textbf{Perplexity} \\ \hline
+       2 & Good-Turing & $\infty$ \\ \hline
+    3 & Good-Turing & $\infty$ \\ \hline
+    4 & Good-Turing& $\infty$ \\ \hline
+        2 & Additive & 3933.026 \\ \hline
+    3 & Additive & 2787000 \\ \hline
+    4 & Additive & 1.399$\times$10\textsuperscript{7} \\ \hline
+        2 & $<$unk$>$ & 25.962 \\ \hline
+    3 & $<$unk$>$ & 3.556 \\ \hline
+    4 & $<$unk$>$ & 1.367 \\ \hline
     2 & none & 24.703 \\ \hline
     3 & none & 2.919 \\ \hline
     4 & none & 1.266 \\ \hline
-    2 & $<$unk$>$ & 25.962 \\ \hline
-    3 & $<$unk$>$ & 3.556 \\ \hline
-    4 & $<$unk$>$ & 1.367 \\ \hline
-    2 & Additive & 3933.026 \\ \hline
-    3 & Additive & 2787000 \\ \hline
-    4 & Additive & 1.399$\times$10\textsuperscript{7} \\ \hline
-    2 & Good-Turing & $\infty$ \\ \hline
-    3 & Good-Turing & $\infty$ \\ \hline
-    4 & Good-Turing& $\infty$ \\ \hline
+
+
+ 
     \end{tabular}
     \end{center}
     \end{table}
@@ -100,10 +103,11 @@ Prediction took place at the character level. Due to the small training corpus, 
 \begin{tabular}{|c|c|}
 \hline
 \textbf{Model} & \textbf{Perplexity} \\ \hline
+Hierarchical Dirichlet & 44.554 \\ \hline
 2-gram (no smoothing) & 8.523 \\ \hline
 3-gram (no smoothing) & 4.371 \\ \hline
 4-gram (no smoothing) & 2.368 \\ \hline
-Hierarchical Dirichlet & 44.554 \\ \hline
+
 Sequence Memoizer & 1.008 \\ \hline
 \end{tabular} 
 \end{center} 
