@@ -1,5 +1,6 @@
 \documentclass[11pt, oneside]{report}   	% use "amsart" instead of "article" for AMSLaTeX format
-\usepackage[margin=2cm]{geometry}              		% See geometry.pdf to learn the layout options. There are lots.
+\usepackage[margin=2cm]{geometry}  
+\usepackage{float}            		% See geometry.pdf to learn the layout options. There are lots.
 \geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
 %\geometry{landscape}                		% Activate for for rotated page geometry
 %\usepackage[parfill]{parskip}    		% Activate to begin paragraphs with an empty line rather than an indent
@@ -128,9 +129,19 @@ moredelim=**[is][\color{yellow}]{|}{|}}
 
 \includepdf[pagecommand={\chapter*{Appendix A: Risk Assessment}\addcontentsline{toc}{chapter}{ A: Risk Assessment}}]{Rebecca Dawes DSE Risk Assessment}
 
-\chapter*{Appendix B: Code Listings}
-\todo[inline]{Attach code}
-\addcontentsline{toc}{chapter}{ B: Code Listings}
+\includepdf[pagecommand={\chapter*{Appendix B: Code Listings}\addcontentsline{toc}{chapter}{ B: Code Listings}}]{code core}
+\includepdf[pages={1-}]{code words file-reader}
+\includepdf[pages={1-}]{code letters file-reader}
+\includepdf[pages={1-}]{code words word-maker}
+\includepdf[pages={1-}]{code letters letter-maker}
+\includepdf[pages={1-}]{code words word-predictor}
+\includepdf[pages={1-}]{code letters letter-predictor}
+\includepdf[pages={1-}]{code words word-probs}
+\includepdf[pages={1-}]{code letters letter-probs}
+\includepdf[pages={1-}]{code words good-turing}
+\includepdf[pages={1-}]{code misc misc-functions}
+\includepdf[pages={1-}]{code letters hierarchical-dirichlet}
+\includepdf[pages={1-}]{code letters sequence-memoizer}
 \end{appendices}
 
 \end{document}

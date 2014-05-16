@@ -48,7 +48,7 @@
 
 (def alpha-MP-memo "Memoized alpha" (memoize alpha-MP))
 
-(def initial-alpha 20)
+(def initial-alpha 6)
 
 (defn find-all-u [alpha] (zipmap (keys all-char-counts) (map #(u-i-MP-memo alpha %) (keys all-char-counts))))
 

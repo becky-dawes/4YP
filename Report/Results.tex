@@ -1,8 +1,10 @@
 \chapter{Testing}\label{chap:results}
 
-\section{Perplexity}\label{sec:perplexity}
+\section{Methods of Comparison}
 
-Language models are compared by evaluating the \textit{perplexity} of the data for each. A better model has a smaller perplexity. Perplexity is defined as $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} for the Sequence Memoizer ($\infty$-gram) \cite{wood2011sequence} and as in Equation \ref{eq:ellXngram} for all other $n$-grams. % in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})=\sum_{i}Q_{i}\log_{2}\hat{P_{i}}$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. For a bi-gram model, MacKay and Peto approximate this to Equation \ref{eq:HD-perplexity-approx} \cite{mackay1995hierarchical}, where $T$ is the total number of words in the corpus.
+\subsection{Perplexity}\label{sec:perplexity}
+
+Language models are compared by evaluating the \textit{perplexity} of the data for each. This is a measure of the predictive accuracy of a model. A better model has a smaller value (perplexity is always positive). Perplexity is defined as $2^{\ell(\boldsymbol{x})}$ where $\ell(\boldsymbol{x})$ is defined as in Equation \ref{eq:ellX} for the Sequence Memoizer ($\infty$-gram) \cite{wood2011sequence} and as in Equation \ref{eq:ellXngram} for all other $n$-grams. % in Equation \ref{eq:HD-perplexity}, where $H(Q;\hat{P})=\sum_{i}Q_{i}\log_{2}\hat{P_{i}}$ is the cross-entropy between the unknown true model $Q$ and the assumed model $\hat{P}$ \cite{mackay1995hierarchical}. For a bi-gram model, MacKay and Peto approximate this to Equation \ref{eq:HD-perplexity-approx} \cite{mackay1995hierarchical}, where $T$ is the total number of words in the corpus.
 
 %\begin{equation}
 %\text{Perplexity}=2^{H(Q;\hat{P})}
@@ -30,7 +32,9 @@ Language models are compared by evaluating the \textit{perplexity} of the data f
 %
 %\todo[inline]{Am I using this?}
 
+\subsection{Testing by Inspection}
 
+One of the most important ways of comparing models is simply by inspecting their predictions. This is a qualitative approach and so is very subjective. Prediction by word is much easier to consider, as the models will generate a sequence of known words. It is then required to judge whether or not this sequence makes logical and grammatical sense. However, with prediction by letter, the quality of a prediction is often quite unclear, as one wrong letter can turn a word to gibberish and therefore make the whole prediction seem ridiculous.  
 
 \section{Comparison of $n$-gram Smoothing Techniques}
 
@@ -64,11 +68,11 @@ The models covered in Chapter \ref{chap:n-gram} were all compared by considering
 
 All models were also tested on their response when asked to predict following a simple context. For bi-gram models, the context was ``dorothy". The unsmoothed model and the model with additive smoothing both predicted the same words: ``dorothy and the scarecrow and". After this the prediction continues in a loop of ``and the scarecrow and the...". The $<$unk$>$ smoothing returned ``dorothy and the $<$unk$>$ $<$unk$>$...". Good-Turing smoothing, however, returned something quite different: ``dorothy and i should be a heart and...". 
 
-The tri-gram models were asked to predict text following the context ``dorothy and". All models returned the same results: ``dorothy and her friends were walking some of us he". Whilst this is obviously not perfect, it is a lot closer to natural language than the bi-gram prediction. The 4-gram models predicted a similarly readable result. Given the context ``dorothy and her", the following text was returned: ``dorothy and her friends were walking but the woodman to chop away the".
+The tri-gram models were asked to predict text following the context ``dorothy and". All models returned the same results: ``dorothy and her friends were walking some of us he". Whilst the last few words do not make sense in this context, it is a lot closer to natural language than the bi-gram prediction. The 4-gram models predicted a similarly readable result. Given the context ``dorothy and her", the following text was returned: ``dorothy and her friends were walking but the woodman to chop away the".
 
 The above results clearly show that a larger value of $n$ gives a better perplexity, except for in additive smoothing (this may be due to non-optimal parameter values - all $\alpha$ values were set to 1). The models employing Good-Turing smoothing had infinite complexity due to some values of $N_{r+1}$ being zero (see Section \ref{sec:goodTuringSmoothing}). Catering for unknown $n$-grams is very important, but testing has shown that the methods of smoothing used were not very effective, instead driving perplexity values up. 
 
-Prediction by considering $n$-grams as groups of letters was less successful. Perplexities are given in Table \ref{table:letterPerplexity}. Given the character ``d", the bi-gram model predicted ``d the the ...". Given ``d ", the tri-gram model predicted ``d the the...". Given ``d t", the 4-gram model predicted ``d t \ \ \ ....".
+Prediction by considering $n$-grams as groups of letters was less successful. Perplexities are given in Table \ref{table:letterPerplexity}. Given the character ``d", the bi-gram model predicted ``d the the ...". Given ``d ", the tri-gram model predicted ``d the the...". Given ``d t", the 4-gram model predicted ``d t \ \ \ ...." (a continuous string of spaces).
 
 \begin{table}[h!]
 \caption{Comparison of Perplexities for Letter $n$-gram Models}
@@ -88,11 +92,11 @@ Again, larger values of $n$ gave better results for perplexity. However, these s
 
 \section{Evaluation of Hierarchical Models}
 
-MacKay and Peto's hierarchical Dirichlet model (see Chapter \ref{chap:HierarchicalDirichletModel}) was implemented using letter groups as $n$-grams. The bi-gram model achieved a perplexity of 44.693 for \textit{The Wonderful Wizard of Oz}. Its prediction given the letter ``d" was ``d the the the ...". This is slightly better than that of the simple $n$-gram model, but the value for perplexity is much higher. 
+MacKay and Peto's hierarchical Dirichlet model (see Chapter \ref{chap:HierarchicalDirichletModel}) was implemented using letter groups as $n$-grams. The bi-gram model achieved a perplexity of 44.693 for \textit{The Wonderful Wizard of Oz}. Its prediction given the letter ``d" was ``d the the the ...", which is the same as that of the simple $n$-gram model, but the value for perplexity is much higher. 
 
 Implementation of the same model using word groups as $n$-grams would probably yield better prediction results, but it was decided that prediction on a character level is more useful in general and so this was not investigated.
 
-Unfortunately, due to hardware restraints, the Sequence Memoizer code was unable to handle large training corpora. This was due to the amount of memory required for constructing the prefix tree. Testing was performed on a tree built using only the first chapter of \textit{The Wonderful Wizard of Oz}. A comparison of perplexities for this chapter for the different models is shown in Table \ref{table:chapterOnePerplexities}. From this, it is clear that the Sequence Memoizer implementation has the best result. Considering that the smaller training corpus increased the perplexities for the 3- and 4-gram models, it is plausible to expect that a larger training corpus would reduce the perplexity of the Sequence Memoizer model.
+Unfortunately, due to hardware restraints, the Sequence Memoizer code was unable to handle large training corpora. This was due to the amount of memory required for constructing the prefix tree. Testing was performed on a tree built using only the first chapter of \textit{The Wonderful Wizard of Oz}. A comparison of perplexities for this chapter for the different models is shown in Table \ref{table:chapterOnePerplexities}. From this, it is clear that the Sequence Memoizer implementation has the best result. Considering that the smaller training corpus increased the perplexities for the 3- and 4-gram models, it is reasonable to expect that a larger training corpus would reduce the perplexity of the Sequence Memoizer model.
 
 Prediction took place at the character level. Due to the small training corpus, the probability of seating a customer at a new table was often higher than choosing any of the existing tables, and so often the predicted character was unexpected. However, unlike the other models, we are not restricted in the length of context used for prediction. Given a longer context, the results are often very much in line with the training text. 
 
@@ -113,12 +117,15 @@ Sequence Memoizer & 1.008 \\ \hline
 \end{center} 
 \end{table}
 
-Given the context "dorothy lived ", the Sequence Memoizer model predicted a varying jumble of letters and numbers. Given a much longer context, the model predicted a string of characters which existed in the training data. It is clear from this that a larger training corpus would allow much more natural prediction.  
+Given the context "dorothy lived ", the Sequence Memoizer model predicted a jumble of letters and numbers which varied with each attempt. Given a much longer context, the model predicted a string of characters which existed in the training data. 
 
 \section{Discussion}
 
-The testing has shown that a larger value of $n$ generally gives a much better perplexity. The Sequence Memoizer essentially sets $n$ to infinity and therefore achieves the best perplexity of all the models. Prediction by word has been shown to yield much better results (qualitatively) than by letter, as the number of possible variations of successive words is much smaller than that of successive letters. It is also much more difficult to test for good prediction by the letter simply by inspection, as one incorrect letter turns a word to gibberish. 
+\vbox{
+The testing has shown that a larger value of $n$ generally gives a much better perplexity. The Sequence Memoizer essentially sets $n$ to infinity and therefore achieves the best perplexity of all the models. Prediction by word has been shown to yield much better results (qualitatively) than by letter, as the number of possible variations of successive words is much smaller than that of successive letters.
+
 
 The tests on the different methods of $n$-gram smoothing proved inconclusive, with the perplexities varying drastically between models. However, it has become clear that Good-Turing smoothing is generally unacceptable unless that training corpus is sufficiently large that there is at least one $n$-gram for every possible value of $r$ (count).
 
+The prediction results generated by the Sequence Memoizer model were not as good as hoped. This is very likely due to the small size of the training corpus used. A smaller corpus greatly increases the probability of drawing from the parent distribution at each node, therefore it is much less likely that the prediction will have been observed as following the given context in the training data. Prediction based on a longer context gives a much more accurate result as there are far fewer observed possibilities in the training data.}
 

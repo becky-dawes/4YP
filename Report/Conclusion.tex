@@ -8,6 +8,10 @@ It was found that increasing values of $n$ made for much better $n$-gram models 
 
 \section{Further Work}
 
-The Sequence Memoizer model would perform much better if it were a significantly larger training corpus. Therefore a computer with more RAM is necessary. It is possible that the code could also be rewritten to reduce the amount of memory required. 
+The Sequence Memoizer model would perform much better if it had a significantly larger training corpus. Therefore a computer with more RAM is necessary. The code used for tree construction required a large number of recursive function calls and so a large memory allocation is needed.
+
+More comprehensive testing, such as quantifying whether a predicted sequence makes logical and grammatical sense, would allow for a better comparison of the models.
 
 Testing based on a large training corpus, such as a text dump of Wikipedia \footnote{\url{www.wikipedia.com}} would be very useful. The code could be adapted to answer questions based on information appearing in the training data (much like Watson).
+
+In the future, $n$-gram models could be used for intelligent systems to learn speech. Based on a large training set (for example, the whole of the internet), a system could generate reasonable responses to questions and possibly be able to converse with humans.

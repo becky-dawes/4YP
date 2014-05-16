@@ -400,7 +400,7 @@ This becomes more complex for words which require branching of nodes (such as ``
 
 
 
-A new class of object was created to store the information required for each node object: \lstinline!(defrecord restaurant_node [range children restaurant depth])!, where the fields are defined as follows:
+A new class of data type was created to store the information required for each node object: \lstinline!(defrecord restaurant_node [range children restaurant depth])!, where the fields are defined as follows:
 
 \begin{itemize}
 \item \lstinline!range!: a vector containing the indices (with respect to the original string) of the first and last letters of the branch's substring
@@ -444,7 +444,7 @@ A new class of object was created to store the information required for each nod
 
  Figure \ref{fig:buildTreeFlowchart} details the tree building procedure. The cycle continues until the longest prefix has been constructed. A main \lstinline!build_tree! function was written with several auxiliary functions supporting it. 
 
-    \begin{figure}[h!]
+    \begin{figure}
     \centering
 \begin{tikzpicture}[node distance = 4cm, auto,>=triangle 45]
 
@@ -489,7 +489,29 @@ A new class of object was created to store the information required for each nod
 
 Checking whether a node's range matches a given context was done using regular expressions. It is necessary to discern between full and partial matches with both the range and the context, so a function  \lstinline!check_range! was written which returns a vector of the form \lstinline![matching_string! \newline \lstinline!is_match_length_equal_to_range_length       is_context_length_greater_than_match_length]!.
 
-The function \lstinline!branch! is used to split a node when a context matches part of the branch substring. It dissociates the current node from the tree and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range.
+The function \lstinline!branch! is used to split a node when a context matches part of the branch substring. It dissociates the current node from the tree and then associates a new node with the desired new range, as well as associating a child node that is a copy of the old node, but with a context that is only the second part of the original range (see Figure \ref{fig:branching}).
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}{0.3\textwidth}
+\Tree [.$\bullet$ m im sim ]
+\caption{Before Branching}
+\label{fig:branchingA}
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\Tree [.$\bullet$ m im [.s im ] ]
+\caption{After Branching}
+\label{fig:branchingB}
+\end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+\Tree [.$\bullet$ m im [.s im sim ] ]
+\caption{Adding New Context}
+\label{fig:branchingC}
+\end{subfigure}
+\caption{Branching a Node}
+\label{fig:branching}
+\end{figure}
+
  
 % The method for building a tree is as follows:
 % \begin{enumerate}
@@ -653,7 +675,7 @@ The \lstinline!build_tree! function has four input arguments:
 \item \lstinline!word!: the current prefix being considered
 \item \lstinline!root_node!: the root node of the tree
 \item \lstinline!root_word!: the original string (from which indices are created and dereferenced)
-\item \lstinline!params!: the parameters describing the node being built on (for example, the object described by \lstinline![:children "a"]! is the child of the root node whose range begins with the letter ``a"; the object described by \lstinline![:children "a" :range]! is the range of that node) 
+\item \lstinline!params!: the parameters describing the node being built on (for example,  \lstinline![:children "a"]! refers to the child of the root node whose range begins with the letter ``a"; \lstinline![:children "a" :range]! refers to the range of that node) 
 \end{itemize}
 
 \noindent It then recursively calls itself, removing one character from the end of \lstinline!word! until the tree for the first character has been constructed. This then becomes the new \lstinline!root_node! onto which the tree for the next longest prefix is built. This  continues for each prefix, ensuring that the tree is built up from the shortest prefix first. 
@@ -713,7 +735,7 @@ During construction, customers were assigned to tables based on the CRP probabil
 
 Once the tree has been built, prediction is rather straightforward. Given a particular context, one must search through the tree for a match. If a match cannot be found, then a node may be instantiated, either by extending a branch, or by fragmenting an existing branch. As mentioned earlier, the probability of choosing an existing table is $\frac{n_{k}-d}{n+c}$, where $n_{k}$ is the number of customers seated at that table, $d$ and $c$ are the discount parameter and concentration parameter (taken to be zero for our purposes) respectively and $n$ is the total number of customers in the restaurant. The probability of choosing a new table (i.e. drawing a symbol from the parent distribution) is $\frac{c+Nd}{n+c}$, where $N$ is the number of tables in the restaurant. Drawing from the parent distribution means repeating this process again at the next highest node. As with tree construction, customers are drawn by assigning probability ranges for all possible options and then generating a random number between 0 and 1 to determine which to choose.
 
-Discount parameters vary depending on a node's \textit{depth} in the tree. In this project, the values given in \textit{A Stochastic Memoizer for Sequence Data} \cite{wood2009stochastic} were used. These are $d_{[0,1,2,...]}=(0.62, 0.69, 0.74, 0.80, 0.95, 0.95, ...)$. In this situation, depth actually refers to the depth in a prefix \textit{trie}, that is a tree in which no \textit{coagulation} (the process of combining symbols to create longer contexts for nodes with only one child) has taken place (all nodes have a context consisting of just one symbol). In the representation discussed earlier, coagulation inherently took place during construction. This is essentially marginalisation. Figure \ref{fig:prefixTrie} shows the prefix trie for ``mississippi". When coagulation takes place, the discount parameters must be multiplied together in accordance with the following theorem: 
+Discount parameters vary depending on a node's \textit{depth} in the tree. In this project, the values given in \textit{A Stochastic Memoizer for Sequence Data} \cite{wood2009stochastic} were used. These are $d_{[0,1,2,...]}=(0.62, 0.69, 0.74, 0.80, 0.95, 0.95, ...)$. In this situation, depth actually refers to the depth in a prefix \textit{trie}, that is a tree in which no \textit{coagulation} (the process of combining symbols to create longer contexts for nodes with only one child) has taken place (all nodes have a context consisting of just one symbol). In the representation discussed earlier, coagulation inherently took place during construction. This is essentially marginalisation and reduces the amount of memory required to store the tree as the number of nodes is significantly lower. Figure \ref{fig:prefixTrie} shows the prefix trie for ``mississippi". When coagulation takes place, the discount parameters must be multiplied together in accordance with the following theorem: 
 \\
 
 \noindent\framebox{\vbox{\noindent\textbf{Coagulation Theorem:}
